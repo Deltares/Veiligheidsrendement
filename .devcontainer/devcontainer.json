@@ -8,7 +8,7 @@
     "source=${localWorkspaceFolder},target=/usr/src/app,type=bind,consistency=cached",
     "source=vrtool_dev_container,target=/usr/src/.env,type=volume"
   ],
-  "postStartCommand": "poetry install & git config --global core.autocrlf true & git config --global --add safe.directory ${containerWorkspaceFolder}",
+  "postStartCommand": "cp -r /usr/src/test_externals/ /usr/src/app/tests/ & poetry install & git config --global core.autocrlf true & git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
     "vscode": {
       "extensions": [
