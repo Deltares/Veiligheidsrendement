@@ -7,23 +7,21 @@ from peewee import SqliteDatabase
 from tests.orm.io import add_computation_scenario_id
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.orm.io.importers.mechanism_simple_importer import MechanismSimpleImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.io.importers.stability_inner_simple_importer import (
-    StabilityInnerSimpleImporter,
-)
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
 
 
-class TestStabilityInnerSimpleImporter:
+class TestMechanismSimpleImporter:
     def test_initialize(self):
         # Call
-        _importer = StabilityInnerSimpleImporter()
+        _importer = MechanismSimpleImporter()
 
         # Assert
-        assert isinstance(_importer, StabilityInnerSimpleImporter)
+        assert isinstance(_importer, MechanismSimpleImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
     def test_import_orm(
@@ -71,7 +69,7 @@ class TestStabilityInnerSimpleImporter:
 
             transaction.commit()
 
-        _importer = StabilityInnerSimpleImporter()
+        _importer = MechanismSimpleImporter()
 
         # Call
         _mechanism_input = _importer.import_orm(
@@ -81,7 +79,7 @@ class TestStabilityInnerSimpleImporter:
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
 
-        assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER
+        assert _mechanism_input.mechanism == MechanismEnum.OVERFLOW
         assert len(_mechanism_input.input) == len(parameters) + 3
         assert _mechanism_input.input["Scenario"] == [
             _computation_scenario.scenario_name
@@ -99,7 +97,7 @@ class TestStabilityInnerSimpleImporter:
 
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
-        _importer = StabilityInnerSimpleImporter()
+        _importer = MechanismSimpleImporter()
         _expected_mssg = "No valid value given for MechanismPerSection."
 
         # Call
