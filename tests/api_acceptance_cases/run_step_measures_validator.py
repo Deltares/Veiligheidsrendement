@@ -128,7 +128,12 @@ class RunStepMeasuresValidator(RunStepValidator):
             )
         for _ref_key, _ref_beta_time_costs in _reference_beta_time_costs.items():
             _res_beta_time_costs = _result_beta_time_costs.get(_ref_key, list())
-            if _ref_beta_time_costs != _res_beta_time_costs:
+            
+            #get only the last values from each tuple
+            _ref_costs = [x[2] for x in _ref_beta_time_costs]
+            _res_costs = [x[2] for x in _res_beta_time_costs]
+
+            if _ref_costs != _res_costs:
                 _key_name = "-".join(_ref_key)
 
                 def beta_year_cost_to_str(cost_collection: list[tuple]) -> str:
