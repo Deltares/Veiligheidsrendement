@@ -36,18 +36,22 @@ class SectionReliability:
                         mechanism
                     )
                 )
-
-                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    _pf_mechanisms_time[
-                        _count, _range_idx
-                    ] = _mechanism_collection.Reliability[str(_range_val)].Pf
-                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
-                    pf = _mechanism_collection.Reliability[str(_range_val)].Pf
-                    # underneath one can choose whether to upscale within sections or not:
-                    N = 1
-                    _pf_mechanisms_time[_count, _range_idx] = min(
-                        1 - (1 - pf) ** N, 1.0 / 2
+                _pf = _mechanism_collection.Reliability[str(_range_val)].Pf
+                def upscale_crosssectional_probability(N_value: float):
+                    # N = a * L_section / b
+                    return min(
+                        1 - (1 - _pf) ** N_value, 1.0 / 2
                     )
+                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    _pf_mechanisms_time[_count, _range_idx] = _pf
+                elif mechanism is MechanismEnum.STABILITY_INNER:
+                    # underneath one can choose whether to upscale within sections or not:
+                    # N = 1
+                    _pf_mechanisms_time[_count, _range_idx] = upscale_crosssectional_probability(4)
+                elif mechanism is  MechanismEnum.PIPING:
+                    # N = 1
+                    _pf_mechanisms_time[_count, _range_idx] = upscale_crosssectional_probability(4)
+
             _count += 1
 
         # Do we want beta or failure probability? Preferably beta as output
