@@ -203,10 +203,10 @@ class RevetmentMeasure(MeasureProtocol):
                     if i == j:
                         continue
                     beta_msr = msr.section_reliability.SectionReliability["0"][
-                        "Section"
+                        MechanismEnum.REVETMENT.__str__()
                     ]
                     beta_cmp = cmp.section_reliability.SectionReliability["0"][
-                        "Section"
+                        MechanismEnum.REVETMENT.__str__()
                     ]
                     cmp_betas = self._compare_betas(beta_msr, beta_cmp)
                     cmp_costs = self._compare_costs(msr.cost, cmp.cost)
