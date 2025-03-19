@@ -4,7 +4,6 @@ import pandas as pd
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
@@ -29,7 +28,7 @@ class SectionReliability:
             1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2
         )
 
-    def calculate_section_reliability(self, dike_section: DikeSection):
+    def calculate_section_reliability(self, dike_section_props: dict[str, float]):
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
@@ -52,9 +51,9 @@ class SectionReliability:
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
                     # N = 1
-                    _mechanism_a = dike_section.TrajectInfo.aPiping if mechanism is MechanismEnum.PIPING else dike_section.TrajectInfo.aStabilityInner
-                    _mechanism_b = dike_section.sensitive_fraction_piping if mechanism is MechanismEnum.PIPING else dike_section.sensitive_fraction_stability_inner
-                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(dike_section.Length, _pf, _mechanism_a, _mechanism_b)
+                    _mechanism_a = dike_section_props["a_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["a_stability_inner"]
+                    _mechanism_b = dike_section_props["sf_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["sf_stability_inner"]
+                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(dike_section_props["length"], _pf, _mechanism_a, _mechanism_b)
 
             _count += 1
 

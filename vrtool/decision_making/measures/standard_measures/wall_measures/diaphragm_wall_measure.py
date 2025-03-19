@@ -55,7 +55,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 mechanism_reliability_collection
             )
 
-        section_reliability.calculate_section_reliability(dike_section)
+        section_reliability.calculate_section_reliability(dike_section.get_cross_sectional_properties())
         return section_reliability
 
     def _get_configured_mechanism_reliability_collection(

@@ -34,3 +34,12 @@ class DikeSection:
     flood_damage: float = float("nan")
     sensitive_fraction_piping: float = 0
     sensitive_fraction_stability_inner: float = 0
+
+    def get_cross_sectional_properties(self) -> dict[str, float]:
+        return dict(
+            length = self.Length,
+            a_piping = self.TrajectInfo.aPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            a_stability_inner = self.TrajectInfo.aStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            sf_piping = self.sensitive_fraction_piping,
+            sf_stability_inner = self.sensitive_fraction_stability_inner
+        )

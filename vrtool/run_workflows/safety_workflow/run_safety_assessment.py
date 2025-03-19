@@ -48,7 +48,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
                     )
 
             # aggregate to section reliability:
-            _section.section_reliability.calculate_section_reliability(_section)
+            _section.section_reliability.calculate_section_reliability(dike_section.get_cross_sectional_properties())
 
         # aggregate computed initial probabilities to DataFrame in selected_traject:
         self.selected_traject.set_probabilities()
