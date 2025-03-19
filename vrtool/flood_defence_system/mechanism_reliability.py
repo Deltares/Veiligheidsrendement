@@ -6,11 +6,7 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.failure_mechanisms import (
-    FailureMechanismCalculatorProtocol,
-    MechanismSimpleCalculator,
-    MechanismSimpleInput,
-)
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismCalculator,
     GenericFailureMechanismInput,
@@ -24,6 +20,12 @@ from vrtool.failure_mechanisms.overflow import (
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
+from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_calculator import (
+    MechanismSimpleCalculator,
+)
+from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_input import (
+    MechanismSimpleInput,
+)
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
