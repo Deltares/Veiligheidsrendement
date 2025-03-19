@@ -95,13 +95,14 @@ class TestMain:
                 MechanismEnum.HYDRAULIC_STRUCTURES.name,
             ],
         }
-        json_file = _input_dir.joinpath("test_config.json")
-        json_file.touch()
-        json_file.write_text(json.dumps(json_config, indent=4))
+        
+        _json_file = _input_dir.joinpath("test_config.json")
+        _json_file.touch()
+        _json_file.write_text(json.dumps(json_config, indent=4))
 
-        yield _input_dir, _output_dir
+        yield _json_file,  _output_dir
 
-        json_file.unlink()
+        _json_file.unlink()
         _test_db_file.unlink()
 
     @pytest.mark.slow
@@ -116,15 +117,15 @@ class TestMain:
         # NOTE: Keep the test case as the fastest of all
         # available in `api_acceptance_cases`.
         # 1. Define test data.
-        _input_dir, _output_dir = cli_config_dirs
-        assert _input_dir.exists()
+        _vrtool_config_file, _output_dir = cli_config_dirs
+        assert _vrtool_config_file.is_file()
         assert not _output_dir.exists()
 
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
             [
-                str(_input_dir),
+                str(_vrtool_config_file),
                 "--log-dir", str(_output_dir)
             ],
             
