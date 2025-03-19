@@ -131,13 +131,7 @@ class MechanismReliability:
     def _get_simple_calculator(
         self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism == MechanismEnum.STABILITY_INNER:
-            _mechanism_input = MechanismSimpleInput.from_mechanism_input(
-                mechanism_input
-            )
-            return MechanismSimpleCalculator(_mechanism_input)
-        
-        if mechanism == MechanismEnum.PIPING:
+        if mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
             _mechanism_input = MechanismSimpleInput.from_mechanism_input(
                 mechanism_input
             )
