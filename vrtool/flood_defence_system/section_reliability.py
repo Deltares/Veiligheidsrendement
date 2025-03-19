@@ -4,6 +4,7 @@ import pandas as pd
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
@@ -15,18 +16,20 @@ BETA_THRESHOLD: float = 8.0
 class SectionReliability:
     load: LoadInput
     failure_mechanisms: FailureMechanismCollection
+    # Result stored during calculate_section_reliability
+    SectionReliability: pd.array
 
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
 
     def _get_upscale_cross_sectional_probability(self, section_length: float, mechanism_pf: float, mechanism_a: float, mechanism_b: float) -> float:
         # N = a * L_section / b
-        _N_value = mechanism_a * section_length / mechanism_b
+        _n_value = mechanism_a * section_length / mechanism_b
         return min(
-            1 - (1 - mechanism_pf) ** _N_value, 1.0 / 2
+            1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2
         )
 
-    def calculate_section_reliability(self, section_length: float):
+    def calculate_section_reliability(self, dike_section: DikeSection):
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
@@ -49,7 +52,9 @@ class SectionReliability:
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
                     # N = 1
-                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(...)
+                    _mechanism_a = dike_section.TrajectInfo.aPiping if mechanism is MechanismEnum.PIPING else dike_section.TrajectInfo.aStabilityInner
+                    _mechanism_b = dike_section.sensitive_fraction_piping if mechanism is MechanismEnum.PIPING else dike_section.sensitive_fraction_stability_inner
+                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(dike_section.Length, _pf, _mechanism_a, _mechanism_b)
 
             _count += 1
 

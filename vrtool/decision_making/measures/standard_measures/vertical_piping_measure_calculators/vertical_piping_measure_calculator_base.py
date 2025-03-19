@@ -76,7 +76,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
                 mechanism_reliability_collection
             )
 
-        section_reliability.calculate_section_reliability(self.dike_section.Length)
+        section_reliability.calculate_section_reliability(self.dike_section)
         return section_reliability
 
     def _copy_results(

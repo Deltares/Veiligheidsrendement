@@ -48,7 +48,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
                     )
 
             # aggregate to section reliability:
-            _section.section_reliability.calculate_section_reliability(_section.Length)
+            _section.section_reliability.calculate_section_reliability(_section)
 
         # aggregate computed initial probabilities to DataFrame in selected_traject:
         self.selected_traject.set_probabilities()
