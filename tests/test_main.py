@@ -13,7 +13,6 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMain:
-
     def test_given_invalid_log_dir_when__initialize_log_file_then_sets_cwd(self):
         # 1. Define test data.
         _invalid_path = None
@@ -22,6 +21,7 @@ class TestMain:
         def cleanup_cwd_dir():
             for _log_file in _expected_log_dir.glob("*.log"):
                 _log_file.unlink()
+
         cleanup_cwd_dir()
         assert not any(_expected_log_dir.glob("*.log"))
 
@@ -95,12 +95,12 @@ class TestMain:
                 MechanismEnum.HYDRAULIC_STRUCTURES.name,
             ],
         }
-        
+
         _json_file = _input_dir.joinpath("test_config.json")
         _json_file.touch()
         _json_file.write_text(json.dumps(json_config, indent=4))
 
-        yield _json_file,  _output_dir
+        yield _json_file, _output_dir
 
         _json_file.unlink()
         _test_db_file.unlink()
@@ -124,11 +124,7 @@ class TestMain:
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
-            [
-                str(_vrtool_config_file),
-                "--log-dir", str(_output_dir)
-            ],
-            
+            [str(_vrtool_config_file), "--log-dir", str(_output_dir)],
         )
 
         # 3. Verify final expectations.

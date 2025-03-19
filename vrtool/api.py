@@ -50,9 +50,7 @@ def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
         VrtoolConfig: Configuration file representing the model in the given directory.
     """
     if not config_file.is_file():
-        raise FileNotFoundError(
-            f"Config file {config_file} not found."
-        )
+        raise FileNotFoundError(f"Config file {config_file} not found.")
 
     _vr_config = VrtoolConfig.from_json(config_file)
     if not _vr_config.input_directory:
