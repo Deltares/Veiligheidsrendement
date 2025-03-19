@@ -2,10 +2,8 @@ import pytest
 
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol, MechanismInput
-from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_calculator import (
+from vrtool.failure_mechanisms.simple_calculator import (
     MechanismSimpleCalculator,
-)
-from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_input import (
     MechanismSimpleInput,
 )
 

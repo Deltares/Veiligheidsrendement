@@ -2,9 +2,7 @@ import numpy as np
 import pytest
 
 from vrtool.failure_mechanisms import MechanismInput
-from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_input import (
-    MechanismSimpleInput,
-)
+from vrtool.failure_mechanisms.simple_calculator import MechanismSimpleInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
