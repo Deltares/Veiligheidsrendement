@@ -33,9 +33,9 @@ class TestApi:
             get_valid_vrtool_config(_config_file)
 
         # 3. Verify expectations.
-        assert str(
-            exception_error.value
-        ) == "Config file {} not found.".format(_config_file)
+        assert str(exception_error.value) == "Config file {} not found.".format(
+            _config_file
+        )
 
     def test_when_get_valid_vrtool_config_with_valid_config_returns_vrtool_config(
         self,

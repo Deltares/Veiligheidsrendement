@@ -128,8 +128,8 @@ class RunStepMeasuresValidator(RunStepValidator):
             )
         for _ref_key, _ref_beta_time_costs in _reference_beta_time_costs.items():
             _res_beta_time_costs = _result_beta_time_costs.get(_ref_key, list())
-            
-            #get only the last values from each tuple
+
+            # get only the last values from each tuple
             _ref_costs = [x[2] for x in _ref_beta_time_costs]
             _res_costs = [x[2] for x in _res_beta_time_costs]
 

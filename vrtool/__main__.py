@@ -24,13 +24,15 @@ def _initialize_log_file(log_dir: click.Path | None):
     if log_dir is None:
         log_dir = Path.cwd()
 
-   
     # Define logging filename and initialize handler
     _log_file = Path(log_dir).joinpath("vrtool_logging.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
     logging.info("Start logging vanuit %s", str(_log_file))
 
-@cli.command(name="assessment", help="Assesses the model with the given configuration file.")
+
+@cli.command(
+    name="assessment", help="Assesses the model with the given configuration file."
+)
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.option("-ld", "--log-dir", type=click.Path())
 def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
@@ -40,9 +42,7 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     # Retrieve parameter and initialize logging.
     _initialize_log_file(log_dir)
 
-    logging.info(
-        "Start beoordeling met configuratie %s", str(config_file)
-    )
+    logging.info("Start beoordeling met configuratie %s", str(config_file))
 
     # Get the selected Traject.
     _vr_config = api.get_valid_vrtool_config(Path(config_file))
@@ -63,9 +63,8 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     _initialize_log_file(log_dir)
 
     logging.info(
-        "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s", str(
-            config_file
-        )
+        "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s",
+        str(config_file),
     )
 
     # Define VrToolConfig and Selected Traject
@@ -74,15 +73,15 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
 
 
 @cli.command(
-    name="optimization", help="Optimizes the model measures with the given configuration file."
+    name="optimization",
+    help="Optimizes the model measures with the given configuration file.",
 )
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.argument("measure_result_ids", type=click.INT, nargs=-1)
 @click.option("-ld", "--log-dir", type=click.Path())
 def run_step_optimization(
-    config_file: click.Path,
-    log_dir: click.Path | None,
-    measure_result_ids: tuple[int]):
+    config_file: click.Path, log_dir: click.Path | None, measure_result_ids: tuple[int]
+):
     """
     Runs step optimization.
     """
@@ -90,9 +89,7 @@ def run_step_optimization(
     _initialize_log_file(log_dir)
 
     _config_file = Path(config_file)
-    logging.info(
-        "Start optimalisatie met configuratie %s", str(config_file)
-    )
+    logging.info("Start optimalisatie met configuratie %s", str(config_file))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(_config_file)
@@ -100,12 +97,12 @@ def run_step_optimization(
     if any(measure_result_ids):
         _iterator = iter(measure_result_ids)
         _measure_result_tuples = list(zip(_iterator, _iterator))
-    api.run_step_optimization(
-        _vr_config, _config_file.parent, _measure_result_tuples
-    )
+    api.run_step_optimization(_vr_config, _config_file.parent, _measure_result_tuples)
 
 
-@cli.command(name="run_full", help="Full run of the model with the given configuration.")
+@cli.command(
+    name="run_full", help="Full run of the model with the given configuration."
+)
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.option("-ld", "--log-dir", type=click.Path())
 def run_full(config_file: click.Path, log_dir: click.Path | None):
@@ -114,9 +111,7 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     """
     # Retrieve parameter and initialize logging.
     _initialize_log_file(log_dir)
-    logging.info(
-        "Start volledige berekening met configuratie %s!", str(config_file)
-    )
+    logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(config_file))
