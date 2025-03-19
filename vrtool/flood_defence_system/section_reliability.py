@@ -26,7 +26,7 @@ class SectionReliability:
             1 - (1 - mechanism_pf) ** _N_value, 1.0 / 2
         )
 
-    def calculate_section_reliability(self):
+    def calculate_section_reliability(self, section_length: float):
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
