@@ -19,6 +19,13 @@ class SectionReliability:
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
 
+    def _get_upscale_cross_sectional_probability(self, section_length: float, mechanism_pf: float, mechanism_a: float, mechanism_b: float) -> float:
+        # N = a * L_section / b
+        _N_value = mechanism_a * section_length / mechanism_b
+        return min(
+            1 - (1 - mechanism_pf) ** _N_value, 1.0 / 2
+        )
+
     def calculate_section_reliability(self):
         # This routine translates cross-sectional to section reliability indices
 
@@ -37,20 +44,12 @@ class SectionReliability:
                     )
                 )
                 _pf = _mechanism_collection.Reliability[str(_range_val)].Pf
-                def upscale_crosssectional_probability(N_value: float):
-                    # N = a * L_section / b
-                    return min(
-                        1 - (1 - _pf) ** N_value, 1.0 / 2
-                    )
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                     _pf_mechanisms_time[_count, _range_idx] = _pf
-                elif mechanism is MechanismEnum.STABILITY_INNER:
+                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
                     # N = 1
-                    _pf_mechanisms_time[_count, _range_idx] = upscale_crosssectional_probability(4)
-                elif mechanism is  MechanismEnum.PIPING:
-                    # N = 1
-                    _pf_mechanisms_time[_count, _range_idx] = upscale_crosssectional_probability(4)
+                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(...)
 
             _count += 1
 
