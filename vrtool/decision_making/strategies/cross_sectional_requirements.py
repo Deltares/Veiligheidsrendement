@@ -17,6 +17,7 @@ class CrossSectionalRequirements:
     dike_traject_b_stability_inner: float
     dike_section_a_piping: float
     dike_section_a_stability_inner: float
+    dike_section_length: float
 
     @classmethod
     def from_dike_traject_and_section_as_input(cls, dike_traject: DikeTraject, section_as_input: SectionAsInput) -> CrossSectionalRequirements:
@@ -74,4 +75,5 @@ class CrossSectionalRequirements:
             dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
             dike_section_a_piping = section_as_input.a_section_piping,
             dike_section_a_stability_inner = section_as_input.a_section_stability_inner,
+            dike_section_length = section_as_input.section_length
         )

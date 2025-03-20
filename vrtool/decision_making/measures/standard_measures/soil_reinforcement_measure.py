@@ -15,6 +15,9 @@ from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
     ModifiedDikeGeometryMeasureInput,
 )
+from vrtool.decision_making.strategies.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,

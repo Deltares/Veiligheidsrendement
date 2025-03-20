@@ -7,6 +7,9 @@ from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import probabilistic_design
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.strategies.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
