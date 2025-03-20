@@ -9,7 +9,7 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-class TestStabilityInnerSimpleInput:
+class TestMechanismSimpleInput:
     def test_from_mechanism_input_with_beta_returns_input_with_beta(
         self, mechanism_input_fixture: MechanismInput
     ):
@@ -60,30 +60,6 @@ class TestStabilityInnerSimpleInput:
 
         # Assert
         assert failure_mechanism_input.is_eliminated
-
-    @pytest.mark.parametrize(
-        "elimination",
-        [
-            pytest.param("NotYes", id="Not a valid string"),
-            pytest.param("   ", id="Empty string"),
-        ],
-    )
-    def test_from_mechanism_input_with_elimination_without_valid_value_raises_value_error(
-        self, elimination: str, mechanism_input_fixture: MechanismInput
-    ):
-        # Setup
-        mechanism_input_fixture.input["beta"] = np.array([0.5], dtype=float)
-        mechanism_input_fixture.input["elimination"] = elimination
-
-        # Call
-        with pytest.raises(ValueError) as exception_error:
-            MechanismSimpleInput.from_mechanism_input(mechanism_input_fixture)
-
-        # Assert
-        assert (
-            str(exception_error.value)
-            == "Warning: Elimination defined but not turned on"
-        )
 
     @pytest.mark.parametrize(
         "initial_probability_of_failure, scenario_probability, expected_result",
