@@ -448,17 +448,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)
             _measure_idx = (_section_idx, *_valid_measures[idx].get_combination_idx())
+            _measure = (_measure_idx[0], _measure_idx[1] + 1, _measure_idx[2] + 1)
             
             # update the probabilities for the mechanisms
             self.traject_risk.update_probabilities_for_measure(
-                _measure_idx
+                _measure
             )
                       
             # add the optimization step
             self.optimization_steps.append(
                 StrategyStep(
                     step_number=len(self.optimization_steps) + 1,
-                    measure=_measure_idx,
+                    measure=_measure,
                     section_idx=_section_idx,
                     aggregated_measure=_valid_measures[idx],
                     probabilities=self.traject_risk.get_initial_probabilities_dict(
