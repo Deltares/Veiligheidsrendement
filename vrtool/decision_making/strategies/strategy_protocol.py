@@ -1,12 +1,8 @@
 from typing import Protocol
 
-import numpy as np
 from typing_extensions import runtime_checkable
 
-from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.aggregated_measures_combination import (
-    AggregatedMeasureCombination,
-)
+from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
@@ -15,10 +11,8 @@ class StrategyProtocol(Protocol):
     design_method: str
     sections: list[SectionAsInput]
     time_periods: list[int]
-    measures_taken: list[tuple[int, int, int]]
-    total_risk_per_step: list[float]
-    probabilities_per_step: list[dict[MechanismEnum, np.ndarray]]
-    selected_aggregated_measures: list[tuple[int, AggregatedMeasureCombination]]
+    initial_step: StrategyStep
+    optimization_steps: list[StrategyStep]
 
     def evaluate(self, *args, **kwargs):
         """
