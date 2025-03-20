@@ -38,6 +38,7 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.greedy_strategy import GreedyStrategy
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.decision_making.strategies.target_reliability_strategy import (
     TargetReliabilityStrategy,
 )
@@ -658,6 +659,8 @@ class TestOrmControllers:
 
         # Define strategies.
         class MockedStrategy(StrategyProtocol):
+            optimization_steps: list[StrategyStep]
+            
             def __init__(self):
                 self.sections = [section_with_combinations]
                 _aggregated_measure_combination = AggregatedMeasureCombination(
@@ -670,30 +673,26 @@ class TestOrmControllers:
                 self.sections[_section_idx].aggregated_measure_combinations = [
                     _aggregated_measure_combination
                 ]
-                self.total_risk_per_step = [1000.0, 100.0]
-                self.probabilities_per_step = [
-                    {
-                        MechanismEnum.STABILITY_INNER: np.linspace(
-                            0.1, 0.6, 100
-                        ).reshape((100, 1)),
-                        MechanismEnum.OVERFLOW: np.linspace(0.05, 0.55, 100).reshape(
-                            (100, 1)
-                        ),
-                    },
-                    {
-                        MechanismEnum.STABILITY_INNER: np.linspace(
-                            0.1, 0.6, 100
-                        ).reshape((100, 1)),
-                        MechanismEnum.OVERFLOW: np.linspace(0.01, 0.1, 100).reshape(
-                            (100, 1)
-                        ),
-                    },
+                
+                self.optimization_steps = [
+                    StrategyStep(
+                        step_number=1,
+                        section_idx=_section_idx,
+                        measure=(_section_idx, 1, 1),
+                        aggregated_measure=_aggregated_measure_combination,
+                        probabilities={
+                            MechanismEnum.STABILITY_INNER: np.linspace(
+                                0.1, 0.6, 100
+                            ).reshape((100, 1)),
+                            MechanismEnum.OVERFLOW: np.linspace(0.01, 0.1, 100).reshape(
+                                (100, 1)
+                            ),
+                        },
+                        total_risk=100.0,
+                        total_cost=84.0,
+                    )
                 ]
-                self.measures_taken = [(_section_idx, 1, 1)]
                 self.time_periods = [0, 2, 4, 24, 42]
-                self.selected_aggregated_measures = [
-                    (_section_idx, _aggregated_measure_combination)
-                ]
 
         _test_strategy = MockedStrategy()
 
@@ -1813,9 +1812,7 @@ class TestCustomMeasureDetail:
         )
         assert _greedy_result.OI_horizon == 50
         assert _greedy_result.LCCOption.size > 0
-        assert any(_greedy_result.measures_taken)
-        assert any(_greedy_result.probabilities_per_step)
-        assert any(_greedy_result.total_risk_per_step)
+        assert any(_greedy_result.optimization_steps)
 
         # Target Reliability strategy
         _target_reliability_result = next(
@@ -1824,6 +1821,4 @@ class TestCustomMeasureDetail:
             if isinstance(_rs, TargetReliabilityStrategy)
         )
         assert _target_reliability_result.OI_horizon == 50
-        assert any(_target_reliability_result.measures_taken)
-        assert any(_target_reliability_result.probabilities_per_step)
-        assert any(_target_reliability_result.total_risk_per_step)
+        assert any(_target_reliability_result.optimization_steps)
