@@ -8,8 +8,7 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.cross_sectional_requirements import (
-    CrossSectionalDikeSectionRequirements,
-    CrossSectionalDikeTrajectRequirements,
+    CrossSectionalRequirements,
 )
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.traject_risk import TrajectRisk
@@ -43,7 +42,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self,
         section_idx: int,
         measure_idx: int,
-        cross_sectional_requirements: CrossSectionalDikeSectionRequirements,
+        cross_sectional_requirements: CrossSectionalRequirements,
         year: int,
         mechanisms: list[MechanismEnum],
     ) -> bool:
@@ -130,7 +129,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         measure_idx: int,
         section_idx: int,
         mechanisms: list[MechanismEnum],
-        cross_sectional_requirements: CrossSectionalDikeSectionRequirements,
+        cross_sectional_requirements: CrossSectionalRequirements,
         investment_year: int,
         design_year: int,
     ) -> bool:
@@ -139,7 +138,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         Args:
             measure_combination (AggregatedMeasureCombination): The measure combination to check.
             mechanisms (list[MechanismEnum]): The mechanisms to check the measure combination for.
-            cross_sectional_requirements (CrossSectionalDikeSectionRequirements): The cross-sectional requirements for the dike traject.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
             investment_year (int): The investment year for the measure combination.
             design_year (int): The design year for the measure combination.
 
@@ -162,13 +161,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def get_valid_measures_for_section(
         self,
         section_idx: int,
-        cross_sectional_requirements: CrossSectionalDikeSectionRequirements,
+        cross_sectional_requirements: CrossSectionalRequirements,
     ) -> list[AggregatedMeasureCombination]:
         """Get the measures that satisfy the cross-sectional requirements for the mechanisms.
 
         Args:
             section_as_input (SectionAsInput): The SectionAsInput object for which the valid measures are to be found.
-            cross_sectional_requirements (CrossSectionalDikeSectionRequirements): The cross-sectional requirements for the dike traject.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
 
         Returns:
             list[AggregatedMeasureCombination]: The list of valid measures for the mechanisms.
@@ -205,13 +204,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def get_best_measure_for_section(
         self,
         section_idx: int,
-        cross_sectional_requirements: CrossSectionalDikeSectionRequirements,
+        cross_sectional_requirements: CrossSectionalRequirements,
     ) -> tuple[list[AggregatedMeasureCombination], list[MechanismEnum]]:
         """Get the measure with the lowest failure probability for the mechanisms that do not satisfy the cross-sectional requirements.
 
         Args:
             section_as_input (SectionAsInput): The SectionAsInput object for which the best measure is to be found.
-            cross_sectional_requirements (CrossSectionalDikeSectionRequirements): The cross-sectional requirements for the dike traject.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
 
         Returns:
             list[AggregatedMeasureCombination]: The list of best measures for the mechanisms that do not satisfy the cross-sectional requirements.
@@ -342,9 +341,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # add probability for this step:
 
             # get the first possible investment year from the aggregated measures
-            _cross_sectional_dike_section_requirements = CrossSectionalDikeSectionRequirements.from_dike_traject_and_section_as_input(dike_traject, self.sections[_section_idx])
+            _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject_and_section_as_input(dike_traject, self.sections[_section_idx])
             _valid_measures = self.get_valid_measures_for_section(
-                _section_idx, _cross_sectional_dike_section_requirements
+                _section_idx, _cross_sectional_requirements
             )
 
             if len(_valid_measures) == 0:
@@ -354,7 +353,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     _invalid_mechanisms,
                 ) = self.get_best_measure_for_section(
                     _section_idx,
-                    _cross_sectional_dike_section_requirements,
+                    _cross_sectional_requirements,
                 )
                 # make a concatenated string of _invalid_mechanisms
                 _invalid_mechanisms_str = " en ".join(
