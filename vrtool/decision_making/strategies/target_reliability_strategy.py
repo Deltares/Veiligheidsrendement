@@ -9,12 +9,14 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
@@ -85,18 +87,26 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
     """
+    design_method: str
+    sections: list[SectionAsInput]
+    time_periods: list[int]
+    initial_step: StrategyStep
+    optimization_steps: list[StrategyStep]
+    
+    @property
+    def total_cost(self):
+        if not self.optimization_steps:
+            return 0.0
+        return self.optimization_steps[-1].total_cost
 
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig):
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
         self.sections = strategy_input.sections
+        self.initial_step = StrategyStep(step_number=0)
+        self.optimization_steps = []
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
-
-        self.measures_taken = []
-        self.total_risk_per_step = []
-        self.probabilities_per_step = []
-        self.selected_aggregated_measures = []
 
     def check_cross_sectional_requirements(
         self,
@@ -393,12 +403,16 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
-        # and the risk for each step
-        _taken_measures = {}
-        _taken_measures_indices = []
-        for _section_idx in section_order:
-            # add probability for this step:
+        
+        self.initial_step = StrategyStep(
+            step_number=0,
+            total_risk=self.traject_risk.get_total_risk(),
+            probabilities=self.traject_risk.get_initial_probabilities_dict(
+                self.traject_risk.mechanisms
+            ),
+        )
 
+        for _section_idx in section_order:
             # get the first possible investment year from the aggregated measures
             _valid_measures = self.get_valid_measures_for_section(
                 _section_idx, _cross_sectional_requirements
@@ -433,43 +447,24 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # get measure with lowest lcc from _valid_measures
             _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)
-            _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
-                idx
-            ]
-            _aggregated_combination = _taken_measures[
-                self.sections[_section_idx].section_name
-            ]
-            measure_idx = _aggregated_combination.get_combination_idx()
-            _taken_measures_indices.append(
-                (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
-            )
-
-            self.selected_aggregated_measures.append(
-                (
-                    _section_idx,
-                    _aggregated_combination,
-                )
-            )
-
-        # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
-        # First we get and update the probabilities per step
-        # we need to track probability for each step
-        self.probabilities_per_step = [
-            self.traject_risk.get_initial_probabilities_dict(
-                self.traject_risk.mechanisms
-            )
-        ]
-        self.total_risk_per_step = [self.traject_risk.get_total_risk()]
-
-        for step in range(0, len(_taken_measures)):
+            _measure_idx = (_section_idx, *_valid_measures[idx].get_combination_idx())
+            
+            # update the probabilities for the mechanisms
             self.traject_risk.update_probabilities_for_measure(
-                _taken_measures_indices[step]
+                _measure_idx
             )
-            self.probabilities_per_step.append(
-                self.traject_risk.get_initial_probabilities_dict(
-                    self.traject_risk.mechanisms
+                      
+            # add the optimization step
+            self.optimization_steps.append(
+                StrategyStep(
+                    step_number=len(self.optimization_steps) + 1,
+                    measure=_measure_idx,
+                    section_idx=_section_idx,
+                    aggregated_measure=_valid_measures[idx],
+                    probabilities=self.traject_risk.get_initial_probabilities_dict(
+                        self.traject_risk.mechanisms
+                    ),
+                    total_risk=self.traject_risk.get_total_risk(),
+                    total_cost=self.total_cost + _lcc[idx]
                 )
             )
-            self.total_risk_per_step.append(self.traject_risk.get_total_risk())
-
-        self.measures_taken = _taken_measures_indices
