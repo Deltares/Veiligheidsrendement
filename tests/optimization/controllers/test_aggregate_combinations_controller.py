@@ -63,6 +63,9 @@ class TestAggregateCombinationsController:
             section_name="dummy_section",
             traject_name="DummyTraject",
             flood_damage=4.2,
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=[],
         )
 
@@ -651,6 +654,9 @@ class TestCostComputation:
             section_name="River case VRTOOL-521",
             traject_name="test",
             flood_damage=float("nan"),
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=_sh_measures + _sg_measures + _sh_sg_measures,
         )
 
