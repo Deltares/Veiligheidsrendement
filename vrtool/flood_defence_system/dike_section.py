@@ -38,8 +38,8 @@ class DikeSection:
     def get_cross_sectional_properties(self) -> dict[str, float]:
         return dict(
             length = self.Length,
-            a_piping = self.TrajectInfo.aPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            a_stability_inner = self.TrajectInfo.aStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            sf_piping = self.sensitive_fraction_piping,
-            sf_stability_inner = self.sensitive_fraction_stability_inner
+            b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            b_stability_inner = self.TrajectInfo.bStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            a_section_piping = self.sensitive_fraction_piping,
+            a_section_stability_inner = self.sensitive_fraction_stability_inner
         )

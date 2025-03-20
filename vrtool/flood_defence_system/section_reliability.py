@@ -16,7 +16,7 @@ class SectionReliability:
     load: LoadInput
     failure_mechanisms: FailureMechanismCollection
     # Result stored during calculate_section_reliability
-    SectionReliability: pd.array
+    SectionReliability: pd.DataFrame
 
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
@@ -50,9 +50,8 @@ class SectionReliability:
                     _pf_mechanisms_time[_count, _range_idx] = _pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
-                    # N = 1
-                    _mechanism_a = dike_section_props["a_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["a_stability_inner"]
-                    _mechanism_b = dike_section_props["sf_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["sf_stability_inner"]
+                    _mechanism_a = dike_section_props["a_section_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["a_section_stability_inner"]
+                    _mechanism_b = dike_section_props["b_piping"] if mechanism is MechanismEnum.PIPING else dike_section_props["b_stability_inner"]
                     _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(dike_section_props["length"], _pf, _mechanism_a, _mechanism_b)
 
             _count += 1
