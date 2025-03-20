@@ -65,12 +65,7 @@ class MechanismSimpleInput:
         else:
             raise ValueError("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = mechanism_input.input.get("elimination", False)
-        if _get_valid_bool_value(_is_eliminated):
-            _is_eliminated = True
-        elif _is_eliminated:
-            # TODO: does this code make sense?
-            raise ValueError("Warning: Elimination defined but not turned on")
+        _is_eliminated = _get_valid_bool_value(mechanism_input.input.get("elimination", False))
 
         _prob_solution_failure = mechanism_input.input.get("Pf", np.ndarray([]))
         _input = cls(
