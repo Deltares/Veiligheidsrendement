@@ -17,8 +17,11 @@ class OptimizationStep(OrmBaseModel):
     `OptimizationRun` of this step.
     """
 
-    optimization_selected_measure = ForeignKeyField(
-        OptimizationSelectedMeasure, backref="optimization_steps", on_delete="CASCADE"
+    selected_primary_measure = ForeignKeyField(
+        OptimizationSelectedMeasure, backref="primary_optimization_steps", on_delete="CASCADE"
+    )
+    selected_secondary_measure = ForeignKeyField(
+        OptimizationSelectedMeasure, backref="secondary_optimization_steps", on_delete="CASCADE"
     )
     step_number = IntegerField()
     step_type = CharField(max_length=_max_char_length)

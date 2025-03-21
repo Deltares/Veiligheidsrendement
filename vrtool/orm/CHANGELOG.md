@@ -1,3 +1,11 @@
+## 0.1.10
+
+- [VRTOOL-548] Merge primary and secondary measure in 1 `OptimizationStep` (#?).
+
+## 0.1.9
+
+## 0.1.8
+
 ## 0.1.7
 
 ## Feat
