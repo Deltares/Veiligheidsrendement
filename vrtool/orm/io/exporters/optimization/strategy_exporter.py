@@ -1,3 +1,5 @@
+import select
+
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -83,55 +85,62 @@ class StrategyExporter(OrmExporterProtocol):
 
         for _optimization_step in strategy_run.optimization_steps:
 
-            # get ids of secondary measures
-            _secondary_measures = [
-                _measure
+            # get id of secondary measure
+            _secondary_measure: AggregatedMeasureCombination = next(
+                (_measure
                 for _measure in [
                     _optimization_step.aggregated_measure.sh_combination.secondary,
                     _optimization_step.aggregated_measure.sg_combination.secondary,
                 ]
-                if _measure is not None
-            ]
-
-            for single_measure in _secondary_measures + [
-                _optimization_step.aggregated_measure
-            ]:
-                _opt_selected_measure_result = self._get_optimization_selected_measure(
-                    single_measure.measure_result_id, single_measure.year
+                if _measure is not None),
+            None)
+            
+            # get measure results
+            _primary_measure_result = self._get_optimization_selected_measure(
+                    _optimization_step.aggregated_measure.measure_result_id,
+                    _optimization_step.aggregated_measure.year,
                 )
-                _created_optimization_step = OptimizationStep.create(
+            _secondary_measure_result = None
+            if _secondary_measure:
+                _secondary_measure_result = self._get_optimization_selected_measure(
+                    _secondary_measure.measure_result_id,
+                    _secondary_measure.year,
+                )
+            
+            _created_optimization_step = OptimizationStep.create(
                     step_number=_optimization_step.step_number,
                     step_type=_optimization_step.step_type.name,
-                    optimization_selected_measure=_opt_selected_measure_result,
+                    selected_primary_measure=_primary_measure_result,
+                    selected_secondary_measure=_secondary_measure_result,
                     total_lcc=_optimization_step.total_cost,
                     total_risk=_optimization_step.total_risk,
                 )
 
-                # Loop over time periods to export including the ones not in the configuration
-                _mechs = self._get_mechanisms(_opt_selected_measure_result)
-                for _t in _time_periods_to_export:
-                    _prob_section = self._get_section_time_value(
-                        _optimization_step.section_idx, _t, _optimization_step.probabilities
-                    )
+            # Loop over time periods to export including the ones not in the configuration
+            _mechs = self._get_mechanisms(_primary_measure_result)
+            for _t in _time_periods_to_export:
+                _prob_section = self._get_section_time_value(
+                    _optimization_step.section_idx, _t, _optimization_step.probabilities
+                )
 
-                    # Export section results for time periods
-                    _step_results_section.append(
-                        {
-                            "optimization_step": _created_optimization_step,
-                            "time": _t,
-                            "beta": pf_to_beta(_prob_section),
-                            "lcc": _optimization_step.aggregated_measure.lcc,
-                        }
-                    )
+                # Export section results for time periods
+                _step_results_section.append(
+                    {
+                        "optimization_step": _created_optimization_step,
+                        "time": _t,
+                        "beta": pf_to_beta(_prob_section),
+                        "lcc": _optimization_step.aggregated_measure.lcc,
+                    }
+                )
 
-                    _step_results_mechanism.extend(
-                        list(
-                            map(
-                                get_step_results_mechanism,
-                                _mechs,
-                            )
+                _step_results_mechanism.extend(
+                    list(
+                        map(
+                            get_step_results_mechanism,
+                            _mechs,
                         )
                     )
+                )
 
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
