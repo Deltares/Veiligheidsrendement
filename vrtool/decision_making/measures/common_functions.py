@@ -71,6 +71,7 @@ def implement_berm_widening(
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:
         berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
+        
     elif mechanism == MechanismEnum.STABILITY_INNER:
         # Case where the berm widened through DStability and the stability factors will be recalculated
         if computation_type == ComputationTypeEnum.DSTABILITY:
@@ -99,43 +100,7 @@ def implement_berm_widening(
             if is_first_year_with_widening:
                 berm_input["RERUN_STIX"] = True
 
-            return berm_input
-
-        # For stability factors
-        if "sf_2025" in berm_input:
-            # For now, inward and outward are the same!
-            if (measure_parameters["Direction"] == "inward") or (
-                measure_parameters["Direction"] == "outward"
-            ):
-                berm_input["sf_2025"] = berm_input["sf_2025"] + (
-                    measure_input["dberm"] * berm_input["dSF/dberm"]
-                )
-                berm_input["sf_2075"] = berm_input["sf_2075"] + (
-                    measure_input["dberm"] * berm_input["dSF/dberm"]
-                )
-            if measure_parameters["StabilityScreen"] == "yes":
-                berm_input["sf_2025"] += _safety_factor_increase
-                berm_input["sf_2075"] += _safety_factor_increase
-        # For betas as input
-        elif "beta_2025" in berm_input:
-            berm_input["beta_2025"] = berm_input["beta_2025"] + (
-                measure_input["dberm"] * berm_input["dbeta/dberm"]
-            )
-            berm_input["beta_2075"] = berm_input["beta_2075"] + (
-                measure_input["dberm"] * berm_input["dbeta/dberm"]
-            )
-            if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta_2025"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2025"], _safety_factor_increase
-                )
-                berm_input[
-                    "beta_2075"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2075"], _safety_factor_increase
-                )
-        elif "beta" in berm_input:
+        elif computation_type == ComputationTypeEnum.SIMPLE:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
             berm_input["beta"] = berm_input["beta"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
@@ -152,13 +117,15 @@ def implement_berm_widening(
             )
 
     elif mechanism == MechanismEnum.PIPING:
-        berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
-        # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
-        berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
-            0
-        )
+        if computation_type == ComputationTypeEnum.SEMIPROB:
+            berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
+            # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
+            berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
+                0
+            )
         if measure_parameters["StabilityScreen"] == "yes":
             berm_input["sf_factor"] = sf_factor_piping(measure_input["l_stab_screen"])
+                
     return berm_input
 
 
