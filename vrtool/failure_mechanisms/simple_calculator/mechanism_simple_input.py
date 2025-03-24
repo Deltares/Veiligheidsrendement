@@ -65,7 +65,9 @@ class MechanismSimpleInput:
         else:
             raise ValueError("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = _get_valid_bool_value(mechanism_input.input.get("elimination", False))
+        _is_eliminated = _get_valid_bool_value(
+            mechanism_input.input.get("elimination", False)
+        )
 
         _prob_solution_failure = mechanism_input.input.get("Pf", np.ndarray([]))
         _input = cls(

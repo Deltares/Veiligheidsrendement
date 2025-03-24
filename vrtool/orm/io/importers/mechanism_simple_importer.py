@@ -9,7 +9,7 @@ from vrtool.orm.models.computation_scenario_parameter import (
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
-class MechanismSimpleImporter(OrmImporterProtocol):  
+class MechanismSimpleImporter(OrmImporterProtocol):
     def _set_parameters(
         self, mech_input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
@@ -28,7 +28,9 @@ class MechanismSimpleImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism_input = MechanismInput(mechanism=MechanismEnum.get_enum(orm_model.mechanism.name))
+        mechanism_input = MechanismInput(
+            mechanism=MechanismEnum.get_enum(orm_model.mechanism.name)
+        )
         _scenario_key = "Scenario"
         _scenario_probablity_key = "P_scenario"
         _probability_of_failure = "Pf"

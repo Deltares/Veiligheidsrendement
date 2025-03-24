@@ -71,7 +71,7 @@ def implement_berm_widening(
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:
         berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
-        
+
     elif mechanism == MechanismEnum.STABILITY_INNER:
         # Case where the berm widened through DStability and the stability factors will be recalculated
         if computation_type == ComputationTypeEnum.DSTABILITY:
@@ -120,12 +120,12 @@ def implement_berm_widening(
         if computation_type == ComputationTypeEnum.SEMIPROB:
             berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
             # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
-            berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
-                0
-            )
+            berm_input["l_achter"] = (
+                berm_input["l_achter"] - measure_input["dberm"]
+            ).clip(0)
         if measure_parameters["StabilityScreen"] == "yes":
             berm_input["sf_factor"] = sf_factor_piping(measure_input["l_stab_screen"])
-                
+
     return berm_input
 
 
