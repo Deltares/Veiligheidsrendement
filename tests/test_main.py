@@ -34,11 +34,19 @@ class TestMain:
         assert any(_expected_log_dir.glob("*.log"))
         cleanup_cwd_dir()
 
-    @pytest.mark.parametrize("time_between_runs, expected_log_files",
-                             [
-                                 pytest.param(0, 1, id="<60s between runs, 1 log file"),
-                                 pytest.param(61, 2, id=">60s between runs, 2 log files")])
-    def test_given_invalid_directory_when_sequential_runs_within_a_minute_then_creates_one_file(self, time_between_runs: int, expected_log_files: int, request: pytest.FixtureRequest):
+    @pytest.mark.parametrize(
+        "time_between_runs, expected_log_files",
+        [
+            pytest.param(0, 1, id="<60s between runs, 1 log file"),
+            pytest.param(61, 2, id=">60s between runs, 2 log files"),
+        ],
+    )
+    def test_given_invalid_directory_when_sequential_runs_within_a_minute_then_creates_one_file(
+        self,
+        time_between_runs: int,
+        expected_log_files: int,
+        request: pytest.FixtureRequest,
+    ):
         # 1. Define test data.
         _input_dir = get_clean_test_results_dir(request)
         assert _input_dir.exists()
@@ -53,7 +61,6 @@ class TestMain:
 
         # 3. Verify expectations.
         assert len(list(_input_dir.glob("vrtool_logging*.log"))) == expected_log_files
-
 
     def test_given_invalid_directory_when_run_full_then_fails(self):
         # 1. Define test data.
