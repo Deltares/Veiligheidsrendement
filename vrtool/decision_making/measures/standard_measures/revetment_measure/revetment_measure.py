@@ -314,6 +314,7 @@ class RevetmentMeasure(MeasureProtocol):
                             _beta_target,
                             _transition_level,
                             _measure_year,
+                            self.unit_costs,
                         )
                     )
                 # 4. Interpolate with years to calculate.

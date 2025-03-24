@@ -8,6 +8,8 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     StoneSlopePart,
 )
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
+
 
 @dataclass
 class RevetmentMeasureData:
@@ -21,7 +23,7 @@ class RevetmentMeasureData:
     reinforce: bool
     tan_alpha: float
 
-    def get_total_cost(self, section_length: float) -> float:
+    def get_total_cost(self, section_length: float, unit_costs: MeasureUnitCosts) -> float:
         """
         Calculates the associated costs of this `RevetmentMeasureData` for a given dike section length (`section_length`).
 
@@ -45,10 +47,9 @@ class RevetmentMeasureData:
         _cost_remove_asfalt = 13.52 * 2.509  # TODO update!
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
-        cost = np.array([206.89, 235.93, 264.06, 291.16, 318.26])
-        f = interp1d(D, cost, fill_value=("extrapolate"))
-        cost_new_steen = f(self.top_layer_thickness)
+        _block_revetment_installation = interp1d([key/100 for key in unit_costs.installation_of_blocks.keys()], list(unit_costs.installation_of_blocks.values()), fill_value=("extrapolate"))
+
+        cost_new_steen = _block_revetment_installation(self.top_layer_thickness)
 
         _slope_part_difference = self.end_part - self.begin_part
         x = _slope_part_difference / self.tan_alpha

@@ -3,6 +3,7 @@ from math import isnan
 import numpy as np
 from scipy.interpolate import interp1d
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -57,6 +58,7 @@ class RevetmentMeasureResultBuilder:
         beta_target: float,
         transition_level: float,
         measure_year: int,
+        unit_costs: MeasureUnitCosts,
     ) -> RevetmentMeasureResult:
         """
         Creates a valid instance of a `RevetmentMeasureResult` based on all the given arguments.
@@ -93,7 +95,7 @@ class RevetmentMeasureResultBuilder:
         )
         _cost = sum(
             map(
-                lambda x: x.get_total_cost(dike_length),
+                lambda x: x.get_total_cost(dike_length, unit_costs),
                 _revetment_measures_collection,
             )
         )
