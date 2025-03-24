@@ -10,12 +10,10 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class TestDikeSection:
 
     def test_initialize(self):
-        # 1. Define test data.
-
-        # 2. Run test.
+        # 1. Instantiate class.
         _dike_section = DikeSection()
 
-        # 3. Verify expectations.
+        # 2. Verify expectations.
         assert isinstance(_dike_section, DikeSection)
         assert isinstance(_dike_section.mechanism_data, dict)
         assert isinstance(_dike_section.section_reliability, SectionReliability)

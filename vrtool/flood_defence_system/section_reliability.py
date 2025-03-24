@@ -24,7 +24,7 @@ class SectionReliability:
 
     def _get_upscale_cross_sectional_probability(self, section_length: float, mechanism_pf: float, mechanism_a: float, mechanism_b: float) -> float:
         # N = a * L_section / b
-        _n_value = mechanism_a * section_length / mechanism_b
+        _n_value = max(mechanism_a * section_length / mechanism_b, 1)
         return min(
             1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2
         )
