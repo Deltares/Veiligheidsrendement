@@ -87,14 +87,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
     """
-    design_method: str
-    sections: list[SectionAsInput]
-    time_periods: list[int]
-    initial_step: StrategyStep
-    optimization_steps: list[StrategyStep]
     
     @property
-    def total_cost(self):
+    def total_cost(self) -> float:
         if not self.optimization_steps:
             return 0.0
         return self.optimization_steps[-1].total_cost

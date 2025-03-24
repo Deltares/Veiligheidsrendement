@@ -12,19 +12,13 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
 class GreedyStrategy(StrategyProtocol):
-    design_method: str
-    sections: list[SectionAsInput]
-    time_periods: list[int]
-    initial_step: StrategyStep
-    optimization_steps: list[StrategyStep]
-    
+
     @property
-    def measure_list(self):
+    def measure_list(self) -> list[tuple[int, int, int]]:
         return [x.measure for x in self.optimization_steps]
 
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig) -> None:
