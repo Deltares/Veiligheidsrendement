@@ -25,17 +25,22 @@ class DikeSection:
     TrajectInfo: DikeTrajectInfo = None
     name: str = ""
     Length: float = float("nan")
-    crest_height: float = float("nan")
     InitialGeometry: pd.DataFrame = None
     houses: pd.DataFrame = None
     with_measures: bool = True
-    cover_layer_thickness: float = float("nan")
     pleistocene_level: float = float("nan")
     flood_damage: float = float("nan")
     sensitive_fraction_piping: float = 0
     sensitive_fraction_stability_inner: float = 0
 
     def get_cross_sectional_properties(self) -> dict[str, float]:
+        """
+        Gets the cross sectional properties of this dike section required to 
+        calculate section reliability length effect.
+
+        Returns:
+            dict[str, float]: Dictionary of parameters and float values to avoid circular dependencies.
+        """
         return dict(
             length = self.Length,
             b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
