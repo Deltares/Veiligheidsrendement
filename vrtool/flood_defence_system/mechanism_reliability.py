@@ -20,9 +20,9 @@ from vrtool.failure_mechanisms.overflow import (
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
-from vrtool.failure_mechanisms.stability_inner import (
-    StabilityInnerSimpleCalculator,
-    StabilityInnerSimpleInput,
+from vrtool.failure_mechanisms.simple_calculator import (
+    MechanismSimpleCalculator,
+    MechanismSimpleInput,
 )
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
@@ -131,11 +131,11 @@ class MechanismReliability:
     def _get_simple_calculator(
         self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism == MechanismEnum.STABILITY_INNER:
-            _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+        if mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+            _mechanism_input = MechanismSimpleInput.from_mechanism_input(
                 mechanism_input
             )
-            return StabilityInnerSimpleCalculator(_mechanism_input)
+            return MechanismSimpleCalculator(_mechanism_input)
 
         if mechanism == MechanismEnum.OVERFLOW:  # specific for SAFE
             _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)

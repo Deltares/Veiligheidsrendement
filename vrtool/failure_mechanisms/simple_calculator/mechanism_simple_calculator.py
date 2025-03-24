@@ -3,27 +3,27 @@ import numpy as np
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
+from vrtool.failure_mechanisms.simple_calculator.mechanism_simple_input import (
+    MechanismSimpleInput,
+)
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     BETA_THRESHOLD,
 )
-from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
-    StabilityInnerSimpleInput,
-)
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
-class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
+class MechanismSimpleCalculator(FailureMechanismCalculatorProtocol):
     """
     Contains all methods related to performing a stability inner calculation.
     """
 
-    def __init__(self, mechanism_input: StabilityInnerSimpleInput) -> None:
-        if not isinstance(mechanism_input, StabilityInnerSimpleInput):
+    def __init__(self, mechanism_input: MechanismSimpleInput) -> None:
+        if not isinstance(mechanism_input, MechanismSimpleInput):
             raise ValueError(
-                "Expected instance of a {}.".format(StabilityInnerSimpleInput.__name__)
+                "Expected instance of a {}.".format(MechanismSimpleInput.__name__)
             )
 
         ReliabilityCalculationMethod.is_valid(
@@ -43,7 +43,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
             # addition: should not be more unsafe
             failure_probability = np.min(
                 [
-                    beta_to_pf(beta) / self._mechanism_input.stability_reduction_factor,
+                    beta_to_pf(beta) / self._mechanism_input.mechanism_reduction_factor,
                     beta_to_pf(beta),
                 ]
             )

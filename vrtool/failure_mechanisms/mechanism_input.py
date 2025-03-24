@@ -1,10 +1,14 @@
+from dataclasses import dataclass, field
 from typing import Any
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
+@dataclass
 class MechanismInput:
-    # Class for input of a mechanism
-    def __init__(self, mechanism: MechanismEnum):
-        self.mechanism = mechanism
-        self.input: dict[str, Any] = {}
+    """
+    This class is used to store the inputs for a failure mechanism.
+    """
+
+    mechanism: MechanismEnum
+    input: dict[str, Any] = field(default_factory=dict)
