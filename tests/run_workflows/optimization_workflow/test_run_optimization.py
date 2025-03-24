@@ -43,6 +43,9 @@ class TestRunOptimization:
                         traject_name="456",
                         measures=[mocked_measure],
                         flood_damage=4.2,
+                        section_length=42,
+                        a_section_piping=2.4,
+                        a_section_stability_inner=4.2,
                     )
                 ],
             )

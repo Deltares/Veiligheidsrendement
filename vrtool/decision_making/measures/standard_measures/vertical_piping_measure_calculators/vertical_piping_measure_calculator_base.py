@@ -1,5 +1,5 @@
 import copy
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
@@ -76,7 +76,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
                 mechanism_reliability_collection
             )
 
-        section_reliability.calculate_section_reliability()
+        section_reliability.calculate_section_reliability(self.dike_section.get_cross_sectional_properties())
         return section_reliability
 
     def _copy_results(

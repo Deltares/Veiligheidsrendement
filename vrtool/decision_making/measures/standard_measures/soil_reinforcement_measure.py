@@ -67,7 +67,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _modified_measure
             )
-            _modified_measure["Reliability"].calculate_section_reliability()
+            _modified_measure["Reliability"].calculate_section_reliability(dike_section.get_cross_sectional_properties())
 
             return _modified_measure
 
