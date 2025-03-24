@@ -1,6 +1,7 @@
 import logging
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
+import re
 
 from pandas import read_csv
 
@@ -31,7 +32,9 @@ class MeasureUnitCosts:
     diaphragm_wall: float = float("nan")
     vertical_geotextile: float = float("nan")
     course_sand_barrier: float = float("nan")
+    anchored_sheetpile: float = float("nan")
     heavescreen: float = float("nan")
+    installation_of_blocks: dict[float, float] = field(default_factory=dict)
 
     @classmethod
     def from_unformatted_dict(cls, unformatted_dict: dict):
@@ -52,6 +55,16 @@ class MeasureUnitCosts:
         _existing_fields = [_field.name for _field in fields(cls)]
         _normalized_dict = {}
 
+        _block_dict = {}
+        for _block_key in filter(lambda x: 'installation of blocks' in x.lower(), unformatted_dict.keys()):
+            _thickness = [float(number) for number in re.findall(r'\d+\.?\d*', _block_key)]
+            if len(_thickness) != 1:
+                raise ValueError(f"Blokdikte niet gevonden voor key: {_block_key} in unit_costs.csv. Meerdere getalswaarden gevonden, check de consistentie.")
+            _block_dict[float(_thickness[0])] = unformatted_dict[_block_key]
+
+        unformatted_dict["Installation of blocks"] = _block_dict
+        #logging TODO
+        
         for key, value in unformatted_dict.items():
             _normalized_key = normalize_key_name(key)
             if _normalized_key not in _existing_fields:
