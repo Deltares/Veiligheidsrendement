@@ -38,16 +38,11 @@ class RevetmentMeasureData:
         """
         if not self.reinforce:
             return 0.0
-        _storage_factor = 1.000
-
-        # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
-        _cost_remove_steen = 15.66
-
-        # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52 * 2.509  # TODO update!
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        _block_revetment_installation = interp1d([key/100 for key in unit_costs.installation_of_blocks.keys()], list(unit_costs.installation_of_blocks.values()), fill_value=("extrapolate"))
+        _block_revetment_installation = interp1d([key/100 for key in unit_costs.installation_of_blocks.keys()], 
+                                                 list(unit_costs.installation_of_blocks.values()), 
+                                                 fill_value=("extrapolate"))
 
         cost_new_steen = _block_revetment_installation(self.top_layer_thickness)
 
@@ -62,19 +57,19 @@ class RevetmentMeasureData:
         area = z * section_length
 
         if StoneSlopePart.is_stone_slope_part(self.top_layer_type):  # cost of new steen
-            cost_vlak = _cost_remove_steen + cost_new_steen
+            cost_vlak = unit_costs.remove_block_revetment + cost_new_steen
         elif self.top_layer_type == 2026.0:
             # cost of new steen, when previous was gras
             cost_vlak = cost_new_steen
         elif GrassSlopePart.is_grass_part(self.top_layer_type):
-            # cost of removing old revetment when new revetment is gras
+            # cost of removing old revetment when new revetment is grass
             if self.previous_top_layer_type == 5.0:
-                cost_vlak = _cost_remove_asfalt
+                cost_vlak = unit_costs.remove_asphalt_revetment
             elif self.previous_top_layer_type == 20.0:
                 cost_vlak = 0.0
             else:
-                cost_vlak = _cost_remove_steen
+                cost_vlak = unit_costs.remove_block_revetment
         else:
             cost_vlak = 0.0
 
-        return area * cost_vlak * _storage_factor
+        return area * cost_vlak

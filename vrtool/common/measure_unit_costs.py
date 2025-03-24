@@ -34,6 +34,8 @@ class MeasureUnitCosts:
     course_sand_barrier: float = float("nan")
     anchored_sheetpile: float = float("nan")
     heavescreen: float = float("nan")
+    remove_block_revetment: float = float("nan")
+    remove_asphalt_revetment: float = float("nan")
     installation_of_blocks: dict[float, float] = field(default_factory=dict)
 
     @classmethod
