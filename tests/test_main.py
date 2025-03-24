@@ -153,5 +153,4 @@ class TestMain:
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
         assert _output_dir.exists()
-        assert _output_dir.joinpath("vrtool_logging.log").exists()
-        assert any(_output_dir.glob("*"))
+        assert any(_output_dir.glob("vrtool_logging*.log"))
