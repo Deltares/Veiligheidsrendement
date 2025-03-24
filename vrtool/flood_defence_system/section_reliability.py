@@ -20,6 +20,7 @@ class SectionReliability:
 
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
+        self.SectionReliability = pd.DataFrame()
 
     def _get_upscale_cross_sectional_probability(self, section_length: float, mechanism_pf: float, mechanism_a: float, mechanism_b: float) -> float:
         # N = a * L_section / b
