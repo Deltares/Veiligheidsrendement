@@ -34,7 +34,7 @@ class TestSectionReliability:
                 measure_year=5
             )
             for _yt in _years:
-                _mrc.Reliability[str(_yt)].Pf = 0 + 0.42 / (100 * max(1, _yt))
+                _mrc.Reliability[str(_yt)].Pf = 0.42 / (100 * max(1, _yt))
             return _mrc
         
         def build_section_reliability_for_mechanism(mechanism: MechanismEnum) -> SectionReliability:

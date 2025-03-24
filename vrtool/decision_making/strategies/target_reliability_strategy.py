@@ -312,7 +312,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         return [_valid_measures_low_prob_cost[0]], _invalid_mechanisms
 
     @staticmethod
-    def get_cross_sectional_requirements_for_target_reliability(cls, dike_traject: DikeTraject, section_as_input: SectionAsInput) -> CrossSectionalRequirements:
+    def get_cross_sectional_requirements_for_target_reliability(dike_traject: DikeTraject, section_as_input: SectionAsInput) -> CrossSectionalRequirements:
         """
         Class method to create a CrossSectionalRequirements object from a DikeTraject object.
         This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
