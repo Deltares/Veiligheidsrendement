@@ -46,12 +46,25 @@ class TestSectionReliability:
 
         yield build_section_reliability_for_mechanism
         
-    @pytest.mark.parametrize("mechanism",[
-        pytest.param(MechanismEnum.PIPING),
-        pytest.param(MechanismEnum.STABILITY_INNER),
+    @pytest.mark.parametrize("mechanism, expected_values",
+                             [
+        pytest.param(
+            MechanismEnum.PIPING,
+            [0.791935, 1.981413],
+            id=str(MechanismEnum.PIPING)),
+        pytest.param(
+            MechanismEnum.STABILITY_INNER,
+            [0.561045, 1.835016],
+            id=str(MechanismEnum.STABILITY_INNER)),
     ])
-    def test_calculate_section_reliability(self, mechanism: MechanismEnum, section_reliability_builder: Callable[[MechanismEnum], SectionReliability]):
+    def test_calculate_section_reliability(self, mechanism: MechanismEnum, expected_values: list[float], section_reliability_builder: Callable[[MechanismEnum], SectionReliability]):
         # 1. Define test data.
+        _expected_result = pd.DataFrame.from_dict(
+            {
+                str(mechanism): expected_values,
+                "Section": expected_values,
+            }, columns=['0', '10'], orient="index"
+        )
         _cross_sectional_properties = dict(
                 length=42,
                 a_section_piping=1.5,
@@ -70,3 +83,4 @@ class TestSectionReliability:
         # 3. Verify expectations.
         assert isinstance(_section_reliability.SectionReliability, pd.DataFrame)
         assert _section_reliability.SectionReliability.empty is False
+        pd.testing.assert_frame_equal(_section_reliability.SectionReliability, _expected_result, check_dtype=False)
