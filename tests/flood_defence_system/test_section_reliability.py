@@ -5,6 +5,9 @@ import pytest
 
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -65,12 +68,12 @@ class TestSectionReliability:
                 "Section": expected_values,
             }, columns=['0', '10'], orient="index"
         )
-        _cross_sectional_properties = dict(
-                length=42,
-                a_section_piping=1.5,
-                a_section_stability_inner=2.3,
-                b_piping=1.1,
-                b_stability_inner=1.2
+        _cross_sectional_requirements = CrossSectionalRequirements(
+                dike_section_length=42,
+                dike_section_a_piping=1.5,
+                dike_section_a_stability_inner=2.3,
+                dike_traject_b_piping=1.1,
+                dike_traject_b_stability_inner=1.2
             )
         _section_reliability = section_reliability_builder(mechanism)
         assert isinstance(_section_reliability, SectionReliability)
@@ -78,7 +81,7 @@ class TestSectionReliability:
         assert _section_reliability.SectionReliability.empty is True
 
         # 2. Run test.
-        _section_reliability.calculate_section_reliability(_cross_sectional_properties)
+        _section_reliability.calculate_section_reliability(_cross_sectional_requirements)
 
         # 3. Verify expectations.
         assert isinstance(_section_reliability.SectionReliability, pd.DataFrame)

@@ -45,7 +45,6 @@ class DikeSection:
             CrossSectionalRequirements: Dataclass with required parameters for length effect calculations.
         """
         return CrossSectionalRequirements(
-            cross_sectional_requirement_per_mechanism= {},
             dike_section_length = self.Length,
             dike_traject_b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
             dike_traject_b_stability_inner = self.TrajectInfo.bStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
