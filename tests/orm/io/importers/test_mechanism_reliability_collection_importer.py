@@ -186,13 +186,19 @@ class TestMechanismReliabilityCollectionImporter:
                 MechanismEnum.STABILITY_INNER,
                 ComputationTypeEnum.SIMPLE,
                 TestDataHelper.get_valid_mechanism_per_section,
-                id="Stability Inner simple",
+                id="Stability Inner SIMPLE",
             ),
             pytest.param(
                 MechanismEnum.PIPING,
                 ComputationTypeEnum.SEMIPROB,
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Piping SEMIPROB",
+            ),
+            pytest.param(
+                MechanismEnum.PIPING,
+                ComputationTypeEnum.SIMPLE,
+                TestDataHelper.get_valid_mechanism_per_section,
+                id="Piping SIMPLE",
             ),
             pytest.param(
                 MechanismEnum.OVERFLOW,

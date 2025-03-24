@@ -30,11 +30,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
         logging.info("Start stap 1: beoordeling & projectie veiligheid")
 
         # Loop over sections and do the assessment.
-        for _, _section in enumerate(self.selected_traject.sections):
-            # get design water level:
-            # TODO remove this line?
-            # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])
-
+        for _section in self.selected_traject.sections:
             # compute reliability in time for each mechanism:
             for mechanism in self.selected_traject.mechanisms:
                 _mechanism_reliability_collection = _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(

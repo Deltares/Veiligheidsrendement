@@ -12,11 +12,11 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 @dataclass
-class StabilityInnerSimpleInput:
+class MechanismSimpleInput:
     beta: np.ndarray
     scenario_probability: np.ndarray
     initial_probability_of_failure: np.ndarray
-    stability_reduction_factor: float
+    mechanism_reduction_factor: float
 
     is_eliminated: bool
     reliability_calculation_method: ReliabilityCalculationMethod
@@ -38,7 +38,7 @@ class StabilityInnerSimpleInput:
     @classmethod
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
-    ) -> StabilityInnerSimpleInput:
+    ) -> MechanismSimpleInput:
         """
         Generates a `StabilityInnerSimpleInput` object based on the provided `MechanismInput`.
 
@@ -63,13 +63,11 @@ class StabilityInnerSimpleInput:
         if isinstance(_beta, np.ndarray) or _beta:
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
-            raise Exception("Warning: No input values SF or Beta StabilityInner")
+            raise ValueError("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = mechanism_input.input.get("elimination", False)
-        if _get_valid_bool_value(_is_eliminated):
-            _is_eliminated = True
-        elif _is_eliminated:
-            raise ValueError("Warning: Elimination defined but not turned on")
+        _is_eliminated = _get_valid_bool_value(
+            mechanism_input.input.get("elimination", False)
+        )
 
         _prob_solution_failure = mechanism_input.input.get("Pf", np.ndarray([]))
         _input = cls(
@@ -78,7 +76,7 @@ class StabilityInnerSimpleInput:
                 "P_scenario", np.ndarray([])
             ),
             initial_probability_of_failure=_prob_solution_failure,
-            stability_reduction_factor=mechanism_input.input.get(
+            mechanism_reduction_factor=mechanism_input.input.get(
                 "piping_reduction_factor", 1
             ),
             reliability_calculation_method=_reliability_calculation_method,
