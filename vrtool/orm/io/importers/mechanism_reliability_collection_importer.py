@@ -8,15 +8,13 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
+from vrtool.orm.io.importers.mechanism_simple_importer import MechanismSimpleImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
 from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.io.importers.revetment_importer import RevetmentImporter
-from vrtool.orm.io.importers.stability_inner_simple_importer import (
-    StabilityInnerSimpleImporter,
-)
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
@@ -84,7 +82,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
         if mechanism == MechanismEnum.STABILITY_INNER:
             if computation_type == ComputationTypeEnum.SIMPLE:
-                return StabilityInnerSimpleImporter().import_orm(mechanism_per_section)
+                return MechanismSimpleImporter().import_orm(mechanism_per_section)
 
             elif computation_type == ComputationTypeEnum.DSTABILITY:
                 _dstability_importer = DStabilityImporter(
@@ -93,6 +91,8 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 return _dstability_importer.import_orm(mechanism_per_section)
 
         if mechanism == MechanismEnum.PIPING:
+            if computation_type == ComputationTypeEnum.SIMPLE:
+                return MechanismSimpleImporter().import_orm(mechanism_per_section)
             return PipingImporter().import_orm(mechanism_per_section)
 
         if mechanism == MechanismEnum.REVETMENT:
