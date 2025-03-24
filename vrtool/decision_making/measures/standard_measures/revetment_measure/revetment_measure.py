@@ -20,9 +20,6 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
     RevetmentMeasureResultCollection,
     RevetmentMeasureSectionReliability,
 )
-from vrtool.decision_making.strategies.cross_sectional_requirements import (
-    CrossSectionalRequirements,
-)
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.flood_defence_system.dike_section import DikeSection

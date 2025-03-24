@@ -7,12 +7,12 @@ from collections import defaultdict
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategies.cross_sectional_requirements import (
-    CrossSectionalRequirements,
-)
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -311,6 +311,65 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # return the first as they have the same cost and pf and are not distinctive
         return [_valid_measures_low_prob_cost[0]], _invalid_mechanisms
 
+    @staticmethod
+    def get_cross_sectional_requirements_for_target_reliability(cls, dike_traject: DikeTraject, section_as_input: SectionAsInput) -> CrossSectionalRequirements:
+        """
+        Class method to create a CrossSectionalRequirements object from a DikeTraject object.
+        This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
+        The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
+
+        Args:
+            dike_traject (DikeTraject): The DikeTraject object for which the cross-sectional requirements are to be calculated.
+            section_as_input (SectionAsInput): The section with the specific requirements to be applied for cross sectional computations.
+
+        Returns:
+            CrossSectionalRequirements: The CrossSectionalRequirements object with the cross-sectional requirements for the dike traject.
+        """
+        # compute cross sectional requirements
+        n_piping = 1 + (
+            dike_traject.general_info.aPiping
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bPiping
+        )
+        n_stab = 1 + (
+            dike_traject.general_info.aStabilityInner
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bStabilityInner
+        )
+        n_overflow = 1
+        n_revetment = 3
+        omegaRevetment = 0.1
+
+        _pf_cs_piping = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaPiping
+            / n_piping
+        )
+        _pf_cs_revetment = dike_traject.general_info.Pmax * omegaRevetment / n_revetment
+        _pf_cs_stabinner = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaStabilityInner
+            / n_stab
+        )
+        _pf_cs_overflow = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaOverflow
+            / n_overflow
+        )
+        return CrossSectionalRequirements(
+            cross_sectional_requirement_per_mechanism={
+                MechanismEnum.PIPING: _pf_cs_piping,
+                MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
+                MechanismEnum.OVERFLOW: _pf_cs_overflow,
+                MechanismEnum.REVETMENT: _pf_cs_revetment,
+            },
+            dike_traject_b_piping=dike_traject.general_info.bPiping,
+            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
+            dike_section_a_piping = section_as_input.a_section_piping,
+            dike_section_a_stability_inner = section_as_input.a_section_stability_inner,
+            dike_section_length = section_as_input.section_length
+        )        
+
     def evaluate(
         self,
         dike_traject: DikeTraject,
@@ -341,7 +400,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # add probability for this step:
 
             # get the first possible investment year from the aggregated measures
-            _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject_and_section_as_input(dike_traject, self.sections[_section_idx])
+            _cross_sectional_requirements = self.get_cross_sectional_requirements_for_target_reliability(dike_traject, self.sections[_section_idx])
             _valid_measures = self.get_valid_measures_for_section(
                 _section_idx, _cross_sectional_requirements
             )

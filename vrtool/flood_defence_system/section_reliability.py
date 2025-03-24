@@ -4,6 +4,9 @@ import pandas as pd
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
@@ -29,7 +32,7 @@ class SectionReliability:
             1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2
         )
 
-    def calculate_section_reliability(self, cross_sectional_properties_dict: dict[str, float]):
+    def calculate_section_reliability(self, cross_sectional_properties: CrossSectionalRequirements):
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
@@ -51,9 +54,9 @@ class SectionReliability:
                     _pf_mechanisms_time[_count, _range_idx] = _pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
-                    _mechanism_a = cross_sectional_properties_dict["a_section_piping"] if mechanism is MechanismEnum.PIPING else cross_sectional_properties_dict["a_section_stability_inner"]
-                    _mechanism_b = cross_sectional_properties_dict["b_piping"] if mechanism is MechanismEnum.PIPING else cross_sectional_properties_dict["b_stability_inner"]
-                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(cross_sectional_properties_dict["length"], _pf, _mechanism_a, _mechanism_b)
+                    _mechanism_a = cross_sectional_properties.dike_section_a_piping if mechanism is MechanismEnum.PIPING else cross_sectional_properties.dike_section_a_stability_inner
+                    _mechanism_b = cross_sectional_properties.dike_traject_b_piping if mechanism is MechanismEnum.PIPING else cross_sectional_properties.dike_traject_b_stability_inner
+                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(cross_sectional_properties.dike_section_length, _pf, _mechanism_a, _mechanism_b)
 
             _count += 1
 

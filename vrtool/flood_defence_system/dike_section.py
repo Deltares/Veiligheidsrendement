@@ -7,6 +7,9 @@ import pandas as pd
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
@@ -33,18 +36,19 @@ class DikeSection:
     sensitive_fraction_piping: float = 0
     sensitive_fraction_stability_inner: float = 0
 
-    def get_cross_sectional_properties(self) -> dict[str, float]:
+    def get_cross_sectional_properties(self) -> CrossSectionalRequirements:
         """
         Gets the cross sectional properties of this dike section required to 
         calculate section reliability length effect.
 
         Returns:
-            dict[str, float]: Dictionary of parameters and float values to avoid circular dependencies.
+            CrossSectionalRequirements: Dataclass with required parameters for length effect calculations.
         """
-        return dict(
-            length = self.Length,
-            b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            b_stability_inner = self.TrajectInfo.bStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            a_section_piping = self.sensitive_fraction_piping,
-            a_section_stability_inner = self.sensitive_fraction_stability_inner
+        return CrossSectionalRequirements(
+            cross_sectional_requirement_per_mechanism= {},
+            dike_section_length = self.Length,
+            dike_traject_b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            dike_traject_b_stability_inner = self.TrajectInfo.bStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
+            dike_section_a_piping = self.sensitive_fraction_piping,
+            dike_section_a_stability_inner = self.sensitive_fraction_stability_inner
         )

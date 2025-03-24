@@ -11,9 +11,6 @@ from vrtool.decision_making.measures.common_functions import (
     sf_factor_piping,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.strategies.cross_sectional_requirements import (
-    CrossSectionalRequirements,
-)
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )

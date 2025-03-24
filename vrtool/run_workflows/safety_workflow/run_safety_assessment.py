@@ -1,9 +1,6 @@
 import logging
 from pathlib import Path
 
-from vrtool.decision_making.strategies.cross_sectional_requirements import (
-    CrossSectionalRequirements,
-)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (

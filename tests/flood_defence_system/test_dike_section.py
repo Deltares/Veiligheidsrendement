@@ -3,6 +3,9 @@ import math
 import pytest
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
@@ -45,12 +48,13 @@ class TestDikeSection:
         _properties = _dike_section.get_cross_sectional_properties()
 
         # 3. Verify expectations.
-        assert isinstance(_properties, dict)
-        assert _properties["length"] == _length
-        assert _properties["b_piping"] == pytest.approx(0.0)
-        assert _properties["b_stability_inner"] == pytest.approx(0.0)
-        assert _properties["a_section_piping"] == _a_piping
-        assert _properties["a_section_stability_inner"] == _a_stability_inner
+        assert isinstance(_properties, CrossSectionalRequirements)
+        assert not _properties.cross_sectional_requirement_per_mechanism
+        assert _properties.dike_section_length == _length
+        assert _properties.dike_traject_b_piping == pytest.approx(0.0)
+        assert _properties.dike_traject_b_stability_inner == pytest.approx(0.0)
+        assert _properties.dike_section_a_piping == _a_piping
+        assert _properties.dike_section_a_stability_inner == _a_stability_inner
 
     def test_given_traject_info_when_get_cross_sectional_properties_returns_values(self):
         # 1. Define test data.
@@ -76,9 +80,10 @@ class TestDikeSection:
         _properties = _dike_section.get_cross_sectional_properties()
 
         # 3. Verify expectations.
-        assert isinstance(_properties, dict)
-        assert _properties["length"] == _length
-        assert _properties["b_piping"] == _b_piping
-        assert _properties["b_stability_inner"] == _b_stability_inner
-        assert _properties["a_section_piping"] == _a_piping
-        assert _properties["a_section_stability_inner"] == _a_stability_inner
+        assert isinstance(_properties, CrossSectionalRequirements)
+        assert not _properties.cross_sectional_requirement_per_mechanism
+        assert _properties.dike_section_length == _length
+        assert _properties.dike_traject_b_piping == _b_piping
+        assert _properties.dike_traject_b_stability_inner == _b_stability_inner
+        assert _properties.dike_section_a_piping == _a_piping
+        assert _properties.dike_section_a_stability_inner == _a_stability_inner
