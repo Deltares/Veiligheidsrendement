@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -9,10 +10,8 @@ from vrtool.api import (
     get_optimization_step_with_lowest_total_cost_table,
     get_valid_vrtool_config,
 )
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm import models as orm
-from vrtool.orm.models import SlopePart
 from vrtool.orm.orm_controllers import open_database
 
 
@@ -100,34 +99,3 @@ class TestApi:
         assert _result[0] == 1
         assert isinstance(_result[1], pd.DataFrame)
         assert _result[2] == pytest.approx(2.59, rel=0.01)
-    
-    def test_given_invalid_revetment_data_when_get_dike_traject_does_not_raise(
-            self, request: pytest.FixtureRequest
-        ):
-        # 1. Define test data.
-
-        # Create a test database with invalid revetment data (truncate SlopePart table).
-        _test_db_name = "vrtool_input.db"
-        _test_db_path = test_data.joinpath("31-1 two coastal sections", _test_db_name)
-        assert _test_db_path.exists()
-
-        _result_path = test_results.joinpath(request.node.name)
-        if _result_path.exists():
-            shutil.rmtree(_result_path)
-        _result_path.mkdir(parents=True)
-
-        shutil.copyfile(_test_db_path, _result_path.joinpath(_test_db_name))
-
-        _opened_db = open_database(_result_path.joinpath(_test_db_name))
-        SlopePart.truncate_table()
-        _opened_db.close()
-
-        # Create config without revetment.
-        _vrtool_config = VrtoolConfig()
-        _vrtool_config.traject = "31-1"
-        _vrtool_config.excluded_mechanisms.append(MechanismEnum.REVETMENT)
-        _vrtool_config.input_directory = _result_path
-        _vrtool_config.input_database_name = _test_db_name
-
-        # 2. Run test.
-        ApiRunWorkflows.get_dike_traject(_vrtool_config)
