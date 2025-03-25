@@ -23,7 +23,6 @@ class TestVrtoolConfig:
             "t_0",
             "T",
             "excluded_mechanisms",
-            "LE_in_section",
             "crest_step",
             "berm_step",
             "OI_horizon",
@@ -64,7 +63,6 @@ class TestVrtoolConfig:
             MechanismEnum.PIPING,
             MechanismEnum.REVETMENT,
         ]
-        assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)
         assert _config.berm_step == [0, 5, 8, 10, 12, 15, 20, 30]
         assert _config.OI_horizon == 50
