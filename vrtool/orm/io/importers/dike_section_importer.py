@@ -188,6 +188,8 @@ class DikeSectionImporter(OrmImporterProtocol):
             cover_layer_thickness=orm_model.cover_layer_thickness,
             pleistocene_level=orm_model.pleistocene_level,
             flood_damage=orm_model.get_flood_damage_value(),
+            sensitive_fraction_piping=orm_model.sensitive_fraction_piping,
+            sensitive_fraction_stability_inner=orm_model.sensitive_fraction_stability_inner,
         )
 
         return _dike_section

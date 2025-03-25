@@ -1,13 +1,15 @@
 import hashlib
 import json
 import shutil
+import time
+from os import wait
 from pathlib import Path
 from typing import Iterator
 
 import pytest
 from click.testing import CliRunner
 
-from tests import test_data, test_results
+from tests import get_clean_test_results_dir, test_data, test_results
 from vrtool import __main__
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 
@@ -31,6 +33,34 @@ class TestMain:
         # 3. Verify expectations.
         assert any(_expected_log_dir.glob("*.log"))
         cleanup_cwd_dir()
+
+    @pytest.mark.parametrize(
+        "time_between_runs, expected_log_files",
+        [
+            pytest.param(0, 1, id="<60s between runs, 1 log file"),
+            pytest.param(61, 2, id=">60s between runs, 2 log files"),
+        ],
+    )
+    def test_given_invalid_directory_when_sequential_runs_within_a_minute_then_creates_one_file(
+        self,
+        time_between_runs: int,
+        expected_log_files: int,
+        request: pytest.FixtureRequest,
+    ):
+        # 1. Define test data.
+        _input_dir = get_clean_test_results_dir(request)
+        assert _input_dir.exists()
+
+        # 2. Run test.
+        for _ in range(2):
+            _ = CliRunner().invoke(
+                __main__.run_full,
+                [str(_input_dir), "--log-dir", str(_input_dir)],
+            )
+            time.sleep(time_between_runs)
+
+        # 3. Verify expectations.
+        assert len(list(_input_dir.glob("vrtool_logging*.log"))) == expected_log_files
 
     def test_given_invalid_directory_when_run_full_then_fails(self):
         # 1. Define test data.
@@ -64,7 +94,7 @@ class TestMain:
 
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
-        assert _input_dir.joinpath("vrtool_logging.log").exists()
+        assert any(_input_dir.glob("vrtool_logging*.log"))
 
     @pytest.fixture(name="cli_config_dirs")
     def _get_cli_config_fixture(
@@ -130,5 +160,4 @@ class TestMain:
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
         assert _output_dir.exists()
-        assert _output_dir.joinpath("vrtool_logging.log").exists()
-        assert any(_output_dir.glob("*"))
+        assert any(_output_dir.glob("vrtool_logging*.log"))

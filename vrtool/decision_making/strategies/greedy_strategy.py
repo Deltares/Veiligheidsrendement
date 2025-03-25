@@ -26,7 +26,6 @@ class GreedyStrategy(StrategyProtocol):
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
         self.time_periods = config.T
-        self.LE_in_section = config.LE_in_section
 
         self.measures_taken = []
         self.total_risk_per_step = []

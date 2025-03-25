@@ -79,6 +79,9 @@ def _get_section_with_measures() -> Iterator[SectionAsInput]:
         section_name="section_name",
         traject_name="traject_name",
         flood_damage=0,
+        section_length=42,
+        a_section_piping=2.4,
+        a_section_stability_inner=4.2,
         measures=[
             OverridenShMeasure(measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT),
             OverridenShMeasure(measure_type=MeasureTypeEnum.REVETMENT),

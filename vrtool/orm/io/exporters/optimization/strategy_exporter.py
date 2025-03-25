@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Iterator
 
 import numpy as np
 
