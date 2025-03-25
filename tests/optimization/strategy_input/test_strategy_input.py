@@ -215,6 +215,9 @@ class TestStrategyInput:
                 section_name="section_1",
                 traject_name="traject_1",
                 flood_damage=0,
+                section_length=42,
+                a_section_piping=2.4,
+                a_section_stability_inner=4.2,
                 measures=[
                     _sh_measure_soil_0_0,
                     _sh_measure_soil_20_0,
