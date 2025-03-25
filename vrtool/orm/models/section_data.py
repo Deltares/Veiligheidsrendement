@@ -24,7 +24,7 @@ class SectionData(OrmBaseModel):
     cover_layer_thickness = FloatField(default=7)
     pleistocene_level = FloatField(default=25)
     flood_damage = FloatField(null=True)
-    sensitive_fraction_piping  = FloatField(default=0)
+    sensitive_fraction_piping = FloatField(default=0)
     sensitive_fraction_stability_inner = FloatField(default=0)
 
     class Meta:

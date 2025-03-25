@@ -25,14 +25,20 @@ class SectionReliability:
         self.failure_mechanisms = FailureMechanismCollection()
         self.SectionReliability = pd.DataFrame()
 
-    def _get_upscale_cross_sectional_probability(self, section_length: float, mechanism_pf: float, mechanism_a: float, mechanism_b: float) -> float:
+    def _get_upscale_cross_sectional_probability(
+        self,
+        section_length: float,
+        mechanism_pf: float,
+        mechanism_a: float,
+        mechanism_b: float,
+    ) -> float:
         # N = a * L_section / b
         _n_value = max(mechanism_a * section_length / mechanism_b, 1)
-        return min(
-            1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2
-        )
+        return min(1 - (1 - mechanism_pf) ** _n_value, 1.0 / 2)
 
-    def calculate_section_reliability(self, cross_sectional_requirements: CrossSectionalRequirements):
+    def calculate_section_reliability(
+        self, cross_sectional_requirements: CrossSectionalRequirements
+    ):
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
@@ -54,9 +60,24 @@ class SectionReliability:
                     _pf_mechanisms_time[_count, _range_idx] = _pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
-                    _mechanism_a = cross_sectional_requirements.dike_section_a_piping if mechanism is MechanismEnum.PIPING else cross_sectional_requirements.dike_section_a_stability_inner
-                    _mechanism_b = cross_sectional_requirements.dike_traject_b_piping if mechanism is MechanismEnum.PIPING else cross_sectional_requirements.dike_traject_b_stability_inner
-                    _pf_mechanisms_time[_count, _range_idx] = self._get_upscale_cross_sectional_probability(cross_sectional_requirements.dike_section_length, _pf, _mechanism_a, _mechanism_b)
+                    _mechanism_a = (
+                        cross_sectional_requirements.dike_section_a_piping
+                        if mechanism is MechanismEnum.PIPING
+                        else cross_sectional_requirements.dike_section_a_stability_inner
+                    )
+                    _mechanism_b = (
+                        cross_sectional_requirements.dike_traject_b_piping
+                        if mechanism is MechanismEnum.PIPING
+                        else cross_sectional_requirements.dike_traject_b_stability_inner
+                    )
+                    _pf_mechanisms_time[
+                        _count, _range_idx
+                    ] = self._get_upscale_cross_sectional_probability(
+                        cross_sectional_requirements.dike_section_length,
+                        _pf,
+                        _mechanism_a,
+                        _mechanism_b,
+                    )
 
             _count += 1
 
