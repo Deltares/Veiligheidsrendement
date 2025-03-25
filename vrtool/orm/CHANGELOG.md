@@ -1,3 +1,9 @@
+## 0.1.8
+
+## Feat
+
+- [VRTOOL-188] Added columns to `SectionData`: `sensitive_fraction_piping` and `sensitive_fraction_stability_inner`
+
 ## 0.1.7
 
 ## Feat

@@ -103,6 +103,9 @@ class TestCombineMeasuresController:
             section_name="Section1",
             traject_name="Traject1",
             flood_damage=0,
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=[],
         )
 
@@ -338,6 +341,9 @@ class TestCombineMeasuresController:
             section_name="Section1",
             traject_name="Traject1",
             flood_damage=0,
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=[],
         )
         _measures = [

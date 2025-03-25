@@ -145,6 +145,9 @@ class TestSectionAsInput:
             section_name="section1",
             traject_name="traject1",
             flood_damage=0.0,
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=_measures,
             initial_assessment=_initial,
         )
@@ -204,6 +207,9 @@ class TestSectionAsInput:
             section_name="section1",
             traject_name="traject1",
             flood_damage=0.0,
+            section_length=42,
+            a_section_piping=2.4,
+            a_section_stability_inner=4.2,
             measures=_measures,
             initial_assessment=_initial_probabilities,
         )
