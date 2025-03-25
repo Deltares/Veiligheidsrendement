@@ -738,9 +738,9 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             
-                            _optimization_steps.append(
+                            self.optimization_steps.append(
                                 StrategyStep(
-                                    step_number=len(_optimization_steps) + 1,
+                                    step_number=len(self.optimization_steps) + 1,
                                     step_type=StepTypeEnum.BUNDLING,
                                     measure=IndexMeasure,
                                     section_idx=IndexMeasure[0],
