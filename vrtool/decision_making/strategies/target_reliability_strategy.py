@@ -50,9 +50,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         If the requirements are not met for any of the mechanisms, the function returns False, otherwise True.
         """
         _section_as_input: SectionAsInput = self.sections[section_idx]
-        _measure = _section_as_input.aggregated_measure_combinations[
-            measure_idx
-        ]
+        _measure = _section_as_input.aggregated_measure_combinations[measure_idx]
         for _mechanism in mechanisms:
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
@@ -314,7 +312,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
         return [_valid_measures_low_prob_cost[0]], _invalid_mechanisms
 
     @staticmethod
-    def get_cross_sectional_requirements_for_target_reliability(dike_traject: DikeTraject, section_as_input: SectionAsInput) -> CrossSectionalRequirements:
+    def get_cross_sectional_requirements_for_target_reliability(
+        dike_traject: DikeTraject, section_as_input: SectionAsInput
+    ) -> CrossSectionalRequirements:
         """
         Class method to create a CrossSectionalRequirements object from a DikeTraject object.
         This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
@@ -367,10 +367,10 @@ class TargetReliabilityStrategy(StrategyProtocol):
             },
             dike_traject_b_piping=dike_traject.general_info.bPiping,
             dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
-            dike_section_a_piping = section_as_input.a_section_piping,
-            dike_section_a_stability_inner = section_as_input.a_section_stability_inner,
-            dike_section_length = section_as_input.section_length
-        )        
+            dike_section_a_piping=section_as_input.a_section_piping,
+            dike_section_a_stability_inner=section_as_input.a_section_stability_inner,
+            dike_section_length=section_as_input.section_length,
+        )
 
     def evaluate(
         self,
@@ -402,7 +402,11 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # add probability for this step:
 
             # get the first possible investment year from the aggregated measures
-            _cross_sectional_requirements = self.get_cross_sectional_requirements_for_target_reliability(dike_traject, self.sections[_section_idx])
+            _cross_sectional_requirements = (
+                self.get_cross_sectional_requirements_for_target_reliability(
+                    dike_traject, self.sections[_section_idx]
+                )
+            )
             _valid_measures = self.get_valid_measures_for_section(
                 _section_idx, _cross_sectional_requirements
             )

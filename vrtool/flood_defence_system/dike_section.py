@@ -38,16 +38,20 @@ class DikeSection:
 
     def get_cross_sectional_properties(self) -> CrossSectionalRequirements:
         """
-        Gets the cross sectional properties of this dike section required to 
+        Gets the cross sectional properties of this dike section required to
         calculate section reliability length effect.
 
         Returns:
             CrossSectionalRequirements: Dataclass with required parameters for length effect calculations.
         """
         return CrossSectionalRequirements(
-            dike_section_length = self.Length,
-            dike_traject_b_piping = self.TrajectInfo.bPiping if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            dike_traject_b_stability_inner = self.TrajectInfo.bStabilityInner if isinstance(self.TrajectInfo, DikeTrajectInfo) else 0.0,
-            dike_section_a_piping = self.sensitive_fraction_piping,
-            dike_section_a_stability_inner = self.sensitive_fraction_stability_inner
+            dike_section_length=self.Length,
+            dike_traject_b_piping=self.TrajectInfo.bPiping
+            if isinstance(self.TrajectInfo, DikeTrajectInfo)
+            else 0.0,
+            dike_traject_b_stability_inner=self.TrajectInfo.bStabilityInner
+            if isinstance(self.TrajectInfo, DikeTrajectInfo)
+            else 0.0,
+            dike_section_a_piping=self.sensitive_fraction_piping,
+            dike_section_a_stability_inner=self.sensitive_fraction_stability_inner,
         )

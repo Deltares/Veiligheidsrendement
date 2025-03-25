@@ -11,7 +11,6 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class TestDikeSection:
-
     def test_initialize(self):
         # 1. Instantiate class.
         _dike_section = DikeSection()
@@ -32,15 +31,17 @@ class TestDikeSection:
         assert _dike_section.sensitive_fraction_piping == pytest.approx(0.0)
         assert _dike_section.sensitive_fraction_stability_inner == pytest.approx(0.0)
 
-    def test_given_no_traject_info_when_get_cross_sectional_properties_returns_values(self):
+    def test_given_no_traject_info_when_get_cross_sectional_properties_returns_values(
+        self,
+    ):
         # 1. Define test data.
         _length = 42
         _a_piping = 2.3
         _a_stability_inner = 1.5
         _dike_section = DikeSection(
-            Length= _length,
+            Length=_length,
             sensitive_fraction_piping=_a_piping,
-            sensitive_fraction_stability_inner=_a_stability_inner
+            sensitive_fraction_stability_inner=_a_stability_inner,
         )
         assert _dike_section.TrajectInfo is None
 
@@ -56,7 +57,9 @@ class TestDikeSection:
         assert _properties.dike_section_a_piping == _a_piping
         assert _properties.dike_section_a_stability_inner == _a_stability_inner
 
-    def test_given_traject_info_when_get_cross_sectional_properties_returns_values(self):
+    def test_given_traject_info_when_get_cross_sectional_properties_returns_values(
+        self,
+    ):
         # 1. Define test data.
         _length = 42
         _a_piping = 2.3
@@ -70,9 +73,9 @@ class TestDikeSection:
         )
         _dike_section = DikeSection(
             TrajectInfo=_traject_info,
-            Length= _length,
+            Length=_length,
             sensitive_fraction_piping=_a_piping,
-            sensitive_fraction_stability_inner=_a_stability_inner
+            sensitive_fraction_stability_inner=_a_stability_inner,
         )
         assert _dike_section.TrajectInfo == _traject_info
 
