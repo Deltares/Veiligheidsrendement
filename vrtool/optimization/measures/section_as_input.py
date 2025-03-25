@@ -30,9 +30,14 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     flood_damage: float
+    # Cross sectional requirements
+    # This SectionAsInput will build a CrossSectionalRequirement (CSR) object.
+    # However it will not have the DikeSection information, therefore we need to set
+    # these required properties here as otherwise our CSR object won't be sufficient.
     section_length: float
     a_section_piping: float
     a_section_stability_inner: float
+    # End cross sectional requirements.
     measures: list[MeasureAsInputProtocol]
     initial_assessment: MechanismPerYearProbabilityCollection = field(
         default_factory=lambda: MechanismPerYearProbabilityCollection([])
