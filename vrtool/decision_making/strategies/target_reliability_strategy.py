@@ -407,6 +407,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
             ),
         )
 
+        _optimization_steps: list[StrategyStep] = []
+
         for _section_idx in section_order:
             # get the first possible investment year from the aggregated measures
             _valid_measures = self.get_valid_measures_for_section(
@@ -451,9 +453,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             )
                       
             # add the optimization step
-            self.optimization_steps.append(
+            _optimization_steps.append(
                 StrategyStep(
-                    step_number=len(self.optimization_steps) + 1,
+                    step_number=len(_optimization_steps) + 1,
                     measure=_measure,
                     section_idx=_section_idx,
                     aggregated_measure=_valid_measures[idx],
@@ -464,3 +466,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     total_cost=self.total_cost + _lcc[idx]
                 )
             )
+        
+        # store the results
+        self.optimization_steps = _optimization_steps
