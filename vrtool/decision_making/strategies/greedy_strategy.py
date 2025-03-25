@@ -529,8 +529,6 @@ class GreedyStrategy(StrategyProtocol):
             probabilities=self.traject_risk.get_initial_probabilities_dict(self.mechanisms),
         )
         
-        _optimization_steps: list[StrategyStep] = []
-
         for _count in range(0, max_count):
             init_risk = self.traject_risk.get_total_risk()
        
@@ -660,9 +658,9 @@ class GreedyStrategy(StrategyProtocol):
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     
-                    _optimization_steps.append(
+                    self.optimization_steps.append(
                         StrategyStep(
-                            step_number=len(_optimization_steps) + 1,
+                            step_number=len(self.optimization_steps) + 1,
                             step_type=StepTypeEnum.SINGLE,
                             measure=Index_Best,
                             section_idx=Index_Best[0],
@@ -700,9 +698,9 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             
-                            _optimization_steps.append(
+                            self.optimization_steps.append(
                                 StrategyStep(
-                                    step_number=len(_optimization_steps) + 1,
+                                    step_number=len(self.optimization_steps) + 1,
                                     step_type=StepTypeEnum.BUNDLING,
                                     measure=IndexMeasure,
                                     section_idx=IndexMeasure[0],
@@ -740,9 +738,9 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             
-                            _optimization_steps.append(
+                            self.optimization_steps.append(
                                 StrategyStep(
-                                    step_number=len(_optimization_steps) + 1,
+                                    step_number=len(self.optimization_steps) + 1,
                                     step_type=StepTypeEnum.BUNDLING,
                                     measure=IndexMeasure,
                                     section_idx=IndexMeasure[0],
@@ -769,9 +767,6 @@ class GreedyStrategy(StrategyProtocol):
             )
         )
         
-        # store the results
-        self.optimization_steps = _optimization_steps
-
         # restore original values
         self.LCCOption = _initial_cost_matrix
         
