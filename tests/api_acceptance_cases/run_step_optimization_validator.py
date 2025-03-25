@@ -158,6 +158,9 @@ class RunStepOptimizationValidator(RunStepValidator):
             assert (
                 _reference.step_number == _result.step_number
             ), f"Expected {_reference.step_number} but got {_result.step_number}"
+            assert (
+                _reference.step_type == _result.step_type
+            ), f"Expected {_reference.step_type} but got {_result.step_type}"
             if (
                 _reference.total_lcc is not None
             ):  # TODO: temporary fix as long as references don't contain cost for TR.
