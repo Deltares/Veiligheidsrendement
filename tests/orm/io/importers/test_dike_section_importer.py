@@ -91,7 +91,7 @@ class TestDikeSectionImporter:
         assert len(_buildings_frame) == 2
         assert list(_buildings_frame.loc[24]) == [2]
         assert list(_buildings_frame.loc[42]) == [1]
-    
+
     @pytest.fixture(name="valid_section_data", scope="module")
     def _get_valid_section_data_fixture(self) -> Iterator[SectionData]:
         _db_file = test_data.joinpath("test_db", "vrtool_with_filtered_results.db")
@@ -107,12 +107,14 @@ class TestDikeSectionImporter:
 
         _db.close()
 
-
-    @pytest.mark.parametrize("excluded_mechanism", [
-        MechanismEnum.REVETMENT,
-        MechanismEnum.PIPING,
-        MechanismEnum.STABILITY_INNER,
-        ])
+    @pytest.mark.parametrize(
+        "excluded_mechanism",
+        [
+            MechanismEnum.REVETMENT,
+            MechanismEnum.PIPING,
+            MechanismEnum.STABILITY_INNER,
+        ],
+    )
     def test__get_mechanism_reliability_collection_list(
         self,
         excluded_mechanism: MechanismEnum,
@@ -124,13 +126,16 @@ class TestDikeSectionImporter:
         _importer = DikeSectionImporter(valid_config)
 
         # 2. Run test.
-        _result = _importer._get_mechanism_reliability_collection_list(valid_section_data)
+        _result = _importer._get_mechanism_reliability_collection_list(
+            valid_section_data
+        )
 
         # 3. Verify expectations.
         assert isinstance(_result, list)
         assert not any([_mrc.mechanism == excluded_mechanism for _mrc in _result])
-        assert all([_mrc.mechanism in valid_config.supported_mechanisms for _mrc in _result])
-
+        assert all(
+            [_mrc.mechanism in valid_config.supported_mechanisms for _mrc in _result]
+        )
 
     def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.

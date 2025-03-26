@@ -107,12 +107,15 @@ class DikeSectionImporter(OrmImporterProtocol):
                     _mechanism_per_section.section.section_name,
                     _mechanism_per_section.mechanism.name,
                 )
-            elif MechanismEnum.get_enum(_mechanism_per_section.mechanism.name) not in self.selected_mechanisms:
+            elif (
+                MechanismEnum.get_enum(_mechanism_per_section.mechanism.name)
+                not in self.selected_mechanisms
+            ):
                 logging.debug(
                     "Skipping import of mechanism %s, as it is not selected in the configuration.",
                     _mechanism_per_section.mechanism.name,
                 )
-                
+
             else:
                 _mechanism_data.append(_importer.import_orm(_mechanism_per_section))
         return _mechanism_data
