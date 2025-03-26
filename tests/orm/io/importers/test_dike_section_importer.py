@@ -100,7 +100,10 @@ class TestDikeSectionImporter:
         _db = open_database(_db_file)
         assert isinstance(_db, SqliteDatabase)
 
-        yield SectionData.get_by_id(1)
+        _section_data = SectionData.get_by_id(1)
+        assert isinstance(_section_data, SectionData)
+
+        yield _section_data
 
         _db.close()
 
