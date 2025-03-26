@@ -39,7 +39,6 @@ class VrtoolConfig:
         ]
     )
     # whether to consider length-effects within a dike section
-    LE_in_section: bool = False
     crest_step: float = 0.5
     berm_step: list[int] = field(default_factory=lambda: [0, 5, 8, 10, 12, 15, 20, 30])
 

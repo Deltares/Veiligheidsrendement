@@ -71,13 +71,21 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _cross_sectional_requirement = cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
                     _mechanism
                 ]
-                _a_factor = (
-                    _section_as_input.a_section_piping
-                    if _mechanism == MechanismEnum.PIPING
-                    else _section_as_input.a_section_stability_inner
-                )
+                _a_factor = cross_sectional_requirements.dike_section_a_piping
+                _b_factor = cross_sectional_requirements.dike_traject_b_piping
+                if _mechanism == MechanismEnum.STABILITY_INNER:
+                    _a_factor = (
+                        cross_sectional_requirements.dike_section_a_stability_inner
+                    )
+                    _b_factor = (
+                        cross_sectional_requirements.dike_traject_b_stability_inner
+                    )
+
                 _le_factor = max(
-                    _section_as_input.section_length * _a_factor / 300, 1.0
+                    cross_sectional_requirements.dike_section_length
+                    * _a_factor
+                    / _b_factor,
+                    1.0,
                 )
                 _section_requirement = _cross_sectional_requirement * _le_factor
                 if (
