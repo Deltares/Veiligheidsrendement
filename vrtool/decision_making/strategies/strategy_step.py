@@ -13,7 +13,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 class StrategyStep:
     step_number: int = 0
     step_type: StepTypeEnum = StepTypeEnum.UNKNOWN
-    measure: tuple[int, int, int] = field(default_factory=lambda: (0,0,0))
+    measure: tuple[int, int, int] = field(default_factory=lambda: (0, 0, 0))
     section_idx: int = 0
     aggregated_measure: AggregatedMeasureCombination = None
     probabilities: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)

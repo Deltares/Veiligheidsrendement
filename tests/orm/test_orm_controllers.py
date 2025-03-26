@@ -665,7 +665,7 @@ class TestOrmControllers:
         # Define strategies.
         class MockedStrategy(StrategyProtocol):
             optimization_steps: list[StrategyStep]
-            
+
             def __init__(self):
                 self.sections = [section_with_combinations]
                 _aggregated_measure_combination = AggregatedMeasureCombination(
@@ -678,7 +678,7 @@ class TestOrmControllers:
                 self.sections[_section_idx].aggregated_measure_combinations = [
                     _aggregated_measure_combination
                 ]
-                
+
                 self.optimization_steps = [
                     StrategyStep(
                         step_number=1,

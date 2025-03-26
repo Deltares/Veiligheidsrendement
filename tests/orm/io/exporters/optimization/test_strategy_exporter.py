@@ -28,16 +28,19 @@ class TestStrategyExporter:
             aggregated measures with investment years to test
             the correct generation of years to export.
             """
+
             optimization_steps: list[StrategyStep] = []
 
             def __init__(self) -> None:
-                self.time_periods = config_t_values                
+                self.time_periods = config_t_values
                 for _iy in investment_years:
                     for _idx in [0, 1]:
-                        self.optimization_steps.append(StrategyStep(
-                            section_idx=_idx,
-                            aggregated_measure=get_dummy_measure(_iy)
-                        ))
+                        self.optimization_steps.append(
+                            StrategyStep(
+                                section_idx=_idx,
+                                aggregated_measure=get_dummy_measure(_iy),
+                            )
+                        )
 
         return MockedStrategy()
 

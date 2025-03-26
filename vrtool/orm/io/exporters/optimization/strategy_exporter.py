@@ -49,9 +49,7 @@ class StrategyExporter(OrmExporterProtocol):
 
         def get_investment_years() -> list[int]:
             _investment_years = []
-            for am in (
-                x.aggregated_measure for x in strategy_run.optimization_steps
-            ):
+            for am in (x.aggregated_measure for x in strategy_run.optimization_steps):
                 if am.year not in _investment_years:
                     _investment_years.append(am.year)
                 _previous_year = am.year - 1
@@ -62,11 +60,12 @@ class StrategyExporter(OrmExporterProtocol):
         return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
-        def get_step_results_mechanism(
-            mechanism: tuple[int, MechanismEnum]
-        ) -> dict:
+        def get_step_results_mechanism(mechanism: tuple[int, MechanismEnum]) -> dict:
             _prob_mechanism = self._get_selected_time(
-                _optimization_step.section_idx, _t, mechanism[1], _optimization_step.probabilities
+                _optimization_step.section_idx,
+                _t,
+                mechanism[1],
+                _optimization_step.probabilities,
             )
             return {
                 "optimization_step": _created_optimization_step,
@@ -111,7 +110,9 @@ class StrategyExporter(OrmExporterProtocol):
                 _mechs = self._get_mechanisms(_opt_selected_measure_result)
                 for _t in _time_periods_to_export:
                     _prob_section = self._get_section_time_value(
-                        _optimization_step.section_idx, _t, _optimization_step.probabilities
+                        _optimization_step.section_idx,
+                        _t,
+                        _optimization_step.probabilities,
                     )
 
                     # Export section results for time periods

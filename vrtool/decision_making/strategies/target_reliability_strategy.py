@@ -26,7 +26,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
     """
-    
+
     @property
     def total_cost(self) -> float:
         if not self.optimization_steps:
@@ -409,7 +409,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         # Rank sections based on initial probability
         section_order = np.flip(np.argsort(initial_section_pfs))
-        
+
         self.initial_step = StrategyStep(
             step_number=0,
             total_risk=self.traject_risk.get_total_risk(),
@@ -460,12 +460,10 @@ class TargetReliabilityStrategy(StrategyProtocol):
             idx = np.argmin(_lcc)
             _measure_idx = (_section_idx, *_valid_measures[idx].get_combination_idx())
             _measure = (_measure_idx[0], _measure_idx[1] + 1, _measure_idx[2] + 1)
-            
+
             # update the probabilities for the mechanisms
-            self.traject_risk.update_probabilities_for_measure(
-                _measure
-            )
-                      
+            self.traject_risk.update_probabilities_for_measure(_measure)
+
             # add the optimization step
             self.optimization_steps.append(
                 StrategyStep(
@@ -477,6 +475,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
                         self.traject_risk.mechanisms
                     ),
                     total_risk=self.traject_risk.get_total_risk(),
-                    total_cost=self.total_cost + _lcc[idx]
+                    total_cost=self.total_cost + _lcc[idx],
                 )
             )
