@@ -397,6 +397,8 @@ class TestRevetmentMeasureResultBuilder:
         # 1. Define test data.
         _builder = RevetmentMeasureResultBuilder()
         _json_reader = JsonFilesToRevetmentDataClassReader()
+        _unit_costs = MeasureUnitCosts.from_csv_file(default_unit_costs_csv)
+
         _test_data = test_data.joinpath(
             "revetment_measure_results", "matrix_results.csv"
         )
@@ -417,6 +419,7 @@ class TestRevetmentMeasureResultBuilder:
                 _comparable_case.target_beta,
                 _comparable_case.transition_level,
                 _comparable_case.evaluation_year,
+                _unit_costs,
             )
 
             # 3. Verify expectations.
