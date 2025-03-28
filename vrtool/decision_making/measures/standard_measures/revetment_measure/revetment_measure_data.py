@@ -40,8 +40,10 @@ class RevetmentMeasureData:
             return 0.0
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        _block_revetment_installation = interp1d([key/100 for key in unit_costs.installation_of_blocks.keys()], 
-                                                 list(unit_costs.installation_of_blocks.values()), 
+        # Make sure values are sorted (check for consistency is done with import of unit_costs)
+
+        _block_revetment_installation = interp1d([key/100 for key in sorted(unit_costs.installation_of_blocks.keys())], 
+                                                 sorted(list(unit_costs.installation_of_blocks.values())), 
                                                  fill_value=("extrapolate"))
 
         cost_new_steen = _block_revetment_installation(self.top_layer_thickness)

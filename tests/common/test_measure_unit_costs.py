@@ -1,7 +1,7 @@
 import dataclasses
 from math import isnan
 from typing import Iterator
-from pandas import read_csv
+from pandas import read_csv, concat
 
 import pytest
 
@@ -87,6 +87,32 @@ class TestMeasureUnitCosts:
         
         assert str(exc_err.value) == _expected_error
 
+    def test_decreasing_cost_for_block_crashes(self, valid_unformatted_dict: dict):
+        # 1. Define test data.
+        #add two costs for Installation of blocks where costs for larger blocks are lower
+        valid_unformatted_dict["Installation of blocks 10cm"] = 4.2
+        valid_unformatted_dict["Installation of blocks 20cm"] = 3.2
+
+        # 2. Run test.
+        #verify it crashes
+        with pytest.raises(ValueError) as exc_err:
+            MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
+
+        # 3. Verify expectations.
+        _expected_error = ("Kosten voor installatie blokken dalen met toenemende dikte. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
+        assert str(exc_err.value) == _expected_error        
+
+    def test_unsorted_cost_for_block_works(self, valid_unformatted_dict: dict):
+        # 1. Define test data.
+        #add two costs for Installation of blocks where block thicknesses are not sorted but costs increase
+        valid_unformatted_dict["Installation of blocks 20cm"] = 4.2
+        valid_unformatted_dict["Installation of blocks 10cm"] = 3.2
+
+        # 2. Run test.
+        #verify it crashes
+        _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
+        assert isinstance(_unit_costs, MeasureUnitCosts)
+
     @pytest.mark.parametrize(
         "excluded_key",
         [
@@ -124,11 +150,13 @@ class TestMeasureUnitCosts:
         # 3. Verify expectations
         assert isinstance(_unit_costs, MeasureUnitCosts)
 
-    def test_init_from_modified_csv_file_bad_string(self):
+
+
+    def test_init_from_modified_csv_file_bad_key(self):
         # 1. Define test data using part of classmethod
         _unformatted_dict = get_unformatted_unit_cost_dict()
 
-        # 2. Modify the data: mess up string
+        # 2. Modify the data: mess up key
         #modify keys that contain 'Installation of blocks' to 'Installatie blokken'
         _keys_to_change = list(filter(lambda x: 'Installation of blocks' in x, _unformatted_dict.keys()))
         #change the keys
@@ -146,10 +174,19 @@ class TestMeasureUnitCosts:
             "Kosten voor maatregel '{}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.".format(_first_bad_key)
         )
         assert str(exc_err.value) == _expected_error
+    
+    def test_identical_thickness_for_block_crashes(self):
+        # 1. Define test data using read_csv
+        _cost_data = read_csv(str(default_unit_costs_csv), encoding="latin_1")
+        #duplicate a line of costs for Installation of blocks
+        _block_key = "Installation of blocks (D=30cm)"
+        _cost_data = concat([_cost_data, _cost_data.loc[_cost_data['Description'] == _block_key]], ignore_index=True)
 
-        #change option 2
+        # 2. Run test.
+        #verify it crashes
+        with pytest.raises(ValueError) as exc_err:
+            MeasureUnitCosts.cost_dataframe_to_dict(_cost_data)
 
+        _expected_error = "Dubbele kosten gevonden voor {} in unit_costs.csv. Controleer de waarden en pas deze aan.".format(_block_key)
 
-
-
-
+        assert str(exc_err.value) == _expected_error
