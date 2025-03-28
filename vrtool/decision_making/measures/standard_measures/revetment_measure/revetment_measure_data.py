@@ -63,7 +63,7 @@ class RevetmentMeasureData:
             cost_vlak = cost_new_steen
         elif GrassSlopePart.is_grass_part(self.top_layer_type):
             # cost of removing old revetment when new revetment is grass
-            if self.previous_top_layer_type == 5.0:
+            if 1.0 <= self.previous_top_layer_type <= 5.0:
                 cost_vlak = unit_costs.remove_asphalt_revetment
             elif self.previous_top_layer_type == 20.0:
                 cost_vlak = 0.0
