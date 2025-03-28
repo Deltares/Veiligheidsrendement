@@ -58,6 +58,7 @@ class MeasureUnitCosts:
         _normalized_dict = {}
 
         _block_dict = {}
+        #get all keys containing 'installation of blocks' and extract the thickness. Thickness should be in centimeters. And there can only be 1 numerical value in this string. If there are two identical thicknesses an exception is raised.
         for _block_key in filter(lambda x: 'installation of blocks' in x.lower(), unformatted_dict.keys()):
             _thickness = [float(number) for number in re.findall(r'\d+\.?\d*', _block_key)]
             if len(_thickness) != 1:
@@ -65,19 +66,15 @@ class MeasureUnitCosts:
             if float(_thickness[0]) in _block_dict.keys():
                 raise ValueError(f"Dubbele blokdikte gevonden voor key: {_block_key} in unit_costs.csv. Controleer de waarden en pas deze aan.")
             _block_dict[float(_thickness[0])] = unformatted_dict[_block_key]
-
-
         
         unformatted_dict["Installation of blocks"] = _block_dict
-        #logging TODO
         
         for key, value in unformatted_dict.items():
             _normalized_key = normalize_key_name(key)
             if _normalized_key not in _existing_fields:
-                if 'installation_of_blocks' in _normalized_key:
-                    continue
-                #raise an error
-                raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
+                if not 'installation_of_blocks' in _normalized_key:          
+                    #raise an error
+                    raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
             _normalized_dict[_normalized_key] = value
 
         #check if block_dict values increase with thickness
@@ -116,7 +113,7 @@ class MeasureUnitCosts:
         return cls.from_unformatted_dict(_unit_cost_dict)
     
     @staticmethod
-    def cost_dataframe_to_dict(cost_dataframe: DataFrame) -> dict:
+    def cost_dataframe_to_dict(cost_dataframe: DataFrame) -> dict[str,float]:
         """
         Converts a cost dataframe to a dictionary.
 

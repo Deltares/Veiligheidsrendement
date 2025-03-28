@@ -109,7 +109,6 @@ class TestMeasureUnitCosts:
         valid_unformatted_dict["Installation of blocks 10cm"] = 3.2
 
         # 2. Run test.
-        #verify it crashes
         _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
         assert isinstance(_unit_costs, MeasureUnitCosts)
 

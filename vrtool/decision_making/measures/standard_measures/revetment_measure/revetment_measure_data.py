@@ -39,14 +39,14 @@ class RevetmentMeasureData:
         if not self.reinforce:
             return 0.0
 
+
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
         # Make sure values are sorted (check for consistency is done with import of unit_costs)
-
         _block_revetment_installation = interp1d([key/100 for key in sorted(unit_costs.installation_of_blocks.keys())], 
                                                  sorted(list(unit_costs.installation_of_blocks.values())), 
                                                  fill_value=("extrapolate"))
 
-        cost_new_steen = _block_revetment_installation(self.top_layer_thickness)
+        _cost_new_block = _block_revetment_installation(self.top_layer_thickness)
 
         _slope_part_difference = self.end_part - self.begin_part
         x = _slope_part_difference / self.tan_alpha
@@ -59,10 +59,10 @@ class RevetmentMeasureData:
         area = z * section_length
 
         if StoneSlopePart.is_stone_slope_part(self.top_layer_type):  # cost of new steen
-            cost_vlak = unit_costs.remove_block_revetment + cost_new_steen
+            cost_vlak = unit_costs.remove_block_revetment + _cost_new_block
         elif self.top_layer_type == 2026.0:
             # cost of new steen, when previous was gras
-            cost_vlak = cost_new_steen
+            cost_vlak = _cost_new_block
         elif GrassSlopePart.is_grass_part(self.top_layer_type):
             # cost of removing old revetment when new revetment is grass
             if 1.0 <= self.previous_top_layer_type <= 5.0:
