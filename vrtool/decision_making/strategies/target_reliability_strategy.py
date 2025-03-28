@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import numpy as np
 
+from vrtool.common.enums import step_type_enum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategies.strategy_step import StrategyStep
@@ -468,6 +469,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             self.optimization_steps.append(
                 StrategyStep(
                     step_number=len(self.optimization_steps) + 1,
+                    step_type=step_type_enum.StepTypeEnum.TARGET,
                     measure=_measure,
                     section_idx=_section_idx,
                     aggregated_measure=_valid_measures[idx],
