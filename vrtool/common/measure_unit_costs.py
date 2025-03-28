@@ -72,9 +72,10 @@ class MeasureUnitCosts:
         for key, value in unformatted_dict.items():
             _normalized_key = normalize_key_name(key)
             if _normalized_key not in _existing_fields:
-                if not 'installation_of_blocks' in _normalized_key:          
-                    #raise an error
-                    raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
+                if 'installation_of_blocks' in _normalized_key:
+                    continue          
+                #raise an error
+                raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
             _normalized_dict[_normalized_key] = value
 
         #check if block_dict values increase with thickness
