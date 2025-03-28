@@ -7,6 +7,7 @@ class StepTypeEnum(VrtoolEnum):
     UNKNOWN = 0
     SINGLE = 1
     BUNDLING = 2
+    TARGET = 3
 
     @classmethod
     def get_enum(cls, enum_name: str) -> StepTypeEnum:

@@ -7,6 +7,7 @@ from collections import defaultdict
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.enums.step_type_enum import StepTypeEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.decision_making.traject_risk import TrajectRisk
@@ -37,7 +38,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
         self.sections = strategy_input.sections
-        self.initial_step = StrategyStep(step_number=0)
+        self.initial_step = StrategyStep(step_number=0, step_type = StepTypeEnum.TARGET)
         self.optimization_steps = []
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
@@ -468,6 +469,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             self.optimization_steps.append(
                 StrategyStep(
                     step_number=len(self.optimization_steps) + 1,
+                    step_type=StepTypeEnum.TARGET,
                     measure=_measure,
                     section_idx=_section_idx,
                     aggregated_measure=_valid_measures[idx],
