@@ -10,6 +10,7 @@ from tests import get_clean_test_results_dir, test_data, test_results
 from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -34,6 +35,7 @@ from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
 
+from vrtool.defaults import default_unit_costs_csv
 
 @dataclass
 class JsonFileCase:
@@ -349,7 +351,7 @@ class TestRevetmentMeasureResultBuilder:
 
         # 4. Output results.
         def measure_to_dict(measure: RevetmentMeasureData) -> dict:
-            measure.cost = measure.get_total_cost(json_file_case.section_length)
+            measure.cost = measure.get_total_cost(json_file_case.section_length, MeasureUnitCosts.from_csv_file(default_unit_costs_csv))
             return measure.__dict__
 
         self._output_to_csv(
@@ -364,7 +366,7 @@ class TestRevetmentMeasureResultBuilder:
         # 1. Define test data.
         _builder = RevetmentMeasureResultBuilder()
         _json_reader = JsonFilesToRevetmentDataClassReader()
-
+        _unit_costs = MeasureUnitCosts.from_csv_file(default_unit_costs_csv)
         # 2. Run test.
         _results = []
         for _case in _json_file_cases:
@@ -375,6 +377,7 @@ class TestRevetmentMeasureResultBuilder:
                 _case.target_beta,
                 _case.transition_level,
                 _case.evaluation_year,
+                _unit_costs,
             )
             assert isinstance(_result, RevetmentMeasureResult)
             _results.append({"section_id": _case.section_id} | _result.__dict__)
