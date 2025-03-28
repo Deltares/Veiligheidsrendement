@@ -1,20 +1,34 @@
+## 0.1.9
+
+### Feat
+
+- [VRTOOL-601] Added column `step_type` to `OptimizationStep` ("SINGLE"/"BUNDLING")
+
+
+## 0.1.8
+
+### Feat
+
+- [VRTOOL-188] Added columns to `SectionData`: `sensitive_fraction_piping` and `sensitive_fraction_stability_inner`
+
+
 ## 0.1.7
 
-## Feat
+### Feat
 
 - [VRTOOL-544] Remove columns from `StandardMeasure`: `prob_of_solution_failure`, `failure_probability_with_solution`, `stability_screen_s_f_increase` (#341).
 
 
 ## 0.1.6
 
-## Feat
+### Feat
 
 - [VRTOOL-545] Added property `flood_damage` to `SectionData` (#343).
 
 
 ## 0.1.5
 
-## Feat
+### Feat
 
 - [VRTOOL-547] Renamed `CustomMeasureDetail` property `year` to `time` (#338).
 

@@ -5,6 +5,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
@@ -72,7 +73,7 @@ class TestDikeSectionImporter:
         assert but_point["z"] == pytest.approx(4.996)
 
     @pytest.mark.usefixtures("db_fixture")
-    def test_import_buildings_list(self, valid_config: VrtoolConfig):
+    def test__import_buildings_list(self, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = DikeSectionImporter(valid_config)
         _section_data = SectionData.get_by_id(1)
@@ -90,6 +91,51 @@ class TestDikeSectionImporter:
         assert len(_buildings_frame) == 2
         assert list(_buildings_frame.loc[24]) == [2]
         assert list(_buildings_frame.loc[42]) == [1]
+
+    @pytest.fixture(name="valid_section_data", scope="module")
+    def _get_valid_section_data_fixture(self) -> Iterator[SectionData]:
+        _db_file = test_data.joinpath("test_db", "vrtool_with_filtered_results.db")
+        assert _db_file.is_file()
+
+        _db = open_database(_db_file)
+        assert isinstance(_db, SqliteDatabase)
+
+        _section_data = SectionData.get_by_id(1)
+        assert isinstance(_section_data, SectionData)
+
+        yield _section_data
+
+        _db.close()
+
+    @pytest.mark.parametrize(
+        "excluded_mechanism",
+        [
+            MechanismEnum.REVETMENT,
+            MechanismEnum.PIPING,
+            MechanismEnum.STABILITY_INNER,
+        ],
+    )
+    def test__get_mechanism_reliability_collection_list(
+        self,
+        excluded_mechanism: MechanismEnum,
+        valid_config: VrtoolConfig,
+        valid_section_data: SectionData,
+    ):
+        # 1. Define test data.
+        valid_config.excluded_mechanisms.append(excluded_mechanism)
+        _importer = DikeSectionImporter(valid_config)
+
+        # 2. Run test.
+        _result = _importer._get_mechanism_reliability_collection_list(
+            valid_section_data
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_result, list)
+        assert not any([_mrc.mechanism == excluded_mechanism for _mrc in _result])
+        assert all(
+            [_mrc.mechanism in valid_config.supported_mechanisms for _mrc in _result]
+        )
 
     def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.

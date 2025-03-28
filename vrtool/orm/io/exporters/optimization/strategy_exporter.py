@@ -1,6 +1,3 @@
-from collections import defaultdict
-from typing import Iterator
-
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -52,10 +49,10 @@ class StrategyExporter(OrmExporterProtocol):
 
         def get_investment_years() -> list[int]:
             _investment_years = []
-            for _, sam in strategy_run.selected_aggregated_measures:
-                if sam.year not in _investment_years:
-                    _investment_years.append(sam.year)
-                _previous_year = sam.year - 1
+            for am in (x.aggregated_measure for x in strategy_run.optimization_steps):
+                if am.year not in _investment_years:
+                    _investment_years.append(am.year)
+                _previous_year = am.year - 1
                 if _previous_year not in _investment_years and _previous_year > 0:
                     _investment_years.append(_previous_year)
             return _investment_years
@@ -65,88 +62,57 @@ class StrategyExporter(OrmExporterProtocol):
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         def get_step_results_mechanism(mechanism: tuple[int, MechanismEnum]) -> dict:
             _prob_mechanism = self._get_selected_time(
-                _section_idx, _t, mechanism[1], _prob_per_step
+                _optimization_step.section_idx,
+                _t,
+                mechanism[1],
+                _optimization_step.probabilities,
             )
             return {
                 "optimization_step": _created_optimization_step,
                 "mechanism_per_section_id": mechanism[0],
                 "time": _t,
                 "beta": pf_to_beta(_prob_mechanism),
-                "lcc": _aggregated_measure.lcc,
+                "lcc": _optimization_step.aggregated_measure.lcc,
             }
 
         _step_results_section = []
         _step_results_mechanism = []
-        _last_step_lcc_per_section = defaultdict(lambda: 0)
-        _step_lcc_tuples = [
-            (
-                "step_idx",
-                "section_name",
-                "aggregation_lcc",
-                "accumulated_lcc",
-                "last_lcc_values",
-            )
-        ]
-        _accumulated_total_lcc_per_step = []
+
         _time_periods_to_export = self.get_time_periods_to_export(strategy_run)
 
-        for _step_idx, (
-            _section_idx,
-            _aggregated_measure,
-        ) in enumerate(strategy_run.selected_aggregated_measures):
-            _accumulated_lcc_last_step = (
-                _accumulated_total_lcc_per_step[-1]
-                if any(_accumulated_total_lcc_per_step)
-                else 0
-            )
-            _accumulated_total_lcc_per_step.append(
-                _aggregated_measure.lcc
-                + _accumulated_lcc_last_step
-                - _last_step_lcc_per_section[_section_idx]
-            )
-            _step_total_lcc = _accumulated_total_lcc_per_step[-1]
-
-            # Update the increment dictionary.
-            _last_step_lcc_per_section[_section_idx] = _aggregated_measure.lcc
+        for _optimization_step in strategy_run.optimization_steps:
 
             # get ids of secondary measures
             _secondary_measures = [
                 _measure
                 for _measure in [
-                    _aggregated_measure.sh_combination.secondary,
-                    _aggregated_measure.sg_combination.secondary,
+                    _optimization_step.aggregated_measure.sh_combination.secondary,
+                    _optimization_step.aggregated_measure.sg_combination.secondary,
                 ]
                 if _measure is not None
             ]
 
-            _total_risk = strategy_run.total_risk_per_step[_step_idx + 1]
-            for single_measure in _secondary_measures + [_aggregated_measure]:
-                _step_lcc_tuples.append(
-                    (
-                        _step_idx + 1,
-                        _section_idx,
-                        _aggregated_measure.lcc,
-                        _accumulated_total_lcc_per_step[-1],
-                        str(list(_last_step_lcc_per_section.items())).strip("[]"),
-                    )
-                )
+            for single_measure in _secondary_measures + [
+                _optimization_step.aggregated_measure
+            ]:
                 _opt_selected_measure_result = self._get_optimization_selected_measure(
                     single_measure.measure_result_id, single_measure.year
                 )
                 _created_optimization_step = OptimizationStep.create(
-                    step_number=_step_idx + 1,
+                    step_number=_optimization_step.step_number,
+                    step_type=_optimization_step.step_type.name,
                     optimization_selected_measure=_opt_selected_measure_result,
-                    total_lcc=_step_total_lcc,
-                    total_risk=_total_risk,
+                    total_lcc=_optimization_step.total_cost,
+                    total_risk=_optimization_step.total_risk,
                 )
-
-                _prob_per_step = strategy_run.probabilities_per_step[_step_idx + 1]
 
                 # Loop over time periods to export including the ones not in the configuration
                 _mechs = self._get_mechanisms(_opt_selected_measure_result)
                 for _t in _time_periods_to_export:
                     _prob_section = self._get_section_time_value(
-                        _section_idx, _t, _prob_per_step
+                        _optimization_step.section_idx,
+                        _t,
+                        _optimization_step.probabilities,
                     )
 
                     # Export section results for time periods
@@ -155,15 +121,19 @@ class StrategyExporter(OrmExporterProtocol):
                             "optimization_step": _created_optimization_step,
                             "time": _t,
                             "beta": pf_to_beta(_prob_section),
-                            "lcc": _aggregated_measure.lcc,
+                            "lcc": _optimization_step.aggregated_measure.lcc,
                         }
                     )
 
                     _step_results_mechanism.extend(
-                        list(map(get_step_results_mechanism, _mechs))
+                        list(
+                            map(
+                                get_step_results_mechanism,
+                                _mechs,
+                            )
+                        )
                     )
 
-        # from pathlib import Path; _lcc_timeline=list(str(slt).strip("()").replace("'", "\"") for slt in _step_lcc_tuples); Path("lcc_values.csv").write_text("\n".join(_lcc_timeline))
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
 

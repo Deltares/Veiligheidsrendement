@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -25,7 +26,8 @@ def _initialize_log_file(log_dir: click.Path | None):
         log_dir = Path.cwd()
 
     # Define logging filename and initialize handler
-    _log_file = Path(log_dir).joinpath("vrtool_logging.log")
+    _current_date = datetime.today().strftime("%Y%m%d_%H%M")
+    _log_file = Path(log_dir).joinpath(f"vrtool_logging_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
     logging.info("Start logging vanuit %s", str(_log_file))
 

@@ -3,82 +3,23 @@ from __future__ import annotations
 import logging
 import math
 from collections import defaultdict
-from dataclasses import dataclass
 
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.cross_sectional_requirements import (
+    CrossSectionalRequirements,
+)
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
-
-
-@dataclass
-class CrossSectionalRequirements:
-    cross_sectional_requirement_per_mechanism: dict[MechanismEnum, np.ndarray]
-
-    dike_traject_b_piping: float
-    dike_traject_b_stability_inner: float
-
-    @classmethod
-    def from_dike_traject(cls, dike_traject: DikeTraject) -> CrossSectionalRequirements:
-        """Class method to create a CrossSectionalRequirements object from a DikeTraject object.
-        This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
-        The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
-
-        Args:
-            dike_traject (DikeTraject): The DikeTraject object for which the cross-sectional requirements are to be calculated.
-
-        Returns:
-            CrossSectionalRequirements: The CrossSectionalRequirements object with the cross-sectional requirements for the dike traject.
-
-        """
-        # compute cross sectional requirements
-        n_piping = 1 + (
-            dike_traject.general_info.aPiping
-            * dike_traject.general_info.TrajectLength
-            / dike_traject.general_info.bPiping
-        )
-        n_stab = 1 + (
-            dike_traject.general_info.aStabilityInner
-            * dike_traject.general_info.TrajectLength
-            / dike_traject.general_info.bStabilityInner
-        )
-        n_overflow = 1
-        n_revetment = 3
-        omegaRevetment = 0.1
-
-        _pf_cs_piping = (
-            dike_traject.general_info.Pmax
-            * dike_traject.general_info.omegaPiping
-            / n_piping
-        )
-        _pf_cs_revetment = dike_traject.general_info.Pmax * omegaRevetment / n_revetment
-        _pf_cs_stabinner = (
-            dike_traject.general_info.Pmax
-            * dike_traject.general_info.omegaStabilityInner
-            / n_stab
-        )
-        _pf_cs_overflow = (
-            dike_traject.general_info.Pmax
-            * dike_traject.general_info.omegaOverflow
-            / n_overflow
-        )
-        return cls(
-            cross_sectional_requirement_per_mechanism={
-                MechanismEnum.PIPING: _pf_cs_piping,
-                MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
-                MechanismEnum.OVERFLOW: _pf_cs_overflow,
-                MechanismEnum.REVETMENT: _pf_cs_revetment,
-            },
-            dike_traject_b_piping=dike_traject.general_info.bPiping,
-            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
-        )
 
 
 class TargetReliabilityStrategy(StrategyProtocol):
@@ -86,17 +27,20 @@ class TargetReliabilityStrategy(StrategyProtocol):
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
     """
 
+    @property
+    def total_cost(self) -> float:
+        if not self.optimization_steps:
+            return 0.0
+        return self.optimization_steps[-1].total_cost
+
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig):
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
         self.sections = strategy_input.sections
+        self.initial_step = StrategyStep(step_number=0)
+        self.optimization_steps = []
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
-
-        self.measures_taken = []
-        self.total_risk_per_step = []
-        self.probabilities_per_step = []
-        self.selected_aggregated_measures = []
 
     def check_cross_sectional_requirements(
         self,
@@ -109,10 +53,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
         """This function checks if the cross-sectional requirements are met for a given measure and year.
         If the requirements are not met for any of the mechanisms, the function returns False, otherwise True.
         """
-        _measure = self.sections[section_idx].aggregated_measure_combinations[
-            measure_idx
-        ]
-
+        _section_as_input: SectionAsInput = self.sections[section_idx]
+        _measure = _section_as_input.aggregated_measure_combinations[measure_idx]
         for _mechanism in mechanisms:
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
@@ -126,13 +68,31 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     return False
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
+                _cross_sectional_requirement = cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
+                    _mechanism
+                ]
+                _a_factor = cross_sectional_requirements.dike_section_a_piping
+                _b_factor = cross_sectional_requirements.dike_traject_b_piping
+                if _mechanism == MechanismEnum.STABILITY_INNER:
+                    _a_factor = (
+                        cross_sectional_requirements.dike_section_a_stability_inner
+                    )
+                    _b_factor = (
+                        cross_sectional_requirements.dike_traject_b_stability_inner
+                    )
+
+                _le_factor = max(
+                    cross_sectional_requirements.dike_section_length
+                    * _a_factor
+                    / _b_factor,
+                    1.0,
+                )
+                _section_requirement = _cross_sectional_requirement * _le_factor
                 if (
                     _measure.sg_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[0]
-                    > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
-                        _mechanism
-                    ]
+                    > _section_requirement
                 ):
                     return False
         return True
@@ -289,7 +249,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         # loop over all mechanisms and check if the requirements are met. Once they are met, set the value to True and break the loop
         for mechanism in _section_as_input.mechanisms:
-            _requirement_met_per_mechanism[mechanism]
+            _requirement_met_per_mechanism[mechanism] = False
             for _measure_idx, _ in enumerate(
                 _section_as_input.aggregated_measure_combinations
             ):
@@ -367,6 +327,67 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # return the first as they have the same cost and pf and are not distinctive
         return [_valid_measures_low_prob_cost[0]], _invalid_mechanisms
 
+    @staticmethod
+    def get_cross_sectional_requirements_for_target_reliability(
+        dike_traject: DikeTraject, section_as_input: SectionAsInput
+    ) -> CrossSectionalRequirements:
+        """
+        Class method to create a CrossSectionalRequirements object from a DikeTraject object.
+        This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
+        The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
+
+        Args:
+            dike_traject (DikeTraject): The DikeTraject object for which the cross-sectional requirements are to be calculated.
+            section_as_input (SectionAsInput): The section with the specific requirements to be applied for cross sectional computations.
+
+        Returns:
+            CrossSectionalRequirements: The CrossSectionalRequirements object with the cross-sectional requirements for the dike traject.
+        """
+        # compute cross sectional requirements
+        n_piping = 1 + (
+            dike_traject.general_info.aPiping
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bPiping
+        )
+        n_stab = 1 + (
+            dike_traject.general_info.aStabilityInner
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bStabilityInner
+        )
+        n_overflow = 1
+        n_revetment = 3
+        omegaRevetment = 0.1
+
+        _pf_cs_piping = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaPiping
+            / n_piping
+        )
+        _pf_cs_revetment = dike_traject.general_info.Pmax * omegaRevetment / n_revetment
+        _pf_cs_stabinner = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaStabilityInner
+            / n_stab
+        )
+        _pf_cs_overflow = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaOverflow
+            / n_overflow
+        )
+        return CrossSectionalRequirements(
+            cross_sectional_requirement_per_mechanism={
+                MechanismEnum.PIPING: _pf_cs_piping,
+                MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
+                MechanismEnum.OVERFLOW: _pf_cs_overflow,
+                MechanismEnum.REVETMENT: _pf_cs_revetment,
+            },
+            dike_traject_b_piping=dike_traject.general_info.bPiping,
+            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
+            dike_section_a_piping=section_as_input.a_section_piping,
+            dike_section_a_stability_inner=section_as_input.a_section_stability_inner,
+            dike_section_length=section_as_input.section_length,
+        )
+
     def evaluate(
         self,
         dike_traject: DikeTraject,
@@ -389,17 +410,21 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Rank sections based on initial probability
         section_order = np.flip(np.argsort(initial_section_pfs))
 
-        # get the cross-sectional requirements for the dike traject (probability)
-        _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
-            dike_traject
+        self.initial_step = StrategyStep(
+            step_number=0,
+            total_risk=self.traject_risk.get_total_risk(),
+            probabilities=self.traject_risk.get_initial_probabilities_dict(
+                self.traject_risk.mechanisms
+            ),
         )
-        # and the risk for each step
-        _taken_measures = {}
-        _taken_measures_indices = []
-        for _section_idx in section_order:
-            # add probability for this step:
 
+        for _section_idx in section_order:
             # get the first possible investment year from the aggregated measures
+            _cross_sectional_requirements = (
+                self.get_cross_sectional_requirements_for_target_reliability(
+                    dike_traject, self.sections[_section_idx]
+                )
+            )
             _valid_measures = self.get_valid_measures_for_section(
                 _section_idx, _cross_sectional_requirements
             )
@@ -433,43 +458,23 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # get measure with lowest lcc from _valid_measures
             _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)
-            _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
-                idx
-            ]
-            _aggregated_combination = _taken_measures[
-                self.sections[_section_idx].section_name
-            ]
-            measure_idx = _aggregated_combination.get_combination_idx()
-            _taken_measures_indices.append(
-                (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
-            )
+            _measure_idx = (_section_idx, *_valid_measures[idx].get_combination_idx())
+            _measure = (_measure_idx[0], _measure_idx[1] + 1, _measure_idx[2] + 1)
 
-            self.selected_aggregated_measures.append(
-                (
-                    _section_idx,
-                    _aggregated_combination,
+            # update the probabilities for the mechanisms
+            self.traject_risk.update_probabilities_for_measure(_measure)
+
+            # add the optimization step
+            self.optimization_steps.append(
+                StrategyStep(
+                    step_number=len(self.optimization_steps) + 1,
+                    measure=_measure,
+                    section_idx=_section_idx,
+                    aggregated_measure=_valid_measures[idx],
+                    probabilities=self.traject_risk.get_initial_probabilities_dict(
+                        self.traject_risk.mechanisms
+                    ),
+                    total_risk=self.traject_risk.get_total_risk(),
+                    total_cost=self.total_cost + _lcc[idx],
                 )
             )
-
-        # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
-        # First we get and update the probabilities per step
-        # we need to track probability for each step
-        self.probabilities_per_step = [
-            self.traject_risk.get_initial_probabilities_dict(
-                self.traject_risk.mechanisms
-            )
-        ]
-        self.total_risk_per_step = [self.traject_risk.get_total_risk()]
-
-        for step in range(0, len(_taken_measures)):
-            self.traject_risk.update_probabilities_for_measure(
-                _taken_measures_indices[step]
-            )
-            self.probabilities_per_step.append(
-                self.traject_risk.get_initial_probabilities_dict(
-                    self.traject_risk.mechanisms
-                )
-            )
-            self.total_risk_per_step.append(self.traject_risk.get_total_risk())
-
-        self.measures_taken = _taken_measures_indices

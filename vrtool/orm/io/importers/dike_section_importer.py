@@ -107,6 +107,15 @@ class DikeSectionImporter(OrmImporterProtocol):
                     _mechanism_per_section.section.section_name,
                     _mechanism_per_section.mechanism.name,
                 )
+            elif (
+                MechanismEnum.get_enum(_mechanism_per_section.mechanism.name)
+                not in self.selected_mechanisms
+            ):
+                logging.debug(
+                    "Skipping import of mechanism %s, as it is not selected in the configuration.",
+                    _mechanism_per_section.mechanism.name,
+                )
+
             else:
                 _mechanism_data.append(_importer.import_orm(_mechanism_per_section))
         return _mechanism_data
@@ -182,6 +191,8 @@ class DikeSectionImporter(OrmImporterProtocol):
             cover_layer_thickness=orm_model.cover_layer_thickness,
             pleistocene_level=orm_model.pleistocene_level,
             flood_damage=orm_model.get_flood_damage_value(),
+            sensitive_fraction_piping=orm_model.sensitive_fraction_piping,
+            sensitive_fraction_stability_inner=orm_model.sensitive_fraction_stability_inner,
         )
 
         return _dike_section

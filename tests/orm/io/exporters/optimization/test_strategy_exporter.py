@@ -1,6 +1,7 @@
 import pytest
 
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.strategy_step import StrategyStep
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -28,13 +29,18 @@ class TestStrategyExporter:
             the correct generation of years to export.
             """
 
+            optimization_steps: list[StrategyStep] = []
+
             def __init__(self) -> None:
                 self.time_periods = config_t_values
-                _sam = []
                 for _iy in investment_years:
                     for _idx in [0, 1]:
-                        _sam.append((_idx, get_dummy_measure(_iy)))
-                self.selected_aggregated_measures = _sam
+                        self.optimization_steps.append(
+                            StrategyStep(
+                                section_idx=_idx,
+                                aggregated_measure=get_dummy_measure(_iy),
+                            )
+                        )
 
         return MockedStrategy()
 
