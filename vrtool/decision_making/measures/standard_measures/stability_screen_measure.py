@@ -108,7 +108,8 @@ class StabilityScreenMeasure(MeasureProtocol):
                 )
             elif mechanism == MechanismEnum.PIPING:
                 self._copy_results(_collection, dike_section_mechanism_reliability)
-                _collection.Input.input["sf_factor"] = sf_factor_piping(length)
+                _collection.Input.input["piping_reduction_factor"] = sf_factor_piping(length)
+                _collection.Input.input["elimination"] = "yes"
             elif mechanism == MechanismEnum.OVERFLOW:
                 self._copy_results(
                     _collection, dike_section_mechanism_reliability
