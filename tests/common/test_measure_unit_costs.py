@@ -1,6 +1,7 @@
 import dataclasses
 from math import isnan
 from typing import Iterator
+from pandas import read_csv
 
 import pytest
 
@@ -15,9 +16,15 @@ def get_required_unformatted_field_names() -> list[str]:
     return [
         _field.name.capitalize().replace("_", " ")
         for _field in dataclasses.fields(MeasureUnitCosts)
-        if _field.default == dataclasses.MISSING
+        if (_field.default == dataclasses.MISSING) and (_field.default_factory == dataclasses.MISSING)
     ]
 
+def get_unformatted_unit_cost_dict() -> dict:
+        _unit_cost_data = read_csv(str(default_unit_costs_csv), encoding="latin_1")    
+        _unit_cost_dict = {}
+        for _, _series in _unit_cost_data.iterrows():
+            _unit_cost_dict[_series["Description"]] = _series["Cost"]
+        return _unit_cost_dict
 
 class TestMeasureUnitCosts:
     @pytest.fixture(name="required_unformatted_field_names")
@@ -58,9 +65,10 @@ class TestMeasureUnitCosts:
         assert isnan(_unit_costs.diaphragm_wall)
         assert isnan(_unit_costs.vertical_geotextile)
 
-    def test_initialize_with_extra_keys_only_logs_warning(
+    def test_initialize_with_extra_keys_raises_error(
         self, valid_unformatted_dict: dict
     ):
+        #test that adding extra keys that are not recognized raises an error
         # 1. Define test data.
         _extra_key = "Dummy Key"
         assert _extra_key not in valid_unformatted_dict
@@ -68,11 +76,16 @@ class TestMeasureUnitCosts:
         valid_unformatted_dict[_extra_key] = 4.2
 
         # 2. Run test.
-        _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
+        with pytest.raises(ValueError) as exc_err:
+            MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
 
         # 3. Verify expectations.
-        assert isinstance(_unit_costs, MeasureUnitCosts)
-        assert _extra_key not in _unit_costs.__dict__.keys()
+        _expected_error = (
+            "Kosten voor maatregel '{}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.".format(
+                _extra_key)
+                )
+        
+        assert str(exc_err.value) == _expected_error
 
     @pytest.mark.parametrize(
         "excluded_key",
@@ -110,3 +123,33 @@ class TestMeasureUnitCosts:
 
         # 3. Verify expectations
         assert isinstance(_unit_costs, MeasureUnitCosts)
+
+    def test_init_from_modified_csv_file_bad_string(self):
+        # 1. Define test data using part of classmethod
+        _unformatted_dict = get_unformatted_unit_cost_dict()
+
+        # 2. Modify the data: mess up string
+        #modify keys that contain 'Installation of blocks' to 'Installatie blokken'
+        _keys_to_change = list(filter(lambda x: 'Installation of blocks' in x, _unformatted_dict.keys()))
+        #change the keys
+        for _key in _keys_to_change:
+            _unformatted_dict[_key.replace('Installation of blocks', 'Installatie blokken')] = _unformatted_dict.pop(_key)
+        
+        _first_bad_key = _keys_to_change[0].replace('Installation of blocks', 'Installatie blokken')
+        
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            MeasureUnitCosts.from_unformatted_dict(_unformatted_dict)
+
+        # 3. Verify expectations.
+        _expected_error = (
+            "Kosten voor maatregel '{}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.".format(_first_bad_key)
+        )
+        assert str(exc_err.value) == _expected_error
+
+        #change option 2
+
+
+
+
+
