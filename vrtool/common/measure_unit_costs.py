@@ -31,7 +31,7 @@ class MeasureUnitCosts:
     sheetpile: float = float("nan")
     diaphragm_wall: float = float("nan")
     vertical_geotextile: float = float("nan")
-    course_sand_barrier: float = float("nan")
+    coarse_sand_barrier: float = float("nan")
     anchored_sheetpile: float = float("nan")
     heavescreen: float = float("nan")
     remove_block_revetment: float = float("nan")
@@ -70,10 +70,8 @@ class MeasureUnitCosts:
         for key, value in unformatted_dict.items():
             _normalized_key = normalize_key_name(key)
             if _normalized_key not in _existing_fields:
-                logging.warning(
-                    "Measure {%s} is not internally defined and won't be imported.", key
-                )
-                continue
+                #raise an error
+                raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
             _normalized_dict[_normalized_key] = value
 
         return cls(**_normalized_dict)
@@ -102,3 +100,4 @@ class MeasureUnitCosts:
             _unit_cost_dict[_series["Description"]] = _series["Cost"]
 
         return cls.from_unformatted_dict(_unit_cost_dict)
+    
