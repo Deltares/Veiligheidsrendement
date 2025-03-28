@@ -4,8 +4,8 @@ import pytest
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.course_sand_barrier_measure_calculator import (
-    CourseSandBarrierMeasureCalculator,
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.coarse_sand_barrier_measure_calculator import (
+    CoarseSandBarrierMeasureCalculator,
 )
 from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.heavescreen_measure_calculator import (
     HeavescreenMeasureCalculator,
@@ -48,8 +48,8 @@ class TestVerticalPipingMeasureCalculatorFactory:
     @pytest.mark.parametrize(
         "calculator_d_cover_args, expected_calculator_type",
         [
-            pytest.param(0, CourseSandBarrierMeasureCalculator, id="d_crest = 0"),
-            pytest.param(1.5, CourseSandBarrierMeasureCalculator, id="d_crest < 2"),
+            pytest.param(0, CoarseSandBarrierMeasureCalculator, id="d_crest = 0"),
+            pytest.param(1.5, CoarseSandBarrierMeasureCalculator, id="d_crest < 2"),
             pytest.param(2, VerticalGeotextileMeasureCalculator, id="d_crest == 2"),
             pytest.param(
                 3.5, VerticalGeotextileMeasureCalculator, id="2 <= d_crest < 4"

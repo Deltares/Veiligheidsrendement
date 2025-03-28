@@ -2,8 +2,8 @@ from math import isnan
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.course_sand_barrier_measure_calculator import (
-    CourseSandBarrierMeasureCalculator,
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.coarse_sand_barrier_measure_calculator import (
+    CoarseSandBarrierMeasureCalculator,
 )
 from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.heavescreen_measure_calculator import (
     HeavescreenMeasureCalculator,
@@ -55,7 +55,7 @@ class VerticalPipingMeasureCalculatorFactory:
             # `d_cover >= 6`.
 
             if _d_cover < 2:
-                return CourseSandBarrierMeasureCalculator
+                return CoarseSandBarrierMeasureCalculator
             elif _d_cover >= 2 and _d_cover < 4:
                 return VerticalGeotextileMeasureCalculator
             elif _d_cover >= 4:
