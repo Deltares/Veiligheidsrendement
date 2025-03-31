@@ -204,44 +204,6 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(api_vrtool_config)
 
-    @pytest.mark.skip(
-        reason="Only used for generating new optimization databases. Run with the --no-skip option."
-    )
-    @pytest.mark.regenerate_test_db
-    @pytest.mark.parametrize(
-        "api_vrtool_config",
-        acceptance_test_cases,
-        indirect=True,
-    )
-    def test_run_step_optimization_acceptance_test_case(
-        self, api_vrtool_config: VrtoolConfig
-    ):
-        """
-        You can run this test from command line with:
-        `pytest -m "regenerate_test_db" --no-skips`
-        """
-        # 1. Define test data.
-        _new_optimization_name = "Basisberekening"
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(api_vrtool_config)
-
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(api_vrtool_config)
-
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            api_vrtool_config
-        )
-
-        # 2. Run test.
-        run_step_optimization(
-            api_vrtool_config, _new_optimization_name, _measures_input
-        )
-
-        # 3. Verify expectations.
-        _validator.validate_results(api_vrtool_config)
-
     def _run_step_optimization_for_strategy(
         self,
         vrtool_config: VrtoolConfig,
@@ -299,6 +261,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[0:2],
         indirect=True,
     )
+    @pytest.mark.regenerate_test_db
     def test_run_step_optimization_with_filtering(
         self, api_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -339,6 +302,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[0:2],
         indirect=True,
     )
+    @pytest.mark.regenerate_test_db
     def test_run_step_optimization_with_adjusted_timing(
         self, api_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
