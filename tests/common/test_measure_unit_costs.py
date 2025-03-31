@@ -87,7 +87,7 @@ class TestMeasureUnitCosts:
         
         assert str(exc_err.value) == _expected_error
 
-    def test_decreasing_cost_for_block_crashes(self, valid_unformatted_dict: dict):
+    def test_given_decreasing_cost_for_block_when_from_unformatted_dict_then_raises(self, valid_unformatted_dict: dict):
         # 1. Define test data.
         #add two costs for Installation of blocks where costs for larger blocks are lower
         valid_unformatted_dict["Installation of blocks 10cm"] = 4.2
