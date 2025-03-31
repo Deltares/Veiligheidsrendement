@@ -385,7 +385,7 @@ class TestRevetmentMeasureResultBuilder:
                 _case.target_beta,
                 _case.transition_level,
                 _case.evaluation_year,
-                default_measure_unit_costs,,
+                default_measure_unit_costs,
             )
             assert isinstance(_result, RevetmentMeasureResult)
             _results.append({"section_id": _case.section_id} | _result.__dict__)
