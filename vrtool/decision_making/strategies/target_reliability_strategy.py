@@ -38,7 +38,10 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
         self.sections = strategy_input.sections
-        self.initial_step = StrategyStep(step_number=0)
+        self.initial_step = StrategyStep(
+            step_number=0,
+            step_type=step_type_enum.StepTypeEnum.TARGET,
+            )
         self.optimization_steps = []
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
@@ -413,6 +416,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         self.initial_step = StrategyStep(
             step_number=0,
+            step_type=step_type_enum.StepTypeEnum.TARGET,
             total_risk=self.traject_risk.get_total_risk(),
             probabilities=self.traject_risk.get_initial_probabilities_dict(
                 self.traject_risk.mechanisms
