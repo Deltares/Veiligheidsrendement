@@ -21,6 +21,7 @@ from vrtool.orm.io.importers.mechanism_reliability_collection_importer import (
 )
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
+from vrtool.orm.io.validators.section_data_validator import SectionDataValidator
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.buildings import Buildings
@@ -177,23 +178,11 @@ class DikeSectionImporter(OrmImporterProtocol):
         return _section_reliability
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
-        if not orm_model:
-            raise ValueError(f"No valid value given for {SectionData.__name__}.")
+        _report = SectionDataValidator().validate(orm_model)
+        if any(_report.errors):
+            # Raise exception with the first error found.
+            raise ValueError(_report.errors[0].error_message)
 
-        def valid_sensitivity(sensitivity: float) -> bool:
-            _max_value = 1.0
-            return sensitivity < _max_value or isclose(sensitivity, _max_value, rel_tol=1e-9, abs_tol=1e-9)
-        
-        def raise_sensitivy_error(sensitivity_property: str, value: float):
-            raise ValueError(f"'{sensitivity_property}' should be a real value in the [0.0, 1.0] limit, but got '{value}'.")
-
-        logging.debug("Verifying sensitivy fraction values are below 1.0 .")
-        if not valid_sensitivity(orm_model.sensitive_fraction_piping):
-            raise_sensitivy_error("sensitive_fraction_piping", orm_model.sensitive_fraction_piping)
-        if not valid_sensitivity(orm_model.sensitive_fraction_stability_inner):
-            raise_sensitivy_error("sensitive_fraction_stability_inner", orm_model.sensitive_fraction_stability_inner)
-
-        logging.debug("Valid sensitivity values, proceeding with DikeSection import.")
         _dike_section = DikeSection(
             name=orm_model.section_name,
             houses=self._import_buildings_list(orm_model.buildings_list),

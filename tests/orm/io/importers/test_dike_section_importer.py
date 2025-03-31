@@ -164,6 +164,19 @@ class TestDikeSectionImporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == "'sensitive_fraction_piping' should be a real value in the [0.0, 1.0] limit, but got '1.000000001'."
 
+
+    @pytest.mark.usefixtures("db_fixture")
+    def test_given_no_section_data_when_import_orm_then_raises(self, valid_config: VrtoolConfig):
+        # 1. Define test data.
+        _importer = DikeSectionImporter(valid_config)
+
+        # 2. Run test
+        with pytest.raises(ValueError) as exc_err:
+            _importer.import_orm(None)
+
+        # 3. Verify expectations.
+        assert str(exc_err.value) == "No valid value given for SectionData."
+
     @pytest.mark.usefixtures("db_fixture")
     def test_given_sensitive_fraction_stability_inner_greater_than_1_when_import_orm_then_raises(self, valid_config: VrtoolConfig):
         # 1. Define test data.
