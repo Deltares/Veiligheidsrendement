@@ -154,7 +154,7 @@ def sf_factor_piping(length: float) -> float:
         length (float): length of the screen (without cover layer thickness)
 
     Returns:
-        float: the safe reduction factor: 100 for 3m; 1000 for 6m
+        float: the reduction factor for the probability: 100 for 3m; 1000 for 6m
     """
     _small_stab_screen_length = 3.0
     return 10 ** (1.0 + length / _small_stab_screen_length)
