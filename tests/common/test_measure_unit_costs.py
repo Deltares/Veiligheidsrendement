@@ -102,7 +102,7 @@ class TestMeasureUnitCosts:
         _expected_error = ("Kosten voor installatie blokken dalen met toenemende dikte. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
         assert str(exc_err.value) == _expected_error        
 
-    def test_unsorted_cost_for_block_works(self, valid_unformatted_dict: dict):
+    def test_given_unsorted_cost_for_block_when_from_unformatted_dict_then_initializes(self, valid_unformatted_dict: dict):
         # 1. Define test data.
         #add two costs for Installation of blocks where block thicknesses are not sorted but costs increase
         valid_unformatted_dict["Installation of blocks 20cm"] = 4.2
