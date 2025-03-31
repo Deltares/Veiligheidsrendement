@@ -20,11 +20,11 @@ def get_required_unformatted_field_names() -> list[str]:
     ]
 
 def get_unformatted_unit_cost_dict() -> dict:
-        _unit_cost_data = read_csv(str(default_unit_costs_csv), encoding="latin_1")    
-        _unit_cost_dict = {}
-        for _, _series in _unit_cost_data.iterrows():
-            _unit_cost_dict[_series["Description"]] = _series["Cost"]
-        return _unit_cost_dict
+    _unit_cost_data = read_csv(str(default_unit_costs_csv), encoding="latin_1")    
+    _unit_cost_dict = {}
+    for _, _series in _unit_cost_data.iterrows():
+        _unit_cost_dict[_series["Description"]] = _series["Cost"]
+    return _unit_cost_dict
 
 class TestMeasureUnitCosts:
     @pytest.fixture(name="required_unformatted_field_names")
@@ -94,7 +94,6 @@ class TestMeasureUnitCosts:
         valid_unformatted_dict["Installation of blocks 20cm"] = 3.2
 
         # 2. Run test.
-        #verify it crashes
         with pytest.raises(ValueError) as exc_err:
             MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
 
