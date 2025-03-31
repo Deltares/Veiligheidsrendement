@@ -40,8 +40,9 @@ class SectionDataValidator:
 
         if not section_data:
             _validation_report.errors.append(
+                ValidationError(
                 f"No valid value given for {SectionData.__name__}.",
-                SectionData
+                section_data)
             )
             return _validation_report
 
