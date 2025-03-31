@@ -81,11 +81,11 @@ class MeasureUnitCosts:
                 raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
             _normalized_dict[_normalized_key] = value
 
-        #check if block_dict values increase with thickness
+        # Check if block_dict values increase with thickness.
         if len(_block_dict) >= 1:
-            #store _block_dict in 2 lists for keys and values using list comprehension
+            # `store _block_dict` in 2 lists for keys and values using list comprehension.
             _thickness, _cost = zip(*list(_block_dict.items()))
-            #ensure _thickness is increasing and get the indices of the sorted list
+            # `ensure _thickness` is increasing and get the indices of the sorted list.
             _sorted_indices = sorted(range(len(_thickness)), key=lambda x: _thickness[x])
             # Check if `_cost` is increasing when sorted.
             if not all(_cost[_sorted_indices[i]] <= _cost[_sorted_indices[i+1]] for i in range(len(_cost)-1)):
