@@ -58,7 +58,10 @@ class MeasureUnitCosts:
         _normalized_dict = {}
 
         _block_dict = {}
-        #get all keys containing 'installation of blocks' and extract the thickness. Thickness should be in centimeters. And there can only be 1 numerical value in this string. If there are two identical thicknesses an exception is raised.
+        # Get all keys containing 'installation of blocks' and extract the thickness. 
+        # Thickness should be in centimeters. 
+        # There can only be 1 numerical value in this string. 
+        # If there are two identical thicknesses an exception is raised.
         for _block_key in filter(lambda x: 'installation of blocks' in x.lower(), unformatted_dict.keys()):
             _thickness = [float(number) for number in re.findall(r'\d+\.?\d*', _block_key)]
             if len(_thickness) != 1:
