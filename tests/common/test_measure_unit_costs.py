@@ -89,7 +89,7 @@ class TestMeasureUnitCosts:
 
     def test_given_decreasing_cost_for_block_when_from_unformatted_dict_then_raises(self, valid_unformatted_dict: dict):
         # 1. Define test data.
-        #add two costs for Installation of blocks where costs for larger blocks are lower
+        # Add two costs for Installation of blocks where costs for larger blocks are lower
         valid_unformatted_dict["Installation of blocks 10cm"] = 4.2
         valid_unformatted_dict["Installation of blocks 20cm"] = 3.2
 
