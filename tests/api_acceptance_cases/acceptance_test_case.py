@@ -19,7 +19,6 @@ class AcceptanceTestCase:
     test cases, often related to the usage and comparison of databases.
     """
 
-    case_name: str
     model_directory: str
     traject_name: str
     excluded_mechanisms: list[MechanismEnum] = field(
@@ -27,105 +26,100 @@ class AcceptanceTestCase:
             MechanismEnum.HYDRAULIC_STRUCTURES,
         ]
     )
+    run_adjusted_timing: bool = False
+    run_filtered: bool = False
 
     @staticmethod
     def get_cases() -> list[AcceptanceTestCase]:
         # Defining acceptance test cases so they are accessible from the other test classes.
         return [
             AcceptanceTestCase(
-                model_directory="31-1 two coastal sections",
+                model_directory="31-1_two_coastal_sections",
                 traject_name="31-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 31-1, two coastal sections",
+                run_adjusted_timing=True,
+                run_filtered=True,
             ),
             AcceptanceTestCase(
-                model_directory="38-1 two river sections",
+                model_directory="38-1_two_river_sections",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, two river sections",
+                run_adjusted_timing=True,
+                run_filtered=True,
             ),
             AcceptanceTestCase(
-                model_directory="31-1 base coastal case",
+                model_directory="31-1_base_coastal_case",
                 traject_name="31-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 31-1, base coastal case",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 base river case",
+                model_directory="38-1_base_river_case",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, base river case",
             ),
             AcceptanceTestCase(
-                model_directory="31-1 mixed coastal case",
+                model_directory="31-1_mixed_coastal_case",
                 traject_name="31-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 31-1, mixed coastal case",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 two river sections D-Stability",
+                model_directory="38-1_two_river_sections_D-Stability",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, two sections with D-Stability",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 two river sections anchored sheetpile",
+                model_directory="38-1_two_river_sections_anchored_sheetpile",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, two river sections with anchored sheetpile [VRTOOL-344]",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 custom measures",
+                model_directory="38-1_custom_measures",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Custom Measures, MVP",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 custom measures high betas low costs",
+                model_directory="38-1_custom_measures_high_betas_low_costs",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, custom measures with high betas and low costs",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 custom measures low betas high costs",
+                model_directory="38-1_custom_measures_low_betas_high_costs",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, custom measures with low betas and high costs",
             ),
             AcceptanceTestCase(
-                model_directory="38-1 custom measures real cases",
+                model_directory="38-1_custom_measures_real_cases",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, custom measures with real cases",
             ),
         ]

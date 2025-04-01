@@ -41,7 +41,7 @@ from vrtool.orm.orm_controllers import (
 
 acceptance_test_cases = list(
     map(
-        lambda x: pytest.param(x, id=x.case_name),
+        lambda x: pytest.param(x, id=x.model_directory),
         AcceptanceTestCase.get_cases(),
     )
 )
