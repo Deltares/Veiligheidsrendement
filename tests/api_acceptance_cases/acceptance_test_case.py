@@ -93,6 +93,15 @@ class AcceptanceTestCase:
                 case_name="Traject 38-1, two river sections with anchored sheetpile [VRTOOL-344]",
             ),
             AcceptanceTestCase(
+                model_directory="38-1 two river sections beta piping input",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 38-1, two river sections with beta piping input",
+            ),
+            AcceptanceTestCase(
                 model_directory="38-1 custom measures",
                 traject_name="38-1",
                 excluded_mechanisms=[
