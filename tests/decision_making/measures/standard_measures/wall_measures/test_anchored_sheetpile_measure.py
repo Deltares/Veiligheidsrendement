@@ -12,6 +12,11 @@ from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_w
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
+from vrtool.defaults import default_unit_costs_csv
+
+
+
 valid_dike_section_cases = [
     dict(
         crest_height=9.98,
@@ -99,6 +104,8 @@ class TestAnchoredSheetpileMeasure:
 
         # 1. Define test data.
         _measure = AnchoredSheetpileMeasure()
+        #add unit costs to _measure
+        _measure.unit_costs = MeasureUnitCosts.from_csv_file(default_unit_costs_csv)
 
         # 2. Run test.
         _total_cost = _measure._calculate_measure_costs(indirect_dike_section)

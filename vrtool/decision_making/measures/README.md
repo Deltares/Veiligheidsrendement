@@ -12,7 +12,7 @@ We differenciate between two types of measures:
     - Soil reinforcement (`SoilReinforcementMeasure`),
     - Stability screen (`StabilityScreenMeasure`),
     - Vertical piping solution measure (`VerticalPipingSolutionMeasure`), this measure is internally (not exposed via the `MeasureTypeEnum`) divided depending on the `cover_layer_thickness` value into:
-        - __Course Sand Barrier__ (Dutch abbreviation: __GZB__) - `CourseSandBarrierMeasureCalculator`,
+        - __Coarse Sand Barrier__ (Dutch abbreviation: __GZB__) - `CoarseSandBarrierMeasureCalculator`,
         - __Vertical Geotextile__ (Dutch abbreviation: __VZG__) - `VerticalGeotextileMeasureCalculator`,
         - __Heavescreen__ - `HeavescreenMeasureCalculator`,
     - Revetment measure (`RevetmentMeasure`)

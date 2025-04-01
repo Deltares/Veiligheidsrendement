@@ -2,6 +2,7 @@ import csv
 import itertools
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterator
 
 import numpy as np
 import pytest
@@ -10,6 +11,7 @@ from tests import get_clean_test_results_dir, test_data, test_results
 from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -19,6 +21,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
 )
+from vrtool.defaults import default_unit_costs_csv
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
@@ -320,12 +323,19 @@ class TestRevetmentMeasureResultBuilder:
             for i in range(0, 6)
         )
 
+    @pytest.fixture(name="default_measure_unit_costs", scope="module")
+    def _get_default_measure_unit_costs_fixture(self) -> Iterator[MeasureUnitCosts]:
+        yield MeasureUnitCosts.from_csv_file(default_unit_costs_csv)
+
     @pytest.mark.parametrize(
         "json_file_case",
         _pytest_json_file_cases,
     )
     def test_get_revetment_measures_collection_from_json_files(
-        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
+        self,
+        json_file_case: JsonFileCase,
+        request: pytest.FixtureRequest,
+        default_measure_unit_costs: MeasureUnitCosts,
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -349,7 +359,7 @@ class TestRevetmentMeasureResultBuilder:
 
         # 4. Output results.
         def measure_to_dict(measure: RevetmentMeasureData) -> dict:
-            measure.cost = measure.get_total_cost(json_file_case.section_length)
+            measure.cost = measure.get_total_cost(json_file_case.section_length, default_measure_unit_costs)
             return measure.__dict__
 
         self._output_to_csv(
@@ -358,7 +368,7 @@ class TestRevetmentMeasureResultBuilder:
         )
 
     def test_build_and_output_collection_from_json_files(
-        self, request: pytest.FixtureRequest
+        self, request: pytest.FixtureRequest, default_measure_unit_costs: MeasureUnitCosts,
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -375,6 +385,7 @@ class TestRevetmentMeasureResultBuilder:
                 _case.target_beta,
                 _case.transition_level,
                 _case.evaluation_year,
+                default_measure_unit_costs,
             )
             assert isinstance(_result, RevetmentMeasureResult)
             _results.append({"section_id": _case.section_id} | _result.__dict__)
@@ -390,7 +401,9 @@ class TestRevetmentMeasureResultBuilder:
         assert _output_file.exists()
         assert len(_output_file.read_text().splitlines()) == len(_results) + 1
 
-    def test_compare_revetment_measure_results_cost(self):
+    def test_compare_revetment_measure_results_cost(
+        self, default_measure_unit_costs: MeasureUnitCosts,
+    ):
         # 1. Define test data.
         _builder = RevetmentMeasureResultBuilder()
         _json_reader = JsonFilesToRevetmentDataClassReader()
@@ -414,6 +427,7 @@ class TestRevetmentMeasureResultBuilder:
                 _comparable_case.target_beta,
                 _comparable_case.transition_level,
                 _comparable_case.evaluation_year,
+                default_measure_unit_costs,
             )
 
             # 3. Verify expectations.

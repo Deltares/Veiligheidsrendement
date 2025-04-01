@@ -8,7 +8,7 @@ from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_c
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class CourseSandBarrierMeasureCalculator(
+class CoarseSandBarrierMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
     """
@@ -17,7 +17,7 @@ class CourseSandBarrierMeasureCalculator(
     """
 
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
-        return unit_costs.course_sand_barrier * self.dike_section.Length
+        return unit_costs.coarse_sand_barrier * self.dike_section.Length
 
     def calculate_reliability(self) -> SectionReliability:
         return self._get_configured_section_reliability()

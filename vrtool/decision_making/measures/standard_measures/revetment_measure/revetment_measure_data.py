@@ -8,6 +8,8 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     StoneSlopePart,
 )
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
+
 
 @dataclass
 class RevetmentMeasureData:
@@ -21,7 +23,7 @@ class RevetmentMeasureData:
     reinforce: bool
     tan_alpha: float
 
-    def get_total_cost(self, section_length: float) -> float:
+    def get_total_cost(self, section_length: float, unit_costs: MeasureUnitCosts) -> float:
         """
         Calculates the associated costs of this `RevetmentMeasureData` for a given dike section length (`section_length`).
 
@@ -36,19 +38,15 @@ class RevetmentMeasureData:
         """
         if not self.reinforce:
             return 0.0
-        _storage_factor = 1.000
 
-        # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
-        _cost_remove_steen = 15.66
-
-        # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52 * 2.509  # TODO update!
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
-        cost = np.array([206.89, 235.93, 264.06, 291.16, 318.26])
-        f = interp1d(D, cost, fill_value=("extrapolate"))
-        cost_new_steen = f(self.top_layer_thickness)
+        # Make sure values are sorted (check for consistency is done with import of unit_costs)
+        _block_revetment_installation = interp1d([key/100 for key in sorted(unit_costs.installation_of_blocks.keys())], 
+                                                 sorted(list(unit_costs.installation_of_blocks.values())), 
+                                                 fill_value=("extrapolate"))
+
+        _cost_new_block = _block_revetment_installation(self.top_layer_thickness)
 
         _slope_part_difference = self.end_part - self.begin_part
         x = _slope_part_difference / self.tan_alpha
@@ -61,19 +59,19 @@ class RevetmentMeasureData:
         area = z * section_length
 
         if StoneSlopePart.is_stone_slope_part(self.top_layer_type):  # cost of new steen
-            cost_vlak = _cost_remove_steen + cost_new_steen
+            cost_vlak = unit_costs.remove_block_revetment + _cost_new_block
         elif self.top_layer_type == 2026.0:
             # cost of new steen, when previous was gras
-            cost_vlak = cost_new_steen
+            cost_vlak = _cost_new_block
         elif GrassSlopePart.is_grass_part(self.top_layer_type):
-            # cost of removing old revetment when new revetment is gras
-            if self.previous_top_layer_type == 5.0:
-                cost_vlak = _cost_remove_asfalt
+            # cost of removing old revetment when new revetment is grass
+            if 1.0 <= self.previous_top_layer_type <= 5.0:
+                cost_vlak = unit_costs.remove_asphalt_revetment
             elif self.previous_top_layer_type == 20.0:
                 cost_vlak = 0.0
             else:
-                cost_vlak = _cost_remove_steen
+                cost_vlak = unit_costs.remove_block_revetment
         else:
             cost_vlak = 0.0
 
-        return area * cost_vlak * _storage_factor
+        return area * cost_vlak

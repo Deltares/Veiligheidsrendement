@@ -19,8 +19,6 @@ class AnchoredSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
         MeasureProtocol (Protocol): Protocol to implement / adhere by this class.
     """
 
-    _anchored_sheetpile_cost = 1100.0
-
     def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
         """
         Overriden method as it is the only difference with the `DiaphragmWallMeasure`.
@@ -39,4 +37,4 @@ class AnchoredSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
                 _h_dike, _d_cover, _length_sheetpile, _l_section
             )
         )
-        return self._anchored_sheetpile_cost * _length_sheetpile * _l_section
+        return self.unit_costs.anchored_sheetpile * _length_sheetpile * _l_section
