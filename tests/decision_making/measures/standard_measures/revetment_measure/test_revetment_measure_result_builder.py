@@ -359,7 +359,9 @@ class TestRevetmentMeasureResultBuilder:
 
         # 4. Output results.
         def measure_to_dict(measure: RevetmentMeasureData) -> dict:
-            measure.cost = measure.get_total_cost(json_file_case.section_length, default_measure_unit_costs)
+            measure.cost = measure.get_total_cost(
+                json_file_case.section_length, default_measure_unit_costs
+            )
             return measure.__dict__
 
         self._output_to_csv(
@@ -368,7 +370,9 @@ class TestRevetmentMeasureResultBuilder:
         )
 
     def test_build_and_output_collection_from_json_files(
-        self, request: pytest.FixtureRequest, default_measure_unit_costs: MeasureUnitCosts,
+        self,
+        request: pytest.FixtureRequest,
+        default_measure_unit_costs: MeasureUnitCosts,
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -402,7 +406,8 @@ class TestRevetmentMeasureResultBuilder:
         assert len(_output_file.read_text().splitlines()) == len(_results) + 1
 
     def test_compare_revetment_measure_results_cost(
-        self, default_measure_unit_costs: MeasureUnitCosts,
+        self,
+        default_measure_unit_costs: MeasureUnitCosts,
     ):
         # 1. Define test data.
         _builder = RevetmentMeasureResultBuilder()

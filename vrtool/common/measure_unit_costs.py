@@ -1,10 +1,10 @@
 import logging
+import re
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-import re
 
-from pandas import read_csv
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
+
 
 @dataclass
 class MeasureUnitCosts:
@@ -58,27 +58,37 @@ class MeasureUnitCosts:
         _normalized_dict = {}
 
         _block_dict = {}
-        # Get all keys containing 'installation of blocks' and extract the thickness. 
-        # Thickness should be in centimeters. 
-        # There can only be 1 numerical value in this string. 
+        # Get all keys containing 'installation of blocks' and extract the thickness.
+        # Thickness should be in centimeters.
+        # There can only be 1 numerical value in this string.
         # If there are two identical thicknesses an exception is raised.
-        for _block_key in filter(lambda x: 'installation of blocks' in x.lower(), unformatted_dict.keys()):
-            _thickness = [float(number) for number in re.findall(r'\d+\.?\d*', _block_key)]
+        for _block_key in filter(
+            lambda x: "installation of blocks" in x.lower(), unformatted_dict.keys()
+        ):
+            _thickness = [
+                float(number) for number in re.findall(r"\d+\.?\d*", _block_key)
+            ]
             if len(_thickness) != 1:
-                raise ValueError(f"Blokdikte niet gevonden voor key: {_block_key} in unit_costs.csv. Meerdere getalswaarden gevonden, check de consistentie.")
+                raise ValueError(
+                    f"Blokdikte niet gevonden voor key: {_block_key} in unit_costs.csv. Meerdere getalswaarden gevonden, check de consistentie."
+                )
             if float(_thickness[0]) in _block_dict.keys():
-                raise ValueError(f"Dubbele blokdikte gevonden voor key: {_block_key} in unit_costs.csv. Controleer de waarden en pas deze aan.")
+                raise ValueError(
+                    f"Dubbele blokdikte gevonden voor key: {_block_key} in unit_costs.csv. Controleer de waarden en pas deze aan."
+                )
             _block_dict[float(_thickness[0])] = unformatted_dict[_block_key]
-        
+
         unformatted_dict["Installation of blocks"] = _block_dict
-        
+
         for key, value in unformatted_dict.items():
             _normalized_key = normalize_key_name(key)
             if _normalized_key not in _existing_fields:
                 if "installation_of_blocks" in _normalized_key:
-                    continue          
-                #raise an error
-                raise ValueError(f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
+                    continue
+                # raise an error
+                raise ValueError(
+                    f"Kosten voor maatregel '{key}' gevonden, maar niet herkend in de VRTOOL. Controleer de waarden en pas deze aan in het bestand unit_costs.csv."
+                )
             _normalized_dict[_normalized_key] = value
 
         # Check if block_dict values increase with thickness.
@@ -86,10 +96,17 @@ class MeasureUnitCosts:
             # `store _block_dict` in 2 lists for keys and values using list comprehension.
             _thickness, _cost = zip(*list(_block_dict.items()))
             # `ensure _thickness` is increasing and get the indices of the sorted list.
-            _sorted_indices = sorted(range(len(_thickness)), key=lambda x: _thickness[x])
+            _sorted_indices = sorted(
+                range(len(_thickness)), key=lambda x: _thickness[x]
+            )
             # Check if `_cost` is increasing when sorted.
-            if not all(_cost[_sorted_indices[i]] <= _cost[_sorted_indices[i+1]] for i in range(len(_cost)-1)):
-                raise ValueError("Kosten voor installatie blokken dalen met toenemende dikte. Controleer de waarden en pas deze aan in het bestand unit_costs.csv.")
+            if not all(
+                _cost[_sorted_indices[i]] <= _cost[_sorted_indices[i + 1]]
+                for i in range(len(_cost) - 1)
+            ):
+                raise ValueError(
+                    "Kosten voor installatie blokken dalen met toenemende dikte. Controleer de waarden en pas deze aan in het bestand unit_costs.csv."
+                )
 
         return cls(**_normalized_dict)
 
@@ -115,9 +132,9 @@ class MeasureUnitCosts:
         _unit_cost_dict = cls.cost_dataframe_to_dict(_unit_cost_data)
 
         return cls.from_unformatted_dict(_unit_cost_dict)
-    
+
     @staticmethod
-    def cost_dataframe_to_dict(cost_dataframe: DataFrame) -> dict[str,float]:
+    def cost_dataframe_to_dict(cost_dataframe: DataFrame) -> dict[str, float]:
         """
         Converts a cost dataframe to a dictionary.
 
@@ -129,10 +146,12 @@ class MeasureUnitCosts:
         """
         _unit_cost_dict = {}
         for _, _series in cost_dataframe.iterrows():
-            #check if key is already in dict. If so, raise an error
+            # check if key is already in dict. If so, raise an error
             if _series["Description"] in _unit_cost_dict.keys():
-                raise ValueError(f"Dubbele kosten gevonden voor {_series['Description']} in unit_costs.csv. Controleer de waarden en pas deze aan.")
-            
+                raise ValueError(
+                    f"Dubbele kosten gevonden voor {_series['Description']} in unit_costs.csv. Controleer de waarden en pas deze aan."
+                )
+
             _unit_cost_dict[_series["Description"]] = _series["Cost"]
 
         return _unit_cost_dict

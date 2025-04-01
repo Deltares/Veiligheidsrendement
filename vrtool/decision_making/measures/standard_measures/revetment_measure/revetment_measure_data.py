@@ -3,12 +3,11 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.interpolate import interp1d
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
-
-from vrtool.common.measure_unit_costs import MeasureUnitCosts
 
 
 @dataclass
@@ -23,7 +22,9 @@ class RevetmentMeasureData:
     reinforce: bool
     tan_alpha: float
 
-    def get_total_cost(self, section_length: float, unit_costs: MeasureUnitCosts) -> float:
+    def get_total_cost(
+        self, section_length: float, unit_costs: MeasureUnitCosts
+    ) -> float:
         """
         Calculates the associated costs of this `RevetmentMeasureData` for a given dike section length (`section_length`).
 
@@ -39,12 +40,13 @@ class RevetmentMeasureData:
         if not self.reinforce:
             return 0.0
 
-
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
         # Make sure values are sorted (check for consistency is done with import of unit_costs)
-        _block_revetment_installation = interp1d([key/100 for key in sorted(unit_costs.installation_of_blocks.keys())], 
-                                                 sorted(list(unit_costs.installation_of_blocks.values())), 
-                                                 fill_value=("extrapolate"))
+        _block_revetment_installation = interp1d(
+            [key / 100 for key in sorted(unit_costs.installation_of_blocks.keys())],
+            sorted(list(unit_costs.installation_of_blocks.values())),
+            fill_value=("extrapolate"),
+        )
 
         _cost_new_block = _block_revetment_installation(self.top_layer_thickness)
 

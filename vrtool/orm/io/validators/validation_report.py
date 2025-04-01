@@ -6,6 +6,7 @@ class ValidationError:
     error_message: str
     context_object: object
 
+
 @dataclass
 class ValidationReport:
     context: object
