@@ -2,7 +2,7 @@ import hashlib
 import shutil
 from pathlib import Path
 from typing import Iterator
-
+import copy
 import pytest
 from peewee import SqliteDatabase
 
@@ -39,9 +39,10 @@ from vrtool.orm.orm_controllers import (
     vrtool_db,
 )
 
-acceptance_test_cases = list(
+
+acceptance_test_cases : list[tuple[AcceptanceTestCase, bool, bool]] = list(
     map(
-        lambda x: pytest.param(x, id=x.model_directory),
+        lambda x: pytest.param(x, x.run_adjusted_timing, x.run_filtered, id=x.model_directory),
         AcceptanceTestCase.get_cases(),
     )
 )
@@ -121,12 +122,12 @@ class TestApiRunWorkflowsAcceptance:
         _test_config.externals = test_externals
 
         # We need to create a copy of the database on the input directory.
-        _test_db_name = "test_{}.db".format(
+        _test_db_name = "vrtool_input_{}.db".format(
             hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
         )
         _test_config.input_database_name = _test_db_name
 
-        # Create a copy of the database to avoid parallelization runs locked databases.
+        # Create a copy of the database to avoid parallellization runs locked databases.
         _reference_db_file = _test_input_directory.joinpath(vrtool_db_default_name)
         assert _reference_db_file.exists(), "No database found at {}.".format(
             _reference_db_file
@@ -167,7 +168,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[0:6],
+        acceptance_test_cases[0:6][0],
         indirect=True,
     )
     def test_run_step_assessment(self, api_vrtool_config: VrtoolConfig):
@@ -188,7 +189,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[:][0],
         indirect=True,
     )
     def test_run_step_measure(self, api_vrtool_config: VrtoolConfig):
@@ -234,7 +235,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[:][0],
         indirect=True,
     )
     def test_run_step_optimization_for_target_reliability(
@@ -246,7 +247,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[:][0],
         indirect=True,
     )
     def test_run_step_optimization_for_greedy_optimization(
@@ -258,7 +259,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[0:2],
+        acceptance_test_cases[0:2][0],
         indirect=True,
     )
     @pytest.mark.regenerate_test_db
@@ -299,7 +300,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[0:2],
+        acceptance_test_cases[0:2][0],
         indirect=True,
     )
     @pytest.mark.regenerate_test_db
@@ -355,7 +356,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[0:1],
+        acceptance_test_cases[0:1][0],
         indirect=True,
     )
     def test_run_full_given_simple_test_case(self, api_vrtool_config: VrtoolConfig):
@@ -372,19 +373,71 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(api_vrtool_config)
 
+    def _run_step_optimization_filtered(
+            self,
+            vrtool_config: VrtoolConfig,
+            validator: RunStepOptimizationValidator,
+            request: pytest.FixtureRequest):
+        
+        # Copy the config.
+        _filtered_vrtool_config = copy.deepcopy(vrtool_config)
+
+        # Get copy of the base input database.
+        _base_db_path = vrtool_config.input_database_path
+        _filtered_vrtool_config.input_database_name =  vrtool_config.input_database_name.replace("vrtool_input", "vrtool_input_filtered")
+        if _filtered_vrtool_config.input_database_path.exists():
+            _filtered_vrtool_config.input_database_path.unlink(missing_ok=True)
+        shutil.copy(_base_db_path, _filtered_vrtool_config.input_database_path)
+
+        # Run the optimization step with the filtered measures.
+
+        # 1. Define test data.
+        # We reuse existing measure results, but we clear the optimization ones.
+        _new_optimization_name = "test_filtered_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        clear_optimization_results(_filtered_vrtool_config)
+
+        validator.validate_preconditions(_filtered_vrtool_config)
+
+        # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
+        _measure_ids = [
+            _get_all_measure_results_of_specific_type(_filtered_vrtool_config, measure_type)
+            for measure_type in [
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.REVETMENT,
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
+            ]
+        ]
+        # flatten list of _measure_ids
+        _measure_ids = [item for sublist in _measure_ids for item in sublist]
+        # each measure should be executed in year 0 so generate tuples of id and 0
+        _measures_input = [(measure_id, 0) for measure_id in _measure_ids]
+
+        # 2. Run test.
+        run_step_optimization(
+            _filtered_vrtool_config, _new_optimization_name, _measures_input
+        )
+
     @pytest.mark.skip(
         reason="Only used for generating new reference databases. Run with the --no-skip option."
     )
     @pytest.mark.parametrize(
-        "api_vrtool_config",
+        "api_vrtool_config, run_adjusted_timing, run_filtered",
         acceptance_test_cases,
-        indirect=True,
+        indirect=["api_vrtool_config"],
     )
     @pytest.mark.regenerate_test_db
-    def test_run_full_to_generate_results(self, api_vrtool_config: VrtoolConfig):
+    def test_run_full_to_generate_results(self, api_vrtool_config: VrtoolConfig, run_adjusted_timing: bool, run_filtered: bool, request: pytest.FixtureRequest):
         """
         This test is only meant to regenerate the references for the large test cases.
         You can run this test from command line with:
         `pytest -m "regenerate_test_db" --no-skips`
         """
         run_full(api_vrtool_config)
+
+        if run_filtered:
+            _validator = RunStepOptimizationValidator("_filtered")
+            self._run_step_optimization_filtered(api_vrtool_config, _validator, request)
+        if run_adjusted_timing:
+            pass
