@@ -99,7 +99,7 @@ class AcceptanceTestCase:
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Custom Measures, MVP",
+                case_name="Traject 38-1, custom Measures, MVP",
             ),
             AcceptanceTestCase(
                 model_directory="38-1 custom measures high betas low costs",
