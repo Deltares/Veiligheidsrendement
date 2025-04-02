@@ -137,7 +137,7 @@ class TestMain:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "cli_config_dirs",
-        ["38-1 two river sections"],
+        ["38-1_two_river_sections"],
         indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
