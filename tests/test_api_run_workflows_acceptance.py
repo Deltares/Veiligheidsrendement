@@ -331,7 +331,7 @@ class TestApiRunWorkflowsAcceptance:
             validator: RunStepOptimizationValidator,
             request: pytest.FixtureRequest):
         
-        # Run the optimization step with the filtered measures.
+        # Run the optimization step with the adjusted timing.
 
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
@@ -426,7 +426,13 @@ class TestApiRunWorkflowsAcceptance:
         This test is only meant to regenerate the references for the large test cases.
         You can run this test from command line with:
         `pytest -m "regenerate_test_db" --no-skips`
+
+        For cases that are configured to run with filtering and/or adjusted timing,
+        an additional optimization run is done with the measure results of the full run of the main case.
+        This generates an additional database with the suffix "_filtered" or "_adjusted_timing".
         """
+
+        # Run the main case
         run_full(api_vrtool_config)
 
         def _get_copied_vrtool_config(suffix: str) -> VrtoolConfig:
@@ -450,6 +456,7 @@ class TestApiRunWorkflowsAcceptance:
                 )
                 shutil.move(vrtool_config.input_database_path, _results_db_name)
 
+        # Run the optimization step with filtered measures.
         if run_filtered:
             _suffix = "_filtered"
 
@@ -462,6 +469,7 @@ class TestApiRunWorkflowsAcceptance:
             # Copy the results
             _copy_results(_filtered_vrtool_config, _suffix)
 
+        # Run the optimization step with adjusted timing.
         if run_adjusted_timing:
             _suffix = "_adjusted_timing"
 
