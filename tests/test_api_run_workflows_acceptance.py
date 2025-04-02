@@ -42,7 +42,7 @@ from vrtool.orm.orm_controllers import (
 
 acceptance_test_cases = list(
     map(
-        lambda x: pytest.param(x, id=x.model_directory),
+        lambda x: pytest.param(x, id=x.case_name),
         AcceptanceTestCase.get_cases(),
     )
 )
@@ -57,7 +57,7 @@ acceptance_test_cases_with_optimization_filtering = list(
 
 acceptance_test_cases_with_optimization_run_settings = list(
     map(
-        lambda x: pytest.param(x, x.run_adjusted_timing, x.run_filtered, id=x.model_directory),
+        lambda x: pytest.param(x, x.run_adjusted_timing, x.run_filtered, id=x.case_name),
         AcceptanceTestCase.get_cases(),
     )
 )

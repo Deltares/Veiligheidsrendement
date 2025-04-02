@@ -29,6 +29,13 @@ class AcceptanceTestCase:
     run_adjusted_timing: bool = False
     run_filtered: bool = False
 
+    @property
+    def case_name(self) -> str:
+        """
+        Returns the name of the test case, which is the same as the model directory.
+        """
+        return self.model_directory.replace("_", " ")
+
     @staticmethod
     def get_cases() -> list[AcceptanceTestCase]:
         # Defining acceptance test cases so they are accessible from the other test classes.
