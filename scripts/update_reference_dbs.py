@@ -1,7 +1,9 @@
+import glob
 from pathlib import Path
 from shutil import copyfile
 
 from tests import test_data, test_results
+from tests.api_acceptance_cases.acceptance_test_case import AcceptanceTestCase
 
 
 def update_reference_dbs():
@@ -17,76 +19,38 @@ def update_reference_dbs():
         `poetry run pytest tests -v -m "regenerate_test_db" --no-skip`.
     Carefully inspect the results before updating the reference databases.
     """
-    print("Updating reference databases...")
-
-    _acceptance_cases: dict[tuple[str, str], list[str]] = {
-        ("test_run_full_to_generate_results", ""):
-        [
-            "base coastal",
-            "mixed coastal",
-            "two coastal",
-            "base river",
-            "two river",
-            "anchored sheetpile",
-            "D-stability",
-            "custom measures",
-            "high betas",
-            "low betas",
-            "real cases",
-        ],
-        ("test_run_step_optimization_with_filtering", "filtered"):
-        [
-            "two coastal",
-            "two river",
-        ],
-        ("test_run_step_optimization_with_adjusted_timing", "adjusted_timing"):
-        [
-            "two coastal",
-            "two river",
-        ],
-    }
-      
-    def _find_matching_dir(root_path: Path, keyword: str) -> Path:
-        _candidate_items = root_path.glob(f"*{keyword}*")
-        _candidate_dirs = [d for d in _candidate_items if d.is_dir()]
-        assert len(_candidate_dirs) > 0, f"No directory found for case '{keyword}' in {root_path}."
-
-        if len(_candidate_dirs) == 1:
-            return _candidate_dirs[0]
-        
-        # find the directory with the shortest name
-        _candidate_dirs.sort(key=lambda p: len(str(p)))
-        return _candidate_dirs[0]
+    _test_results_dir = test_results.joinpath("TestApiRunWorkflowsAcceptance", "test_run_full_to_generate_results")
     
+    print(f"UPDATING reference databases in {test_data}\n\tfrom {_test_results_dir}")
+
     # Loop over the cases
-    for (_folder, suffix), _case_keywords in _acceptance_cases.items():
+    for _case in AcceptanceTestCase.get_cases():
 
-        for _case in _case_keywords:
+            # Find result directory
+            _result_dir = _test_results_dir.joinpath(_case.model_directory)
 
-            # Find result database
-            _result_dir = _find_matching_dir(test_results.joinpath("TestApiRunWorkflowsAcceptance", _folder), _case.replace(" ", "_"))
-            _result_db = _result_dir.joinpath("vrtool_result.db")
-            if not _result_db.is_file():
-                print(f"SKIPPING {_result_db}: Result database not found.")
+            # Copy the result databases
+            _result_dbs = glob.glob(str(_result_dir.joinpath("vrtool_result*.db")))
+            if not _result_dbs:
+                print(f"SKIPPING {_result_dir}\n\tNo result databases found.")
                 continue
 
-            # Find reference database
-            _reference_dir = _find_matching_dir(test_data, _case)
-            _db_name = "vrtool_input.db"
-            if suffix:
-                _db_name = f"vrtool_input_{suffix}.db"
-            _reference_db = _reference_dir.joinpath(_db_name)
-            assert _reference_db.is_file(), f"Reference database not found: {_reference_db}"
+            for _result_db in _result_dbs:
+                _result_db = Path(_result_db)
+                _reference_db = test_data.joinpath(_case.model_directory, _result_db.name.replace("vrtool_result", "vrtool_input"))
+                if not _reference_db.is_file():
+                    print(f"SKIPPING {_result_db}\n\tNo reference database found at: {_reference_db}")
+                    continue
 
-            # Check timestamp of the result database
-            _result_db_timestamp = _result_db.stat().st_mtime
-            _reference_db_timestamp = _reference_db.stat().st_mtime
-            if _reference_db_timestamp >= _result_db_timestamp:
-                print(f"SKIPPING {_reference_db}: Reference database is up to date.")
-                continue
+                # Check timestamp of the result database
+                _result_db_timestamp = _result_db.stat().st_mtime
+                _reference_db_timestamp = _reference_db.stat().st_mtime
+                if _reference_db_timestamp >= _result_db_timestamp:
+                    print(f"SKIPPING {_result_db}\n\tReference database is up to date: {_reference_db}")
+                    continue
 
-            # Copy the result database to the reference database
-            _reference_db.unlink()
-            copyfile(_result_db, _reference_db)
-            print(f"UPDATING {_reference_db} from {_result_db}.")
+                # Copy the result database to the reference database
+                _reference_db.unlink()
+                copyfile(_result_db, _reference_db)
+                print(f"UPDATING {_reference_db}\n\tfrom {_result_db}")
     
