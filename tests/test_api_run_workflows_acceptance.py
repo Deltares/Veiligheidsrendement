@@ -352,7 +352,7 @@ class TestApiRunWorkflowsAcceptance:
             ]
         ]
         # flatten list of _measure_ids
-        _measure_ids = [item for sublist in _measure_ids for item in sublist]
+        _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
 
         # get the sections for each measure
         _sections_per_measure_id = _get_list_of_sections_for_measure_ids(
