@@ -204,7 +204,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[:],
+        acceptance_test_cases,
         indirect=True,
     )
     def test_run_step_measure(self, api_vrtool_config: VrtoolConfig):
@@ -250,7 +250,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[:],
+        acceptance_test_cases,
         indirect=True,
     )
     def test_run_step_optimization_for_target_reliability(
@@ -262,7 +262,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
-        acceptance_test_cases[:],
+        acceptance_test_cases,
         indirect=True,
     )
     def test_run_step_optimization_for_greedy_optimization(
@@ -313,7 +313,6 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases_with_optimization_filtering,
         indirect=True,
     )
-    @pytest.mark.regenerate_test_db
     def test_run_step_optimization_with_filtering(
         self, api_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -378,7 +377,6 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases_with_optimization_adjusted_timing,
         indirect=True,
     )
-    @pytest.mark.regenerate_test_db
     def test_run_step_optimization_with_adjusted_timing(
         self, api_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -386,7 +384,7 @@ class TestApiRunWorkflowsAcceptance:
         # The post validation is not reliable as the way to calculate lcc's does not
         # seem to be accurate when dealing with filtered timings.
         _validator = RunStepOptimizationValidator(
-            reference_db_suffix="_adjusted_timing", report_validation=False
+            "_adjusted_timing", False
         )
 
         # 2. Run test.
@@ -470,7 +468,7 @@ class TestApiRunWorkflowsAcceptance:
              # Copy the config.
             _filtered_vrtool_config = _get_copied_vrtool_config(_suffix)
 
-            _validator = RunStepOptimizationValidator(_suffix)
+            _validator = RunStepOptimizationValidator(_suffix, False)
             self._run_step_optimization_with_adjusted_timing(_filtered_vrtool_config, _validator, request)
 
             # Copy the results
