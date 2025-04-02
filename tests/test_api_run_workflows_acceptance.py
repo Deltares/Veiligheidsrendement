@@ -421,7 +421,7 @@ class TestApiRunWorkflowsAcceptance:
                 _copied_vrtool_config.input_database_path.unlink(missing_ok=True)
             shutil.copy(_base_db_path, _copied_vrtool_config.input_database_path)
 
-            return _filtered_vrtool_config
+            return _copied_vrtool_config
 
         if run_filtered:
             _filtered_vrtool_config = _get_copied_vrtool_config("_filtered")
