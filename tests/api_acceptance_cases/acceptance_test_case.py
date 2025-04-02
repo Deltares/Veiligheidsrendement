@@ -98,6 +98,14 @@ class AcceptanceTestCase:
                 ],
             ),
             AcceptanceTestCase(
+                model_directory="38-1_two_river_sections_beta_piping_input",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+            ),
+            AcceptanceTestCase(
                 model_directory="38-1_custom_measures",
                 traject_name="38-1",
                 excluded_mechanisms=[
