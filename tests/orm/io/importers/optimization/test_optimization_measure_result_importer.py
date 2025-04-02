@@ -53,7 +53,7 @@ class TestOptimizationMeasureResultImporter:
         assert all(isinstance(_ir, MeasureAsInputProtocol) for _ir in _imported_results)
 
     @pytest.mark.fixture_database(
-        test_data.joinpath("38-1 custom measures", "with_aggregated_measures.db")
+        test_data.joinpath("38-1_custom_measures", "with_aggregated_measures.db")
     )
     def test_get_measure_as_input_types_custom_measure_returns_sh_sg(
         self, custom_measures_vrtool_config: VrtoolConfig
@@ -84,7 +84,7 @@ class TestOptimizationMeasureResultImporter:
         assert all(_et in _importer_data_collection_types for _et in _expected_types)
 
     @pytest.mark.fixture_database(
-        test_data.joinpath("38-1 custom measures", "with_aggregated_measures.db")
+        test_data.joinpath("38-1_custom_measures", "with_aggregated_measures.db")
     )
     def test_import_orm_for_custom_measures(
         self, custom_measures_vrtool_config: VrtoolConfig

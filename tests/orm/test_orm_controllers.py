@@ -1109,7 +1109,7 @@ class TestCustomMeasureDetail:
     This test class mostly covers integration tests for `CustomMeasureDetail` workflows.
     """
 
-    _custom_measures_test_dir = test_data.joinpath("38-1 custom measures")
+    _custom_measures_test_dir = test_data.joinpath("38-1_custom_measures")
 
     def _get_custom_measure_dict(
         self,
