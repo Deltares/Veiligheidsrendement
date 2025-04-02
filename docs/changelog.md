@@ -1,8 +1,26 @@
+## v1.1.0 (2025-04-02)
+
+### Feat
+
+- VRTOOL-601 Add step type for target (#391)
+- VRTOOL 562 Do not check revetment if turned off (#387)
+- VRTOOL-188 Account for length effect in sections (#375)
+- VRTOOL-449 Log filename (generated from CLI calls) contains now date and time (#382)
+- VRTOOL 599 Add option to directly input beta for piping. (#378)
+- VRTOOL-598 Add json full path
+- VRTOOL-604 Upgraded to python 3.12 (#365)
+
+### Fix
+
+- VRTOOL-595 Fix diverse issues with cost computation (#388)
+- VRTOOL-602 questionable revetment grid (#363)
+- VRTOOL-449 Logging file not happening during cli run (#369)
+
 ## v1.0.1 (2024-09-24)
 
 ### Fix
 
-- Write value to correct object (#360)
+- write value to correct object (#360)
 
 ## v1.0.0 (2024-09-16)
 
