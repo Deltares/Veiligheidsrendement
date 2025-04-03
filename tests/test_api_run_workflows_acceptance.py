@@ -351,7 +351,7 @@ class TestApiRunWorkflowsAcceptance:
                 MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             ]
         ]
-        # flatten list of _measure_ids
+        # flatten list of _measure_ids ans sort
         _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
 
         # get the sections for each measure
