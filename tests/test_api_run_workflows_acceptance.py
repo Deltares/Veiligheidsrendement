@@ -1,8 +1,9 @@
+import copy
 import hashlib
 import shutil
 from pathlib import Path
 from typing import Iterator
-import copy
+
 import pytest
 from peewee import SqliteDatabase
 
@@ -39,7 +40,6 @@ from vrtool.orm.orm_controllers import (
     vrtool_db,
 )
 
-
 acceptance_test_cases = list(
     map(
         lambda x: pytest.param(x, id=x.case_name),
@@ -57,7 +57,9 @@ acceptance_test_cases_with_optimization_filtering = list(
 
 acceptance_test_cases_with_optimization_run_settings = list(
     map(
-        lambda x: pytest.param(x, x.run_adjusted_timing, x.run_filtered, id=x.case_name),
+        lambda x: pytest.param(
+            x, x.run_adjusted_timing, x.run_filtered, id=x.case_name
+        ),
         AcceptanceTestCase.get_cases(),
     )
 )
@@ -271,13 +273,14 @@ class TestApiRunWorkflowsAcceptance:
         self._run_step_optimization_for_strategy(
             api_vrtool_config, "Veiligheidsrendement", request
         )
-    
+
     def _run_step_optimization_with_filtering(
-            self,
-            vrtool_config: VrtoolConfig,
-            validator: RunStepOptimizationValidator,
-            request: pytest.FixtureRequest):
-        
+        self,
+        vrtool_config: VrtoolConfig,
+        validator: RunStepOptimizationValidator,
+        request: pytest.FixtureRequest,
+    ):
+
         # Run the optimization step with the filtered measures.
 
         # 1. Define test data.
@@ -304,9 +307,7 @@ class TestApiRunWorkflowsAcceptance:
         _measures_input = [(measure_id, 0) for measure_id in _measure_ids]
 
         # 2. Run test.
-        run_step_optimization(
-            vrtool_config, _new_optimization_name, _measures_input
-        )
+        run_step_optimization(vrtool_config, _new_optimization_name, _measures_input)
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
@@ -320,17 +321,20 @@ class TestApiRunWorkflowsAcceptance:
         _validator = RunStepOptimizationValidator("_filtered")
 
         # 2. Run test.
-        self._run_step_optimization_with_filtering(api_vrtool_config, _validator, request)
+        self._run_step_optimization_with_filtering(
+            api_vrtool_config, _validator, request
+        )
 
         # 3. Verify expectations.
         _validator.validate_results(api_vrtool_config)
-    
+
     def _run_step_optimization_with_adjusted_timing(
-            self,
-            vrtool_config: VrtoolConfig,
-            validator: RunStepOptimizationValidator,
-            request: pytest.FixtureRequest):
-        
+        self,
+        vrtool_config: VrtoolConfig,
+        validator: RunStepOptimizationValidator,
+        request: pytest.FixtureRequest,
+    ):
+
         # Run the optimization step with the adjusted timing.
 
         # 1. Define test data.
@@ -368,9 +372,7 @@ class TestApiRunWorkflowsAcceptance:
         ]
 
         # 2. Run test.
-        run_step_optimization(
-            vrtool_config, _new_optimization_name, _measures_input
-        )
+        run_step_optimization(vrtool_config, _new_optimization_name, _measures_input)
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
@@ -383,12 +385,12 @@ class TestApiRunWorkflowsAcceptance:
         # 1. Define test data.
         # The post validation is not reliable as the way to calculate lcc's does not
         # seem to be accurate when dealing with filtered timings.
-        _validator = RunStepOptimizationValidator(
-            "_adjusted_timing", False
-        )
+        _validator = RunStepOptimizationValidator("_adjusted_timing", False)
 
         # 2. Run test.
-        self._run_step_optimization_with_adjusted_timing(api_vrtool_config, _validator, request)
+        self._run_step_optimization_with_adjusted_timing(
+            api_vrtool_config, _validator, request
+        )
 
         # 3. Verify expectations.
         _validator.validate_results(api_vrtool_config)
@@ -421,7 +423,13 @@ class TestApiRunWorkflowsAcceptance:
         indirect=["api_vrtool_config"],
     )
     @pytest.mark.regenerate_test_db
-    def test_run_full_to_generate_results(self, api_vrtool_config: VrtoolConfig, run_adjusted_timing: bool, run_filtered: bool, request: pytest.FixtureRequest):
+    def test_run_full_to_generate_results(
+        self,
+        api_vrtool_config: VrtoolConfig,
+        run_adjusted_timing: bool,
+        run_filtered: bool,
+        request: pytest.FixtureRequest,
+    ):
         """
         This test is only meant to regenerate the references for the large test cases.
         You can run this test from command line with:
@@ -441,7 +449,11 @@ class TestApiRunWorkflowsAcceptance:
 
             # Get copy of the base input database.
             _base_db_path = api_vrtool_config.input_database_path
-            _copied_vrtool_config.input_database_name =  api_vrtool_config.input_database_name.replace("vrtool_input", f"vrtool_input{suffix}")
+            _copied_vrtool_config.input_database_name = (
+                api_vrtool_config.input_database_name.replace(
+                    "vrtool_input", f"vrtool_input{suffix}"
+                )
+            )
             if _copied_vrtool_config.input_database_path.exists():
                 _copied_vrtool_config.input_database_path.unlink(missing_ok=True)
             shutil.copy(_base_db_path, _copied_vrtool_config.input_database_path)
@@ -464,7 +476,9 @@ class TestApiRunWorkflowsAcceptance:
             _filtered_vrtool_config = _get_copied_vrtool_config(_suffix)
 
             _validator = RunStepOptimizationValidator(_suffix)
-            self._run_step_optimization_with_filtering(_filtered_vrtool_config, _validator, request)
+            self._run_step_optimization_with_filtering(
+                _filtered_vrtool_config, _validator, request
+            )
 
             # Copy the results
             _copy_results(_filtered_vrtool_config, _suffix)
@@ -473,11 +487,13 @@ class TestApiRunWorkflowsAcceptance:
         if run_adjusted_timing:
             _suffix = "_adjusted_timing"
 
-             # Copy the config.
+            # Copy the config.
             _filtered_vrtool_config = _get_copied_vrtool_config(_suffix)
 
             _validator = RunStepOptimizationValidator(_suffix, False)
-            self._run_step_optimization_with_adjusted_timing(_filtered_vrtool_config, _validator, request)
+            self._run_step_optimization_with_adjusted_timing(
+                _filtered_vrtool_config, _validator, request
+            )
 
             # Copy the results
             _copy_results(_filtered_vrtool_config, _suffix)
