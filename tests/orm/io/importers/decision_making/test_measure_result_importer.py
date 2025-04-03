@@ -9,7 +9,7 @@ from vrtool.orm.orm_controllers import open_database
 class TestMeasureResultImporter:
     def test_given_valid_measure_result_import_as_expected(self):
         # 1. Define test data.
-        _test_db = test_data.joinpath("38-1 base river case", "vrtool_input.db")
+        _test_db = test_data.joinpath("38-1_base_river_case", "vrtool_input.db")
         assert _test_db.is_file()
 
         _db = open_database(_test_db)

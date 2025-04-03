@@ -8,7 +8,7 @@ from peewee import SqliteDatabase
 from tests import get_clean_test_results_dir, test_data
 from vrtool.orm.orm_controllers import initialize_database
 
-_database_ref_dir = test_data.joinpath("38-1 custom measures")
+_database_ref_dir = test_data.joinpath("38-1_custom_measures")
 
 
 @pytest.fixture(name="custom_measure_db_context")

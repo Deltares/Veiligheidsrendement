@@ -28,6 +28,7 @@ packages = [{ include = "vrtool" }]
 
 [tool.poetry.scripts]
 migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databases"
+update_reference_dbs = "scripts.update_reference_dbs:update_reference_dbs"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
