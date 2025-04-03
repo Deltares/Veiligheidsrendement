@@ -452,7 +452,7 @@ class TestApiRunWorkflowsAcceptance:
             # Copy the results.
             if vrtool_config.input_database_path.exists():
                 _results_db_name = vrtool_config.output_directory.joinpath(
-                    f"vrtool_results{suffix}.db"
+                    f"vrtool_result{suffix}.db"
                 )
                 shutil.move(vrtool_config.input_database_path, _results_db_name)
 
