@@ -1,3 +1,9 @@
+## v1.1.1 (2025-06-24)
+
+### Feat
+
+- 394 enhance updating reference dbs (#395)
+
 ## v1.1.0 (2025-04-02)
 
 ### Feat
