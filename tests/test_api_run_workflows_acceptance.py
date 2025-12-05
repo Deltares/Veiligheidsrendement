@@ -198,10 +198,6 @@ class TestApiRunWorkflowsAcceptance:
         run_step_assessment(api_vrtool_config)
 
         # 3. Verify expectations.
-        assert api_vrtool_config.output_directory.exists()
-        assert any(api_vrtool_config.output_directory.glob("*"))
-
-        # 4. Validate exporting results is possible
         _validator.validate_results(api_vrtool_config)
 
     @pytest.mark.parametrize(

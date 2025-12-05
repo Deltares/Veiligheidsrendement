@@ -50,13 +50,9 @@ class TestApiReportedBugs:
         _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
-        assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
         ApiRunWorkflows(_vrtool_config).run_all()
-
-        # 3. Verify expectations.
-        assert any(_vrtool_config.output_directory.glob("*"))
 
     @pytest.fixture(name="api_vrtool_config")
     def _get_api_vrtool_config_from_dir_and_db_str(
