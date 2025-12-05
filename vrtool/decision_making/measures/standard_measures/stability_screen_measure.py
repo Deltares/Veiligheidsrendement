@@ -154,12 +154,11 @@ class StabilityScreenMeasure(MeasureProtocol):
 
             # Save and run new model
             _original_name = _dstability_wrapper.stix_path.stem
-            _export_path = (
-                self.config.output_directory
-                / "intermediate_result"
-                / _dstability_wrapper.stix_path.with_stem(
+            _export_path = self.config.output_directory.joinpath(
+                "intermediate_result",
+                _dstability_wrapper.stix_path.with_stem(
                     _original_name + "_stability_screen"
-                ).name
+                ).name,
             )
 
             if not _export_path.parent.exists():

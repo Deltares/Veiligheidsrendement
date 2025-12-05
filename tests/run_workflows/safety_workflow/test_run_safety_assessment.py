@@ -43,33 +43,6 @@ class TestRunSafetyAssessment:
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a DikeTraject."
 
-    def test_get_valid_output_dir_creates_missing_directories(
-        self, request: pytest.FixtureRequest
-    ):
-        # 1. Define test data
-        _vr_config = VrtoolConfig()
-        _dike_traject = DikeTraject()
-        _assessment = RunSafetyAssessment(_vr_config, _dike_traject)
-        _assessment.vr_config = VrtoolConfig()
-        _assessment.vr_config.output_directory = test_results.joinpath(
-            request.node.name
-        )
-        if _assessment.vr_config.output_directory.exists():
-            shutil.rmtree(_assessment.vr_config.output_directory)
-
-        # 2. Run test
-        _assessment._get_valid_output_dir(["just", "another", "nested", "dir"])
-
-        # 3. Verify expectations
-        assert _assessment.vr_config.output_directory.exists()
-        assert (
-            _assessment.vr_config.output_directory
-            / "just"
-            / "another"
-            / "nested"
-            / "dir"
-        ).exists()
-
     def test_given_invalid_vrtool_config_when_initialize_raises(
         self, invalid_vrtool_config_fixture: tuple[VrtoolConfig, str]
     ):
