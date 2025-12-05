@@ -54,7 +54,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results = ResultsSafetyAssessment()
         _results.selected_traject = self.selected_traject
         _results.vr_config = self.vr_config
-        _results._write_results_to_file()
 
         logging.info("Stap 1 afgerond.")
 
