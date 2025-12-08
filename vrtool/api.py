@@ -62,6 +62,9 @@ def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
     if not _vr_config.output_directory.exists():
         _vr_config.output_directory.mkdir(parents=True)
 
+    logging.info("Geldige configuratie geladen: %s met settings:", str(_vr_config))
+    logging.info(_vr_config.to_json())
+
     return _vr_config
 
 
