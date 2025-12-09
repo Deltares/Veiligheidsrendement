@@ -26,14 +26,13 @@ def cli(externals: click.Path | None):
     __externals_path = Path(externals) if externals else None
 
 
-def _initialize_log_file(log_dir: click.Path | None):
-    # Logging dir.
+def _initialize_log_file(log_dir: click.Path):
     if log_dir is None:
-        log_dir = Path.cwd()
+        raise ValueError("Log directory cannot be None.")
 
     # Define logging filename and initialize handler
     _current_date = datetime.today().strftime("%Y%m%d_%H%M")
-    _log_file = Path(log_dir).joinpath(f"vrtool_logging_{_current_date}.log")
+    _log_file = Path(log_dir).joinpath(f"vrtool_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
     logging.info("Start logging vanuit %s", str(_log_file))
 
@@ -57,6 +56,8 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None, ext
     Runs the step assessment.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     logging.info("Start beoordeling met configuratie %s", str(config_file))
@@ -78,6 +79,8 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     Runs step measures.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     logging.info(
@@ -105,6 +108,8 @@ def run_step_optimization(
     Runs step optimization.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     _config_file = Path(config_file)
@@ -130,6 +135,8 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     Runs all the veiligheidsrendement steps (assessment, measures and optimization).
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
     logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
