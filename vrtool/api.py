@@ -242,20 +242,6 @@ class ApiRunWorkflows:
             ResultsOptimization: The final results contained in the `ResultsOptimization`.
         """
         # Run all steps with one command.
-        if not self.vrtool_config.output_directory.is_dir():
-            logging.info(
-                "Aanmaken uitvoerfolders op {}".format(
-                    self.vrtool_config.output_directory
-                )
-            )
-            self.vrtool_config.output_directory.mkdir(parents=True, exist_ok=True)
-            self.vrtool_config.output_directory.joinpath("figures").mkdir(
-                parents=True, exist_ok=True
-            )
-            self.vrtool_config.output_directory.joinpath(
-                "results", "investment_steps"
-            ).mkdir(parents=True, exist_ok=True)
-
         logging.info("Start beoordeling & doorrekenen maatregelen.")
 
         # Step 1 + 2. Run assessment through running measures.
