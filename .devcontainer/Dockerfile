@@ -22,6 +22,7 @@ ENV PIXI_HOME=$SRC_ROOT/.pixi
 # This location needs to be mounted with your vrtool checkout:
 # -v {your_vrtool_checkout_dir}:/usr/src/app
 WORKDIR $SRC_ROOT/app
-
+RUN apt-get update
+RUN apt-get install -y dotnet-sdk-8.0
 # Define the endpoint
 CMD [ "/bin/bash" ]
