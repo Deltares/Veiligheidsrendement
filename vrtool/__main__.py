@@ -1,10 +1,8 @@
 import logging
 from datetime import datetime
-from math import log
 from pathlib import Path
 
 import click
-from tomlkit import value
 
 from vrtool import api
 from vrtool.orm.version.migration import default_scripts_dir
@@ -22,7 +20,7 @@ def cli():
     pass
 
 
-def _initialize_log_file(log_dir: click.Path, step_name: str):
+def _initialize_log_file(log_dir: click.Path):
     if log_dir is None:
         raise ValueError("Log directory cannot be None.")
 
@@ -30,9 +28,6 @@ def _initialize_log_file(log_dir: click.Path, step_name: str):
     _current_date = datetime.today().strftime("%Y%m%d_%H%M")
     _log_file = Path(log_dir).joinpath(f"vrtool_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
-    logging.info("Run type: %s", step_name)
-    logging.info("Run name: %s", step_name)
-
     logging.info("Start logging vanuit %s", str(_log_file))
 
 
@@ -48,7 +43,7 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     # Retrieve parameter and initialize logging.
     if log_dir is None:
         log_dir = config_file.parent
-    _initialize_log_file(log_dir, "assessment")
+    _initialize_log_file(log_dir)
 
     logging.info("Start beoordeling met configuratie %s", str(config_file))
 
@@ -70,7 +65,7 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     # Retrieve parameter and initialize logging.
     if log_dir is None:
         log_dir = config_file.parent
-    _initialize_log_file(log_dir, "measures")
+    _initialize_log_file(log_dir)
 
     logging.info(
         "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s",
@@ -98,7 +93,7 @@ def run_step_optimization(
     # Retrieve parameter and initialize logging.
     if log_dir is None:
         log_dir = config_file.parent
-    _initialize_log_file(log_dir, "optimization")
+    _initialize_log_file(log_dir)
 
     _config_file = Path(config_file)
     logging.info("Start optimalisatie met configuratie %s", str(config_file))
@@ -124,7 +119,7 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     # Retrieve parameter and initialize logging.
     if log_dir is None:
         log_dir = config_file.parent
-    _initialize_log_file(log_dir, "full_run")
+    _initialize_log_file(log_dir)
     logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
     # Define VrToolConfig and Selected Traject
