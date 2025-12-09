@@ -14,15 +14,11 @@ If you have not installed the `vrtool` for development please do so now:
     ```
     | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda (miniforge)](https://conda-forge.org/miniforge/) (or check [other options](#other-installation-options)):    
+2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Pixi](https://pixi.sh/latest/installation/) (or check [other options](#other-installation-options)):    
     ```bash
     cd C:\repos\vrtool_repo
-    conda env create -f .devcontainer\environment.yml
-    conda activate vrtool_env
-    poetry install
+    pixi install
     ```
-    | Note, [Poetry](https://python-poetry.org/) should have been installed with the `environment.yml` file, otherwise add it manually via pip (`pip install conda`) or conda-forge (`conda install -c conda-forge poetry`). Then you can proceed to do `poetry install`.
-
 ### Other installation options.
 
 ### Using the Docker dev container.
@@ -54,9 +50,8 @@ To download and use it, assuming a running [Docker desktop](https://www.docker.c
 
 3. Install your checkout.
     ```bash
-    poetry install
+    pixi install
     ```
-    > If it fails you can try doing `poetry install` instead, this is due to some dependency differences between the `conda-forge` version and the one in the `poetry.lock` file.
 
 ### Via `pypi`
 It is also possible to contribute to the project without the use of `conda` and `poetry`. For instance, directly with pip (`pypi`):
@@ -76,9 +71,9 @@ pip install .
 5. Make sure you [added documentation](#adding-documentation).
 6. [Create a pull request](#creating-a-pull-request)
 
-## JIRA Board
+## Reporting a problem
 
-We make use of a [Deltares JIRA board](https://issuetracker.deltares.nl/secure/RapidBoard.jspa?rapidView=810&projectKey=VRTOOL&view=planning&issueLimit=100) mostly for issue tracking, backlog management and sprint(s) overview. If you lack access to said board, please contact the project administrator(s).
+We make use of a [GitHub Issues](https://github.com/Deltares/Veiligheidsrendement/issues) to report new features, tasks, general improvements and of course bugs.
 
 ### How to create an issue?
 

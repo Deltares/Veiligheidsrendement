@@ -36,7 +36,7 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 
 ### Development mode
 
-We recommend you to check our `CONTRIBUTING.md` document and its [installation steps section](./docs/CONTRIBUTING.md#install-before-contributing).
+We recommend you to check our `CONTRIBUTING.md` document and its [installation steps section](./CONTRIBUTING.md#install-before-contributing).
 
 
 ### Dependencies / Pre-requirements.
