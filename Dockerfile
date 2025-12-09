@@ -6,15 +6,12 @@ FROM python:3.12
 RUN apt-get update
 
 # Copy the directories with the local vrtool.
-WORKDIR /vrtool_src
-COPY README.md LICENSE pyproject.toml poetry.lock /vrtool_src/
-COPY vrtool /vrtool_src/vrtool
+WORKDIR /app
+COPY README.md LICENSE pyproject.toml /app/
+COPY vrtool /app/vrtool
 
-# Install the required packages
-RUN pip install poetry
-RUN poetry config virtualenvs.create false
-RUN poetry install --without dev,test
-RUN apt-get clean autoclean
+# Install koswat and its dependencies.
+RUN pip install --upgrade pip && pip install /app
 
-# Define the endpoint
-CMD ["python3"]
+# Set the entrypoint to run vrtool as a module.
+ENTRYPOINT ["python", "-m", "vrtool"]
