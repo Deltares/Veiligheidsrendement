@@ -14,7 +14,9 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMain:
-    def test_given_invalid_log_dir_when__initialize_log_file_then_raises_value_error(self):
+    def test_given_invalid_log_dir_when__initialize_log_file_then_raises_value_error(
+        self,
+    ):
         # 1. Define test data.
         _expected_message = "Log directory cannot be None."
         _invalid_path = None
