@@ -169,9 +169,9 @@ class VrtoolConfig:
         _vrtool_config._relative_paths_to_absolute(json_path.parent)
         return _vrtool_config
 
-    def to_json(self) -> str:
+    def serialize(self) -> str:
         """
-        Converts this configuration into a JSON string.
+        Serializes this configuration into a JSON string.
         Returns:
             str: JSON representation of this configuration.
         """
@@ -179,7 +179,7 @@ class VrtoolConfig:
             if isinstance(value, Path):
                 return str(value)
             if isinstance(value, MechanismEnum):
-                return value.value
+                return value.name
             if isinstance(value, list):
                 return [serialize_value(v) for v in value]
             if isinstance(value, MeasureUnitCosts):
