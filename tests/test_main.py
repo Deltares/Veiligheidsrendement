@@ -14,24 +14,16 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMain:
-    def test_given_invalid_log_dir_when__initialize_log_file_then_sets_cwd(self):
+    def test_given_invalid_log_dir_when__initialize_log_file_then_raises_value_error(self):
         # 1. Define test data.
+        _expected_message = "Log directory cannot be None."
         _invalid_path = None
-        _expected_log_dir = Path().cwd()
-        # Ensure no log file spresent in the cwd
-        def cleanup_cwd_dir():
-            for _log_file in _expected_log_dir.glob("*.log"):
-                _log_file.unlink()
-
-        cleanup_cwd_dir()
-        assert not any(_expected_log_dir.glob("*.log"))
-
         # 2. Run test.
-        __main__._initialize_log_file(_invalid_path)
+        with pytest.raises(ValueError) as exc_info:
+            __main__._initialize_log_file(_invalid_path)
 
         # 3. Verify expectations.
-        assert any(_expected_log_dir.glob("*.log"))
-        cleanup_cwd_dir()
+        assert str(exc_info.value) == _expected_message
 
     @pytest.mark.parametrize(
         "time_between_runs, expected_log_files",
