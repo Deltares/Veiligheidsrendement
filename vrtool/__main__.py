@@ -20,15 +20,18 @@ def cli():
     pass
 
 
-def _initialize_log_file(log_dir: click.Path | None):
+def _initialize_log_file(log_dir: click.Path | None, step_name: str):
     # Logging dir.
     if log_dir is None:
         log_dir = Path.cwd()
 
     # Define logging filename and initialize handler
     _current_date = datetime.today().strftime("%Y%m%d_%H%M")
-    _log_file = Path(log_dir).joinpath(f"vrtool_logging_{_current_date}.log")
+    _log_file = Path(log_dir).joinpath(f"vrtool_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
+    logging.info("Run type: %s", step_name)
+    logging.info("Run name: %s", step_name)
+
     logging.info("Start logging vanuit %s", str(_log_file))
 
 
@@ -42,7 +45,7 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     Runs the step assessment.
     """
     # Retrieve parameter and initialize logging.
-    _initialize_log_file(log_dir)
+    _initialize_log_file(log_dir, "assessment")
 
     logging.info("Start beoordeling met configuratie %s", str(config_file))
 
@@ -62,7 +65,7 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     Runs step measures.
     """
     # Retrieve parameter and initialize logging.
-    _initialize_log_file(log_dir)
+    _initialize_log_file(log_dir, "measures")
 
     logging.info(
         "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s",
@@ -88,7 +91,7 @@ def run_step_optimization(
     Runs step optimization.
     """
     # Retrieve parameter and initialize logging.
-    _initialize_log_file(log_dir)
+    _initialize_log_file(log_dir, "optimization")
 
     _config_file = Path(config_file)
     logging.info("Start optimalisatie met configuratie %s", str(config_file))
@@ -112,7 +115,7 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     Runs all the veiligheidsrendement steps (assessment, measures and optimization).
     """
     # Retrieve parameter and initialize logging.
-    _initialize_log_file(log_dir)
+    _initialize_log_file(log_dir, "full_run")
     logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
     # Define VrToolConfig and Selected Traject

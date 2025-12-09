@@ -59,7 +59,7 @@ class TestMain:
             time.sleep(time_between_runs)
 
         # 3. Verify expectations.
-        assert len(list(_input_dir.glob("vrtool_logging*.log"))) == expected_log_files
+        assert len(list(_input_dir.glob("vrtool_*.log"))) == expected_log_files
 
     def test_given_invalid_directory_when_run_full_then_fails(self):
         # 1. Define test data.
@@ -93,7 +93,7 @@ class TestMain:
 
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
-        assert any(_input_dir.glob("vrtool_logging*.log"))
+        assert any(_input_dir.glob("vrtool_*.log"))
 
     @pytest.fixture(name="cli_config_dirs")
     def _get_cli_config_fixture(
@@ -159,4 +159,4 @@ class TestMain:
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
         assert _output_dir.exists()
-        assert any(_output_dir.glob("vrtool_logging*.log"))
+        assert any(_output_dir.glob("vrtool_*.log"))
