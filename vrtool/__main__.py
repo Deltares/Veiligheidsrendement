@@ -4,6 +4,7 @@ from math import log
 from pathlib import Path
 
 import click
+from tomlkit import value
 
 from vrtool import api
 from vrtool.orm.version.migration import default_scripts_dir
@@ -21,10 +22,9 @@ def cli():
     pass
 
 
-def _initialize_log_file(log_dir: click.Path | None, step_name: str):
-    # Logging dir.
+def _initialize_log_file(log_dir: click.Path, step_name: str):
     if log_dir is None:
-        log_dir = Path.cwd()
+        raise ValueError("Log directory cannot be None.")
 
     # Define logging filename and initialize handler
     _current_date = datetime.today().strftime("%Y%m%d_%H%M")
