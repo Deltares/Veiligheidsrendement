@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from math import log
 from pathlib import Path
 
 import click
@@ -45,6 +46,8 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     Runs the step assessment.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir, "assessment")
 
     logging.info("Start beoordeling met configuratie %s", str(config_file))
@@ -65,6 +68,8 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     Runs step measures.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir, "measures")
 
     logging.info(
@@ -91,6 +96,8 @@ def run_step_optimization(
     Runs step optimization.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir, "optimization")
 
     _config_file = Path(config_file)
@@ -115,6 +122,8 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     Runs all the veiligheidsrendement steps (assessment, measures and optimization).
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir, "full_run")
     logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
