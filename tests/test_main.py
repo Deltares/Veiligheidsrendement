@@ -14,24 +14,16 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMain:
-    def test_given_invalid_log_dir_when__initialize_log_file_then_sets_cwd(self):
+    def test_given_invalid_log_dir_when__initialize_log_file_then_raises_value_error(self):
         # 1. Define test data.
+        _expected_message = "Log directory cannot be None."
         _invalid_path = None
-        _expected_log_dir = Path().cwd()
-        # Ensure no log file spresent in the cwd
-        def cleanup_cwd_dir():
-            for _log_file in _expected_log_dir.glob("*.log"):
-                _log_file.unlink()
-
-        cleanup_cwd_dir()
-        assert not any(_expected_log_dir.glob("*.log"))
-
         # 2. Run test.
-        __main__._initialize_log_file(_invalid_path)
+        with pytest.raises(ValueError) as exc_info:
+            __main__._initialize_log_file(_invalid_path)
 
         # 3. Verify expectations.
-        assert any(_expected_log_dir.glob("*.log"))
-        cleanup_cwd_dir()
+        assert str(exc_info.value) == _expected_message
 
     @pytest.mark.parametrize(
         "time_between_runs, expected_log_files",
@@ -59,7 +51,7 @@ class TestMain:
             time.sleep(time_between_runs)
 
         # 3. Verify expectations.
-        assert len(list(_input_dir.glob("vrtool_logging*.log"))) == expected_log_files
+        assert len(list(_input_dir.glob("vrtool_*.log"))) == expected_log_files
 
     def test_given_invalid_directory_when_run_full_then_fails(self):
         # 1. Define test data.
@@ -93,7 +85,7 @@ class TestMain:
 
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
-        assert any(_input_dir.glob("vrtool_logging*.log"))
+        assert any(_input_dir.glob("vrtool_*.log"))
 
     @pytest.fixture(name="cli_config_dirs")
     def _get_cli_config_fixture(
@@ -159,4 +151,4 @@ class TestMain:
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
         assert _output_dir.exists()
-        assert any(_output_dir.glob("vrtool_logging*.log"))
+        assert any(_output_dir.glob("vrtool_*.log"))
