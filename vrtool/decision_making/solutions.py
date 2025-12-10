@@ -21,7 +21,6 @@ class Solutions:
     T: list[int]
     mechanisms: list[MechanismEnum]
     measures: list[MeasureProtocol]
-    measure_table: pd.DataFrame
 
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
         self.section_name = dike_section.name
@@ -32,7 +31,6 @@ class Solutions:
         self.T = config.T
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureProtocol] = []
-        self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
     def _is_stability_screen_measure_valid(self) -> bool:
         return MechanismEnum.STABILITY_INNER in self.mechanisms
