@@ -8,6 +8,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 @dataclass
 class DikeTrajectInfo:
     "Class containing relevant failure mechanism information for a dike traject."
+
     traject_name: str
 
     omegaPiping: float = 0.24

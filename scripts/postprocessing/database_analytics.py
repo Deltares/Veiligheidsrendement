@@ -171,9 +171,9 @@ def assessment_for_each_step(assessment_input, reliability_per_step):
     list: list of dictionaries containing the reliability of each section and mechanism for each step.
     """
 
-    def get_assessment() -> list[
-        dict[MechanismEnum, dict[list[str], dict[str, list[int]]]]
-    ]:
+    def get_assessment() -> (
+        list[dict[MechanismEnum, dict[list[str], dict[str, list[int]]]]]
+    ):
         # Extend the assessment if needed (e.g. if the investment years are not in the config years)
         _ass_times = set(assessment_input[MechanismEnum.STABILITY_INNER][1]["time"])
         _rel_times = set(

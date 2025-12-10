@@ -113,7 +113,10 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
 
             # Calculate the related entries in `MeasureResult`.
-            (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
+            (
+                _mr_sections,
+                _mr_mechanisms,
+            ) = CustomMeasureTimeBetaCalculator(
                 _retrieved_measure_per_section, _retrieved_custom_measure_details
             ).calculate(_new_measure_result)
             _measure_result_section_to_add.extend(_mr_sections)

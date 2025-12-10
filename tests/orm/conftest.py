@@ -183,9 +183,9 @@ def _get_basic_measure_per_section() -> MeasurePerSection:
 
 
 @pytest.fixture(name="get_orm_basic_dike_traject_info")
-def get_orm_basic_dike_traject_info_factory() -> Iterator[
-    Callable[[], OrmDikeTrajectInfo]
-]:
+def get_orm_basic_dike_traject_info_factory() -> (
+    Iterator[Callable[[], OrmDikeTrajectInfo]]
+):
     """
     Gets a basic dike traject info entity generator method.
     """
@@ -227,7 +227,7 @@ def get_basic_mechanism_per_section_factory(
 
 @pytest.fixture(name="get_basic_computation_scenario")
 def get_basic_computation_scenario_factory(
-    get_basic_mechanism_per_section: Callable[[], MechanismPerSection]
+    get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
 ) -> Iterator[Callable[[], ComputationScenario]]:
     """
     Gets a basic computation scenario entity generator.
@@ -250,9 +250,9 @@ def get_basic_computation_scenario_factory(
 
 
 @pytest.fixture(name="get_basic_measure_type")
-def get_basic_measure_type_factory() -> Iterator[
-    Callable[[Optional[str]], MeasureType]
-]:
+def get_basic_measure_type_factory() -> (
+    Iterator[Callable[[Optional[str]], MeasureType]]
+):
     """
     Gets a basic measure type entity generator.
     """
@@ -277,9 +277,9 @@ def get_basic_measure_factory() -> Iterator[Callable[[], Measure]]:
 
 
 @pytest.fixture(name="get_basic_measure_per_section")
-def get_basic_measure_per_section_factory() -> Iterator[
-    Callable[[], MeasurePerSection]
-]:
+def get_basic_measure_per_section_factory() -> (
+    Iterator[Callable[[], MeasurePerSection]]
+):
     """
     Gets a basic measure per section entity generator.
     """
@@ -288,7 +288,7 @@ def get_basic_measure_per_section_factory() -> Iterator[
 
 @pytest.fixture(name="get_basic_measure_result")
 def get_basic_measure_result_factory(
-    get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    get_basic_measure_per_section: Callable[[], MeasurePerSection],
 ) -> Iterator[Callable[[], MeasureResult]]:
     """
     Gets a basic measure result entity generator.
