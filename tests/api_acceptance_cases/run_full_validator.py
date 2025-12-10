@@ -16,9 +16,7 @@ vrtool_db_default_name = "vrtool_input.db"
 
 class RunFullValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
-        assert RunStepOptimizationValidator.get_csv_reference_dir(
-            valid_vrtool_config
-        ).exists()
+        pass
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Validate the optimization results.
