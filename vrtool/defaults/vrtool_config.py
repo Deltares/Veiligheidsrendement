@@ -169,6 +169,25 @@ class VrtoolConfig:
         _vrtool_config._relative_paths_to_absolute(json_path.parent)
         return _vrtool_config
 
+    def serialize(self) -> str:
+        """
+        Serializes this configuration into a JSON string.
+        Returns:
+            str: JSON representation of this configuration.
+        """
+        def serialize_value(value) -> str:
+            if isinstance(value, Path):
+                return str(value)
+            if isinstance(value, MechanismEnum):
+                return value.name
+            if isinstance(value, list):
+                return [serialize_value(v) for v in value]
+            if isinstance(value, MeasureUnitCosts):
+                return value.__dict__
+            return value
+        _as_dict = { k: serialize_value(v) for k, v in self.__dict__.items() }
+        return json.dumps(_as_dict, sort_keys=True, indent=4)
+
     def validate_config(self) -> None:
         """
         Validates this `VrtoolConfig` raising errors when it is not compliant.
