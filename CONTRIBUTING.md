@@ -22,7 +22,7 @@ If you have not installed the `vrtool` for development please do so now:
 ### Other installation options.
 
 ### Using the Docker dev container.
-With each succesful commit to `main` we publish a new development docker container that can be used as a means to speed up the installation steps in a controlled environment. This docker development container includes the "test externals" (at the moment of writing this is only the `DStability` **linux** kernel) and a conda environment with poetry already installed in it.
+With each succesful commit to `main` we publish a new development docker container that can be used as a means to speed up the installation steps in a controlled environment. This docker development container, based on a [Pixi](https://pixi.sh/dev/deployment/container/) image, includes the "test externals" (at the moment of writing this is only the `DStability` **linux** kernel) in the `/app/test_externals` location.
 
 The container is accessible to all deltares contributors at the [Deltares Harbor](containers.deltares.nl/gfs-dev/vrtool_dev:latest)
 
@@ -198,7 +198,7 @@ When we talk about normalization we refer to standardizing how we name, describe
 - a variable,
 
 
-Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `poetry run isort . && poetry run black .`.
+Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `pixi run -e dev isort . && pixi run -e dev black .`.
 
 Our own agreements for `vrtool` code standards are as follows and will be looked up during a pull-request review:
 

@@ -2,8 +2,8 @@
 # `docker build -t vrtool_dev .devcontainer`
 # To run the docker for pytest:
 # `docker run -v {your_vrtool_checkout_dir}:/usr/src/app/ -v {vrtool_env_dir}:/usr/src/.env -t vrtool_dev`
-# `poetry install`
-# `poetry run pytest -m {your_pytest_arguments}`
+# `pixi install -e dev`
+# `pixi run -e dev pytest -m {your_pytest_arguments}`
 
 # FROM condaforge/miniforge3:latest
 FROM containers.deltares.nl/gfs-dev/vrtool_externals:latest AS vrtool_externals-env
