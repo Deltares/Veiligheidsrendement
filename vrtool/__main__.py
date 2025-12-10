@@ -51,7 +51,7 @@ def _set_externals_path(vr_config: VrtoolConfig):
 )
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.option("-ld", "--log-dir", type=click.Path())
-def run_step_assessment(config_file: click.Path, log_dir: click.Path | None, externals: click.Path | None):
+def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     """
     Runs the step assessment.
     """
