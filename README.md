@@ -36,7 +36,7 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 
 ### Development mode
 
-We recommend you to check our `CONTRIBUTING.md` document and its [installation steps section](./docs/CONTRIBUTING.md#install-before-contributing).
+We recommend you to check our `CONTRIBUTING.md` document and its [installation steps section](./CONTRIBUTING.md#install-before-contributing).
 
 
 ### Dependencies / Pre-requirements.
@@ -52,7 +52,7 @@ We found out a hard dependency when working under a Windows environment with the
 When using your own environment, you might have to follow the openturns installation steps for version 1.19.
 
 ### How to run tests
-Tests can be run with the pytest command `pytest run`. However, when working under a [development mode](#development-mode) environment, we advise to run the command `poetry run pytest` instead.
+Tests can be run with the pytest command `pytest run`. However, when working under a [development mode](#development-mode) environment, we advise to run the command `pixi run -e test pytest` instead.
 
 
 ## Endpoint usage

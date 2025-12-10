@@ -1,16 +1,14 @@
-[tool.poetry]
+[project]
 name = "vrtool"
 version = "1.1.1"
 description = "veiligheidsrendement tool (core and orm)"
-authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
+authors = [{name = "Wouter Jan Klerk", email = "wouterjan.klerk@deltares.nl"}]
 maintainers = [
-  "Carles S. Soriano Pérez <carles.sorianoperez@deltares.nl>",
-  "Ardt Klapwijk <ardt.klapwijk@deltares.nl>",
-  "Stephan Rikkert <stephan.rikkert@deltares.nl>",
+  {name = "Carles S. Soriano Pérez", email = "carles.sorianoperez@deltares.nl"},
+  {name = "Ardt Klapwijk", email = "ardt.klapwijk@deltares.nl"},
+  {name = "Stephan Rikkert", email = "stephan.rikkert@deltares.nl"},
 ]
 readme = "README.md"
-repository = "https://github.com/Deltares/veiligheidsrendement"
-documentation = "https://deltares-research.github.io/VrtoolDocumentation/"
 keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
 classifiers = [
   'Programming Language :: Python :: 3',
@@ -24,46 +22,79 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Physics',
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
-packages = [{ include = "vrtool" }]
+requires-python = ">=3.12,<3.13"
+dependencies = ["matplotlib", "numpy", "pandas", "shapely", "scipy", "seaborn", "openturns", "openpyxl", "click", "peewee", "d-geolib>=2.8.0,<3", "tqdm"]
 
-[tool.poetry.scripts]
+[project.urls]
+homepage = "https://deltares-research.github.io/VrtoolDocumentation/"
+documentation = "https://deltares-research.github.io/VrtoolDocumentation/"
+repository = "https://github.com/Deltares/veiligheidsrendement"
+issues = "https://github.com/Deltares/veiligheidsrendement/issues"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64","osx-arm64", "osx-64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+vrtool = { path = ".", editable = true }
+build = "*"
+
+[tool.pixi.tasks]
 migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databases"
 update_reference_dbs = "scripts.update_reference_dbs:update_reference_dbs"
 
-[tool.poetry.dependencies]
+[tool.pixi.dependencies]
 python = ">=3.12,<3.13"
-matplotlib = "^3.7.0"
+matplotlib = ">3.7.0"
 numpy = "1.26.4"
 pandas = ">=1.5.3"
-shapely = "^2.0.1"
+shapely = ">=2.0.1"
 scipy = ">=1.8.1,<1.14.0"
-seaborn = "^0.12.2"
-openturns = "^1.26"
-openpyxl = "^3.1.1"
-click = "^8.1.3"
-peewee = "^3.16.1"
-d-geolib = "^2.6.0"
-tqdm = "^4.66.2"
+seaborn = ">=0.12.2"
+openturns = "==1.25"
+openpyxl = ">=3.1.1"
+click = ">=8.1.3"
+peewee = ">=3.16.1"
+tqdm = ">=4.66.2"
 
-[tool.poetry.group.test.dependencies]
-pytest = "^7.2.1"
-pytest-cov = "^3.0.0"
-coverage = "^6.4.4"
-teamcity-messages = "^1.32"
-pytest-xdist = "^3.3.1"
-pytest-profiling = "^1.7.0"
-pywin32 = {version="^307", platform = "win32"}
 
-[tool.poetry.group.dev.dependencies]
-black = "^22.8.0"
-isort = "^5.10.1"
-commitizen = "^3.0.1"
+[tool.pixi.feature.test.dependencies]
+pytest = ">=7.2.1"
+pytest-cov = ">=3.0.0"
+coverage = ">=6.4.4"
+teamcity-messages = ">=1.32"
+pytest-xdist = ">=3.3.1"
+pytest-profiling = ">=1.7.0"
+pywin32 = ">=311"
+
+[tool.pixi.feature.dev.dependencies]
+black = ">=22.8.0"
+isort = ">=5.10.1"
+commitizen = ">=3.0.1"
 urllib3 = "1.26.15"
+
+[tool.pixi.feature.dev.tasks]
+isort = "isort"
+black = "black"
+build = "python -m build --outdir dist/"
+
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+dev = { features = ["dev", "test"], solve-group = "default" }
+py312 = ["py312", "default"]
 
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py312']
 exclude = '''
 (
   /(
@@ -96,10 +127,6 @@ skip = [
   "site",
 ]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.pytest.ini_options]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -107,7 +134,6 @@ markers = [
   "externals: marks tests that require of external binaries (deselect with '-m \"not externals\"')",
   "fixture_database: allows to define which database will be used in a fixture; check `tests.orm.conftest.py` for usages",
 ]
-
 
 [tool.commitizen]
 name = "cz_conventional_commits"

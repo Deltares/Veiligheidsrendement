@@ -14,19 +14,15 @@ If you have not installed the `vrtool` for development please do so now:
     ```
     | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda (miniforge)](https://conda-forge.org/miniforge/) (or check [other options](#other-installation-options)):    
+2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Pixi](https://pixi.sh/latest/installation/) (or check [other options](#other-installation-options)), we will install the `dev` environment that guarantees we have all the test packages:    
     ```bash
     cd C:\repos\vrtool_repo
-    conda env create -f .devcontainer\environment.yml
-    conda activate vrtool_env
-    poetry install
+    pixi install -e dev
     ```
-    | Note, [Poetry](https://python-poetry.org/) should have been installed with the `environment.yml` file, otherwise add it manually via pip (`pip install conda`) or conda-forge (`conda install -c conda-forge poetry`). Then you can proceed to do `poetry install`.
-
 ### Other installation options.
 
 ### Using the Docker dev container.
-With each succesful commit to `main` we publish a new development docker container that can be used as a means to speed up the installation steps in a controlled environment. This docker development container includes the "test externals" (at the moment of writing this is only the `DStability` **linux** kernel) and a conda environment with poetry already installed in it.
+With each succesful commit to `main` we publish a new development docker container that can be used as a means to speed up the installation steps in a controlled environment. This docker development container, based on a [Pixi](https://pixi.sh/dev/deployment/container/) image, includes the "test externals" (at the moment of writing this is only the `DStability` **linux** kernel) in the `/app/test_externals` location.
 
 The container is accessible to all deltares contributors at the [Deltares Harbor](containers.deltares.nl/gfs-dev/vrtool_dev:latest)
 
@@ -54,17 +50,8 @@ To download and use it, assuming a running [Docker desktop](https://www.docker.c
 
 3. Install your checkout.
     ```bash
-    poetry install
+    pixi install -2 dev
     ```
-    > If it fails you can try doing `poetry install` instead, this is due to some dependency differences between the `conda-forge` version and the one in the `poetry.lock` file.
-
-### Via `pypi`
-It is also possible to contribute to the project without the use of `conda` and `poetry`. For instance, directly with pip (`pypi`):
-```bash
-cd C:\repos\vrtool_repo
-pip install .
-```
-| Note, this will not install `Poetry`, which is required to properly maintain the interdependencies of `Veiligheidsrendement` tool.
 
 ## Before making a pull request.
 1. Make sure you followed our [code standards](#code-standards).
@@ -72,13 +59,13 @@ pip install .
 3. Make sure the Quality Gate of [SonarCloud](https://sonarcloud.io/project/overview?id=Deltares_Veiligheidsrendement) is succesful.
     1. no new bugs or code smells are introduced.
     2. code coverage has not dropped (and hopefully has increased).
-4. Make sure there are no failing tests in [TeamCity](https://dpcbuild.deltares.nl/project/Vrtool?branch=%3Cdefault%3E&buildTypeTab=overview&mode=builds).
+4. Make sure there are no failing tests in [TeamCity](https://dpcbuild.deltares.nl/project/VrtoolSuite_CoreCiCd?branch=%3Cdefault%3E&buildTypeTab=overview&mode=builds).
 5. Make sure you [added documentation](#adding-documentation).
 6. [Create a pull request](#creating-a-pull-request)
 
-## JIRA Board
+## Reporting a problem
 
-We make use of a [Deltares JIRA board](https://issuetracker.deltares.nl/secure/RapidBoard.jspa?rapidView=810&projectKey=VRTOOL&view=planning&issueLimit=100) mostly for issue tracking, backlog management and sprint(s) overview. If you lack access to said board, please contact the project administrator(s).
+We make use of a [GitHub Issues](https://github.com/Deltares/Veiligheidsrendement/issues) to report new features, tasks, general improvements and of course bugs.
 
 ### How to create an issue?
 
@@ -118,7 +105,7 @@ At the moment of writing this document the [vrtool repository](https://github.co
 
 New branches are encouraged based on the _dare to share_  principle, this allows the rest of contributors to be aware of your changes as soon as possible. However, please do not forget to create a related issue as described in the [above section](#when-should-issues-be-created).
 
-All created branches should adhere to the pattern `prefix\VRTOOL-##_title_in_snake_case`. Where:
+All created branches should adhere to the pattern `prefix\##_title_in_snake_case`. Where:
 
 * `prefix`, is a descriptive string representing the type of issue. The current accepted prefixes are the following:
     - __main__: This prefix is not to be used as containts the latest (greatest) changes. To contribute into this branch you will have to do a pull-request from your own branch.
@@ -126,20 +113,24 @@ All created branches should adhere to the pattern `prefix\VRTOOL-##_title_in_sna
     - __bug/*__:  for issues tagged as "bug".
     - __poc/*__: for research and development issues outside an official sprint.
     - __chore/*__: for issues tagged as "task" or "improvement" that are trivial such as cleaning up code or modifying a few tests. 
+    - __ci/*__: for issues tagged as "task", "improvement" or "new feature" related to CI/CD pipelines.
     - __docs/*__: for issues tagged as "documentation".
-* `VRTOOL-##`, is the issue number that can be found in its own page (for instance https://issuetracker.deltares.nl/browse/VRTOOL-71) would be `VRTOOL-71`.
-* and `title_in_snake_case` is a short abstract of the title (they can be often too long) in the snake case format, issue `VRTOOL-71 Create collaboration How to.` should be `_create_collaboration_how_to`.
+* `##`, is the issue number that can be found in its own page (for instance https://github.com/Deltares/Veiligheidsrendement/issues/417) would be `471`.
+* and `title_in_snake_case` is a short abstract of the title (they can be often too long) in the snake case format, issue `71 Create collaboration How to.` should be `_create_collaboration_how_to`.
 
-So, as an example the documentation issue `VRTOOL-71 Create collaboration How to` would be carried out in a branch named as `docs/VRTOOL-71_create_collaboration_how_to`.
+So, as an example the documentation issue `71 Create collaboration How to` would be carried out in a branch named as `docs/71_create_collaboration_how_to`.
 
 ### Adding dependencies
 
-This project makes use of [Poetry](https://python-poetry.org/). In order to properly add a dependency use the poetry command line `poetry add _dependency_name`. In `vrtool`, we distinguish these types of dependencies.
-- general ( `poetry add _dependency_`) . A dependency that __needs__ to be distributed with the package because it is required for a correct functioning of the tool. Think of packages such as `pandas` or `numpy`.
-- test (`poetry add _dependency_to_add_ --group test`). A dependency only used during testing, think of `pytest` or libraries used to generate code coverage reports.
-- dev (`poetry add _dependency_to_add_ --group dev` ). Think of dependencies needed by developers to help in their tasks, such as `black` or `isort`. 
-- docs ( `poetry add _dependency_to_add_ --group docs). Dependencies required to generate documentation. At the moment we are not using this.
+This project makes use of [Pixi](https://pixi.sh). In `vrtool`, we distinguish these types of dependencies.
+- general ( `pixi add _dependency_`) . A dependency that __needs__ to be distributed with the package because it is required for a correct functioning of the tool. Think of packages such as `pandas` or `numpy`.
+- test (`pixi add _dependency_to_add_ --feature test`). A dependency only used during testing, think of `pytest` or libraries used to generate code coverage reports.
+- dev (`pixi add _dependency_to_add_ --feature dev` ). Think of dependencies needed by developers to help in their tasks, such as `black`, `isort`. 
 
+Each dependency group gets installed as a separte environment:
+- `pixi install`: installs the default "feature" dependencies for the internally defined python version.
+- `pixi install -e test`:  installs the default and test "features".
+- `pixi install -e dev`: installs the default, test and dev "features", this is the want you want for contributing.
 
 ### Commiting changes
 
@@ -207,7 +198,7 @@ When we talk about normalization we refer to standardizing how we name, describe
 - a variable,
 
 
-Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `poetry run isort . && poetry run black .`.
+Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `pixi run -e dev isort . && pixi run -e dev black .`.
 
 Our own agreements for `vrtool` code standards are as follows and will be looked up during a pull-request review:
 
@@ -450,4 +441,4 @@ Besides the in-code documentation via docstrings, adding new features or modifyi
 2. Create an extensive markdown file in the [docs](.) directory, like this `CONTRIBUTING.md` file.
 3. Create / update the available tutorials. Some code modifications might have an impact on the existing documentation. Consider either updating, extending or creating new one to ensure "new" contributors can adapt easily enough.
 
-For now we do not publish the documentation, however this might be tackled in the future by using [MkDocs](https://www.mkdocs.org/). Therefore we suggest the contributor to follow its markdown directives.
+We encourage as well contributors to add and extend our [VRTOOL wiki pages](https://github.com/Deltares/Veiligheidsrendement/wiki).
