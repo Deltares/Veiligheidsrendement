@@ -392,6 +392,24 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(api_vrtool_config)
+    
+    @pytest.mark.parametrize(
+        "api_vrtool_config",
+        acceptance_test_cases[0:1],
+        indirect=True,
+    )
+    def test_run_step_optimization_with_less_iterations_gives_different_results(
+            self, api_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+        ):
+        # 1. Define test data.
+        # Custom configuration for testing due to which assertions should fail.
+        api_vrtool_config.max_greedy_iterations = 10
+        
+        # 2. Run test.
+        with pytest.raises(AssertionError):
+            self._run_step_optimization_for_strategy(
+                api_vrtool_config, "Veiligheidsrendement", request
+            )
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
