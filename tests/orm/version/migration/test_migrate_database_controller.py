@@ -101,7 +101,7 @@ class TestMigrateDatabaseController:
 
         # 2. Run test
         with pytest.raises(Exception) as exc_err:
-            MigrateDatabaseController(Path(""))._apply_migration_script(
+            MigrateDatabaseController(valid_conversion_scripts)._apply_migration_script(
                 valid_conversion_db, _script
             )
 
