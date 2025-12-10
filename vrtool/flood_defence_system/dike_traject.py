@@ -78,11 +78,3 @@ class DikeTraject:
         self.probabilities = _assessment.reset_index(drop=True).set_index(
             ["name", "mechanism"]
         )
-
-    def write_initial_assessment_results(
-        self,
-        case_settings: dict,
-    ):
-        self.probabilities.to_csv(
-            case_settings["directory"].joinpath("InitialAssessment_Betas.csv")
-        )

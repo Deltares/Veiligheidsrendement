@@ -23,7 +23,6 @@ class TestSolutionsImporter:
     def _get_solutions_importer_vrtool_config_fixture(self) -> VrtoolConfig:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
-        _vr_config.output_directory = test_results
 
         return _vr_config
 
