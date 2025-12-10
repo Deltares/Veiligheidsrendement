@@ -4,32 +4,47 @@ from pathlib import Path
 
 import click
 
-from vrtool import api
+from vrtool import __version__, api
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.version.migration import default_scripts_dir
 from vrtool.orm.version.migration.migrate_database_controller import (
     MigrateDatabaseController,
 )
 from vrtool.vrtool_logger import VrToolLogger
 
+__externals_path: Path | None = None
+
 
 @click.group()
-def cli():
+@click.version_option(__version__)
+@click.option("--externals", type=click.Path(), help="Path to externals directory.")
+def cli(externals: click.Path | None):
     """
     Set of general available calls for VeiligheidsrendementTool.
     """
-    pass
+    global __externals_path
+    __externals_path = Path(externals) if externals else None
 
 
-def _initialize_log_file(log_dir: click.Path | None):
-    # Logging dir.
+def _initialize_log_file(log_dir: click.Path):
     if log_dir is None:
-        log_dir = Path.cwd()
+        raise ValueError("Log directory cannot be None.")
 
     # Define logging filename and initialize handler
     _current_date = datetime.today().strftime("%Y%m%d_%H%M")
-    _log_file = Path(log_dir).joinpath(f"vrtool_logging_{_current_date}.log")
+    _log_file = Path(log_dir).joinpath(f"vrtool_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
     logging.info("Start logging vanuit %s", str(_log_file))
+
+
+def _set_externals_path(vr_config: VrtoolConfig):
+    logging.info("Config externals path: %s.", str(vr_config.externals))
+    logging.info("CLI externals path: %s.", str(__externals_path))
+    if vr_config.externals is not None or __externals_path is None:
+        logging.info("No externals path set, using config value.")
+        return
+    logging.info("Setting externals path from CLI parameter.")
+    vr_config.externals = __externals_path
 
 
 @cli.command(
@@ -42,12 +57,15 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     Runs the step assessment.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     logging.info("Start beoordeling met configuratie %s", str(config_file))
 
     # Get the selected Traject.
     _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _set_externals_path(_vr_config)
     api.run_step_assessment(_vr_config)
 
 
@@ -62,6 +80,8 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     Runs step measures.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     logging.info(
@@ -71,6 +91,7 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _set_externals_path(_vr_config)
     api.run_step_measures(_vr_config)
 
 
@@ -88,6 +109,8 @@ def run_step_optimization(
     Runs step optimization.
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
 
     _config_file = Path(config_file)
@@ -95,6 +118,7 @@ def run_step_optimization(
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(_config_file)
+    _set_externals_path(_vr_config)
     _measure_result_tuples = []
     if any(measure_result_ids):
         _iterator = iter(measure_result_ids)
@@ -112,11 +136,14 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     Runs all the veiligheidsrendement steps (assessment, measures and optimization).
     """
     # Retrieve parameter and initialize logging.
+    if log_dir is None:
+        log_dir = config_file.parent
     _initialize_log_file(log_dir)
     logging.info("Start volledige berekening met configuratie %s!", str(config_file))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _set_externals_path(_vr_config)
     api.run_full(_vr_config)
 
 

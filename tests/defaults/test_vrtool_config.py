@@ -102,6 +102,70 @@ class TestVrtoolConfig:
         assert isinstance(_vrtool_config, VrtoolConfig)
         assert _vrtool_config.traject == "MyCustomTraject"
 
+    def test_serialize_vrtool_config(self):
+        # 1. Define test data.
+        _traject_name = "test_traject"
+        _vrtool_config = VrtoolConfig(
+            input_directory=Path("input"),
+            output_directory=Path("output"),
+            externals=Path("externals"),
+            traject=_traject_name,
+        )
+
+        # 2. Run test
+        _json_str = _vrtool_config.serialize()
+        _loaded_json = json.loads(_json_str)
+        # 3. Verify expectations.
+        assert _loaded_json is not None
+        assert _loaded_json["input_database_name"] == ""
+        assert _loaded_json["input_directory"] == "input"
+        assert _loaded_json["output_directory"] == "output"
+        assert _loaded_json["externals"] == "externals"
+        assert _loaded_json["language"] == "EN"
+        assert _loaded_json["traject"] == _traject_name
+        assert _loaded_json["t_0"] == 2025
+        assert _loaded_json["T"] == [0, 19, 20, 25, 50, 75, 100]
+        assert _loaded_json["excluded_mechanisms"] == [
+            MechanismEnum.HYDRAULIC_STRUCTURES.name
+        ]
+        assert _loaded_json["crest_step"] == 0.5
+        assert _loaded_json["berm_step"] == [0, 5, 8, 10, 12, 15, 20, 30]
+        assert _loaded_json["OI_horizon"] == 50
+        assert _loaded_json["BC_stop"] == 0.1
+        assert _loaded_json["max_greedy_iterations"] == 150
+        assert _loaded_json["f_cautious"] == 1.5
+        assert _loaded_json["discount_rate"] == 0.03
+        assert _loaded_json["design_methods"] == [
+            "Veiligheidsrendement",
+            "Doorsnede-eisen",
+        ]
+        assert _loaded_json["unit_costs"] == {
+            "inward_added_volume": 58.76,
+            "inward_starting_costs": 252.44,
+            "outward_reuse_factor": 0.7,
+            "outward_removed_volume": 27.59,
+            "outward_reused_volume": 18.59,
+            "outward_added_volume": 50.75,
+            "outward_compensation_factor": 0.5,
+            "house_removal": 500000.0,
+            "road_renewal": 1070.0,
+            "sheetpile": 690.0,
+            "diaphragm_wall": 34190.0,
+            "vertical_geotextile": 1700.0,
+            "coarse_sand_barrier": 1700.0,
+            "anchored_sheetpile": 1100.0,
+            "heavescreen": 400.0,
+            "remove_block_revetment": 15.66,
+            "remove_asphalt_revetment": 33.92,
+            "installation_of_blocks": {
+                "30.0": 206.89,
+                "35.0": 235.93,
+                "40.0": 264.06,
+                "45.0": 291.16,
+                "50.0": 318.26,
+            },
+        }
+
     @pytest.mark.parametrize(
         "custom_path",
         [

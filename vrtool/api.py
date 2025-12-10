@@ -56,6 +56,9 @@ def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
     if not _vr_config.input_directory:
         _vr_config.input_directory = config_file.parent
 
+    logging.info("Geldige configuratie geladen: %s met settings:", str(config_file))
+    logging.info(_vr_config.serialize())
+
     return _vr_config
 
 
@@ -155,6 +158,7 @@ class ApiRunWorkflows:
         return get_dike_traject(vrtool_config)
 
     def run_assessment(self) -> ResultsSafetyAssessment:
+        logging.info("Run type: %s", "Assessment")
         # Clear the results
         clear_assessment_results(self.vrtool_config)
 
@@ -169,6 +173,7 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
+        logging.info("Run type: %s", "Measures")
         # Run assessment to achieve a stable step (for now)
         _results_assessment = self.run_assessment()
         # Clear the results
@@ -198,6 +203,8 @@ class ApiRunWorkflows:
         Returns:
             ResultsOptimization: Optimization results.
         """
+        logging.info("Run type: %s", "Optimization")
+        logging.info("Run name: %s", optimization_name)
         # Create optimization run
         _measures_for_optimization = import_results_measures_for_optimization(
             self.vrtool_config, selected_measures_id_year
@@ -235,6 +242,9 @@ class ApiRunWorkflows:
         Returns:
             ResultsOptimization: The final results contained in the `ResultsOptimization`.
         """
+        _run_name = "Basisberekening"
+        logging.info("Run type: %s", "Full Run")
+        logging.info("Run name: %s", _run_name)
         # Run all steps with one command.
         logging.info("Start beoordeling & doorrekenen maatregelen.")
 
@@ -247,7 +257,7 @@ class ApiRunWorkflows:
         _ids_to_import = get_all_measure_results_with_supported_investment_years(
             self.vrtool_config
         )
-        _optimization_result = self.run_optimization("Basisberekening", _ids_to_import)
+        _optimization_result = self.run_optimization(_run_name, _ids_to_import)
 
         logging.info("Berekening afgerond.")
         return _optimization_result

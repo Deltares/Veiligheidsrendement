@@ -1,5 +1,4 @@
-import shutil
-from pathlib import Path
+import logging
 
 import pandas as pd
 import pytest
@@ -13,6 +12,7 @@ from vrtool.api import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm import models as orm
 from vrtool.orm.orm_controllers import open_database
+from vrtool.vrtool_logger import VrToolLogger
 
 
 class TestApi:
@@ -41,7 +41,7 @@ class TestApi:
         self,
     ):
         # 1. Define test data.
-        _input_dir = test_data / "vrtool_config"
+        _input_dir = test_data.joinpath("vrtool_config")
         _config_file = _input_dir.joinpath("custom_config.json")
         assert _config_file.exists()
 
@@ -52,6 +52,32 @@ class TestApi:
         assert isinstance(_vrtool_config, VrtoolConfig)
         assert _vrtool_config.traject == "MyCustomTraject"
         assert _vrtool_config.input_directory == _input_dir
+
+    def test_when_get_valid_vrtool_config_with_valid_config_logs_settings(
+        self,
+    ):
+        # 1. Define test data
+        _config_file = test_data.joinpath("vrtool_config", "custom_config.json")
+        assert _config_file.exists()
+        _expected_log_message = (
+            f"Geldige configuratie geladen: {_config_file} met settings:"
+        )
+        _log_messages = []
+
+        class CustomLogHandler(logging.StreamHandler):
+            def emit(self, record: logging.LogRecord) -> None:
+                _log_messages.append(record.getMessage())
+
+        _custom_handler = CustomLogHandler()
+        VrToolLogger.add_handler(_custom_handler, logging.INFO)
+
+        # 2. Run test.
+        _vrtool_config = get_valid_vrtool_config(_config_file)
+
+        # 3. Verify expectations.
+        assert isinstance(_vrtool_config, VrtoolConfig)
+        assert _expected_log_message in _log_messages
+        assert _log_messages[-1] == _vrtool_config.serialize()
 
     @pytest.mark.parametrize(
         "vrtool_config",
