@@ -30,8 +30,8 @@ class TestMain:
     @pytest.mark.parametrize(
         "time_between_runs, expected_log_files",
         [
-            pytest.param(0, 1, id="<60s between runs, 1 log file"),
-            pytest.param(61, 2, id=">60s between runs, 2 log files"),
+            pytest.param(0, 1, id="less than 60s between runs, 1 log file"),
+            pytest.param(61, 2, id="more than 60s between runs, 2 log files"),
         ],
     )
     def test_given_invalid_directory_when_sequential_runs_within_a_minute_then_creates_one_file(
@@ -112,7 +112,6 @@ class TestMain:
             "input_directory": str(_input_dir),
             "input_database_name": _test_db_file.name,
             "traject": "38-1",
-            "output_directory": str(_output_dir),
             "excluded_mechanisms": [
                 MechanismEnum.REVETMENT.name,
                 MechanismEnum.HYDRAULIC_STRUCTURES.name,

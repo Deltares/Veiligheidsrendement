@@ -272,8 +272,9 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     mechanism=mechanism,
                     is_first_year_with_widening=is_first_year_with_widening,
                     computation_type=calc_type,
-                    path_intermediate_stix=self.config.output_directory
-                    / "intermediate_result",
+                    path_intermediate_stix=self.config.input_directory.joinpath(
+                        "intermediate_result"
+                    ),
                     depth_screen=_depth_screen,
                 )
                 is_first_year_with_widening = False

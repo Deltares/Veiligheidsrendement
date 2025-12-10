@@ -40,7 +40,6 @@ class TestOptimizationMeasureResultImporter:
         _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
-        assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
         _importer = OptimizationMeasureResultImporter(_vrtool_config, _investment_years)

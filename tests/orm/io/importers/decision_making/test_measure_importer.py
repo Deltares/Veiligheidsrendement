@@ -31,7 +31,6 @@ class TestMeasureImporter:
     def _get_measure_importer_vrtool_config_fixture(self) -> VrtoolConfig:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
-        _vr_config.output_directory = test_results
         _vr_config.berm_step = 4.2
         _vr_config.t_0 = 42
         _vr_config.unit_costs = MeasureUnitCosts(

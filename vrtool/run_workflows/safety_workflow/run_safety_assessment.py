@@ -54,14 +54,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results = ResultsSafetyAssessment()
         _results.selected_traject = self.selected_traject
         _results.vr_config = self.vr_config
-        _results._write_results_to_file()
 
         logging.info("Stap 1 afgerond.")
 
         return _results
-
-    def _get_valid_output_dir(self, path_args: list[str]) -> Path:
-        _section_figures_dir = self.vr_config.output_directory.joinpath(*path_args)
-        if not _section_figures_dir.exists():
-            _section_figures_dir.mkdir(parents=True, exist_ok=True)
-        return _section_figures_dir

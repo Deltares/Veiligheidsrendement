@@ -19,7 +19,6 @@ class TestVrtoolConfig:
             "language",
             "traject",
             "input_directory",
-            "output_directory",
             "t_0",
             "T",
             "excluded_mechanisms",
@@ -108,7 +107,6 @@ class TestVrtoolConfig:
         _traject_name = "test_traject"
         _vrtool_config = VrtoolConfig(
             input_directory=Path("input"),
-            output_directory=Path("output"),
             externals=Path("externals"),
             traject=_traject_name,
         )
@@ -120,7 +118,6 @@ class TestVrtoolConfig:
         assert _loaded_json is not None
         assert _loaded_json["input_database_name"] == ""
         assert _loaded_json["input_directory"] == "input"
-        assert _loaded_json["output_directory"] == "output"
         assert _loaded_json["externals"] == "externals"
         assert _loaded_json["language"] == "EN"
         assert _loaded_json["traject"] == _traject_name
@@ -176,14 +173,13 @@ class TestVrtoolConfig:
     )
     def test_init_with_mapproperty_as_str_sets_to_path(self, custom_path: str):
         # 1. Define test data
-        _paths_dict = dict(output_directory=custom_path, input_directory=custom_path)
+        _paths_dict = dict(input_directory=custom_path)
 
         # 2. Run test
         _vrtool_config = VrtoolConfig(**_paths_dict)
 
         # 3. Verify expectations.
         _custom_path = Path(custom_path)
-        assert _vrtool_config.output_directory == _custom_path
         assert _vrtool_config.input_directory == _custom_path
 
     @pytest.mark.parametrize(
@@ -192,26 +188,24 @@ class TestVrtoolConfig:
     )
     def test_init_with_not_value_returns_none(self, none_value: Union[str, None]):
         # 1. Define test data
-        _paths_dict = dict(output_directory=none_value, input_directory=none_value)
+        _paths_dict = dict(input_directory=none_value)
 
         # 2. Run test
         _vrtool_config = VrtoolConfig(**_paths_dict)
 
         # 3. Verify expectations.
-        assert _vrtool_config.output_directory is None
         assert _vrtool_config.input_directory is None
 
     def test_init_with_path_returns_same(self):
         # 1. Define test data
         _test_path = Path("just\\a\\path")
-        _paths_dict = dict(output_directory=_test_path, input_directory=_test_path)
+        _paths_dict = dict(input_directory=_test_path)
 
         # 2. Run test
         _vrtool_config = VrtoolConfig(**_paths_dict)
 
         # 3. Verify expectations.
         assert _vrtool_config.input_directory == _test_path
-        assert _vrtool_config.output_directory == _test_path
 
     @pytest.mark.parametrize(
         "input_directory",
@@ -294,7 +288,6 @@ class TestVrtoolConfig:
         # 1. Define test data.
         _vrtool_config = VrtoolConfig()
         _vrtool_config.input_directory = path_value
-        _vrtool_config.output_directory = path_value
         _vrtool_config.externals = path_value
 
         # 2. Run test.
@@ -302,7 +295,6 @@ class TestVrtoolConfig:
 
         # 3. Verify expectations.
         assert _vrtool_config.input_directory == expected_value
-        assert _vrtool_config.output_directory == expected_value
         assert _vrtool_config.externals == expected_value
 
     def test_t0_and_t100_included_in_T(self):
