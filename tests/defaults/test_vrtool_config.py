@@ -107,7 +107,6 @@ class TestVrtoolConfig:
         _traject_name = "test_traject"
         _vrtool_config = VrtoolConfig(
             input_directory=Path("input"),
-            output_directory=Path("output"),
             externals=Path("externals"),
             traject=_traject_name,
         )
@@ -119,7 +118,6 @@ class TestVrtoolConfig:
         assert _loaded_json is not None
         assert _loaded_json["input_database_name"] == ""
         assert _loaded_json["input_directory"] == "input"
-        assert _loaded_json["output_directory"] == "output"
         assert _loaded_json["externals"] == "externals"
         assert _loaded_json["language"] == "EN"
         assert _loaded_json["traject"] == _traject_name

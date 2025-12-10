@@ -114,7 +114,6 @@ We will execute a `run_full` command, for this purpose we will create a director
     "input_directory": ".",
     "input_database_name": "vrtool_input.db",
     "traject": "38-1",
-    "output_directory": "./output",
     "excluded_mechanisms": [
         "REVETMENT",
         "HYDRAULIC_STRUCTURES"
