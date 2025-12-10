@@ -4,7 +4,7 @@ from pathlib import Path
 
 import click
 
-from vrtool import api, __version__
+from vrtool import __version__, api
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.version.migration import default_scripts_dir
 from vrtool.orm.version.migration.migrate_database_controller import (
@@ -12,12 +12,12 @@ from vrtool.orm.version.migration.migrate_database_controller import (
 )
 from vrtool.vrtool_logger import VrToolLogger
 
-
 __externals_path: Path | None = None
+
 
 @click.group()
 @click.version_option(__version__)
-@click.option("--externals", type=click.Path(),  help="Path to externals directory.")
+@click.option("--externals", type=click.Path(), help="Path to externals directory.")
 def cli(externals: click.Path | None):
     """
     Set of general available calls for VeiligheidsrendementTool.
@@ -35,6 +35,7 @@ def _initialize_log_file(log_dir: click.Path):
     _log_file = Path(log_dir).joinpath(f"vrtool_{_current_date}.log")
     VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
     logging.info("Start logging vanuit %s", str(_log_file))
+
 
 def _set_externals_path(vr_config: VrtoolConfig):
     logging.info("Config externals path: %s.", str(vr_config.externals))
@@ -113,7 +114,7 @@ def run_step_optimization(
     _initialize_log_file(log_dir)
 
     _config_file = Path(config_file)
-    logging.info("Start optimalisatie met configuratie %s", str(config_file))    
+    logging.info("Start optimalisatie met configuratie %s", str(config_file))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(_config_file)

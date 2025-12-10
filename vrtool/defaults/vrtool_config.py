@@ -175,6 +175,7 @@ class VrtoolConfig:
         Returns:
             str: JSON representation of this configuration.
         """
+
         def serialize_value(value) -> str:
             if isinstance(value, Path):
                 return str(value)
@@ -185,7 +186,8 @@ class VrtoolConfig:
             if isinstance(value, MeasureUnitCosts):
                 return value.__dict__
             return value
-        _as_dict = { k: serialize_value(v) for k, v in self.__dict__.items() }
+
+        _as_dict = {k: serialize_value(v) for k, v in self.__dict__.items()}
         return json.dumps(_as_dict, sort_keys=True, indent=4)
 
     def validate_config(self) -> None:
