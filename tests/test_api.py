@@ -52,7 +52,6 @@ class TestApi:
         assert isinstance(_vrtool_config, VrtoolConfig)
         assert _vrtool_config.traject == "MyCustomTraject"
         assert _vrtool_config.input_directory == _input_dir
-        assert _vrtool_config.output_directory == _input_dir.joinpath("results")
 
     def test_when_get_valid_vrtool_config_with_valid_config_logs_settings(
         self,
@@ -107,7 +106,6 @@ class TestApi:
         _vrtool_config = VrtoolConfig(traject=_found_dike_traject.traject_name)
         _vrtool_config.input_directory = _test_db_path.parent
         _vrtool_config.input_database_name = _test_db_path.name
-        _vrtool_config.output_directory = test_results.joinpath(request.node.name)
 
         # Get a valid test `OptimizationRun`
         _optimization_run = orm.OptimizationRun.get_by_id(1)

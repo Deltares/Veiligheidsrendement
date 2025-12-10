@@ -41,12 +41,6 @@ class RunOptimization(VrToolRunProtocol):
         self._selected_measure_ids = optimization_selected_measure_ids
         self._ids_to_import = optimization_input.measure_id_year_list
 
-    def _get_output_dir(self) -> Path:
-        _results_dir = self.vr_config.output_directory
-        if not _results_dir.exists():
-            _results_dir.mkdir(parents=True)
-        return _results_dir
-
     def _get_strategy_controller_with_aggregations(
         self,
         section_input_collection: list[SectionAsInput],

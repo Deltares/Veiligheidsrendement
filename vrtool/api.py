@@ -56,12 +56,6 @@ def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
     if not _vr_config.input_directory:
         _vr_config.input_directory = config_file.parent
 
-    if not _vr_config.output_directory:
-        _vr_config.output_directory = _vr_config.input_directory.joinpath("results")
-
-    if not _vr_config.output_directory.exists():
-        _vr_config.output_directory.mkdir(parents=True)
-
     logging.info("Geldige configuratie geladen: %s met settings:", str(config_file))
     logging.info(_vr_config.serialize())
 
@@ -252,20 +246,6 @@ class ApiRunWorkflows:
         logging.info("Run type: %s", "Full Run")
         logging.info("Run name: %s", _run_name)
         # Run all steps with one command.
-        if not self.vrtool_config.output_directory.is_dir():
-            logging.info(
-                "Aanmaken uitvoerfolders op {}".format(
-                    self.vrtool_config.output_directory
-                )
-            )
-            self.vrtool_config.output_directory.mkdir(parents=True, exist_ok=True)
-            self.vrtool_config.output_directory.joinpath("figures").mkdir(
-                parents=True, exist_ok=True
-            )
-            self.vrtool_config.output_directory.joinpath(
-                "results", "investment_steps"
-            ).mkdir(parents=True, exist_ok=True)
-
         logging.info("Start beoordeling & doorrekenen maatregelen.")
 
         # Step 1 + 2. Run assessment through running measures.

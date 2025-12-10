@@ -22,7 +22,6 @@ class VrtoolConfig:
     # Directory to write the results to
     input_database_name: str = ""
     input_directory: Path = None
-    output_directory: Optional[Path] = None
     externals: Optional[Path] = None  # for DStability
     language: str = "EN"
 
@@ -102,7 +101,6 @@ class VrtoolConfig:
             return value
 
         self.input_directory = _convert_to_path(self.input_directory)
-        self.output_directory = _convert_to_path(self.output_directory)
         self.externals = _convert_to_path(self.externals)
 
         def _valid_mechanism(mechanism: MechanismEnum | str) -> MechanismEnum:
@@ -134,7 +132,6 @@ class VrtoolConfig:
             return parent_path.joinpath(value).resolve()
 
         self.input_directory = _relative_to_absolute(self.input_directory)
-        self.output_directory = _relative_to_absolute(self.output_directory)
         self.externals = _relative_to_absolute(self.externals)
 
     def export(self, export_path: Path):
