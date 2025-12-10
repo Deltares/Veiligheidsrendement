@@ -49,7 +49,7 @@ update_reference_dbs = "scripts.update_reference_dbs:update_reference_dbs"
 
 [tool.pixi.dependencies]
 python = ">=3.12,<3.13"
-matplotlib = ">3.7.0,<4.0.0"
+matplotlib = ">3.7.0"
 numpy = "1.26.4"
 pandas = ">=1.5.3"
 shapely = ">=2.0.1"
@@ -69,7 +69,7 @@ coverage = ">=6.4.4"
 teamcity-messages = ">=1.32"
 pytest-xdist = ">=3.3.1"
 pytest-profiling = ">=1.7.0"
-pywin32 = ">=311,<312"
+pywin32 = ">=311"
 
 [tool.pixi.feature.dev.dependencies]
 black = ">=22.8.0"
