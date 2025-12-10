@@ -159,6 +159,10 @@ We can now run the container by mounting our directory ( `docker_case` ) to `/mo
 
 The results of our calculation can be found in our __local__ directory `docker_case/output` and in the provided database `docker_case/vrtool_input.db`.
 
+As earlier mentioned, you can still override the default externals path by doing something as: 
+```cli
+> podman run -v docker_case:/model vrtool --externals /my/externals/path run_full /model/docker_config.json
+```
 
 ## Contribution guidelines ##
 
