@@ -14,7 +14,7 @@ def migrate_test_databases():
     the latest version.
     The orm version will be updated according to the migration scripts.
 
-    Can be run with `poetry run migrate_test_db`
+    Can be run with `pixi run migrate_test_db`
     """
     # Fetch the dir containing the migration scripts.
     _root_dir = Path(__file__).parent.parent.parent

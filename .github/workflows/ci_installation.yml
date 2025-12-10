@@ -3,8 +3,7 @@ name: ci-install-package
 on:
   push:
     branches:
-      - main
-      - ci/create_docker_dev
+      - master
     
 jobs:
   install-package:
@@ -12,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        environment: [py312]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -21,35 +20,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4.7.1
+      - uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.3.0
-        with:
-          poetry-version: 1.6.1
-
-      - name: Cache Poetry virtualenv
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: ~/.virtualenvs
-          key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            venv-${{ matrix.os }}-${{ matrix.python-version }}-
-
-      - name: Set Poetry config
-        run: |
-          poetry config virtualenvs.in-project false
-          poetry config virtualenvs.path ~/.virtualenvs
+          pixi-version: v0.49.0
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          environments: ${{ matrix.environment }}
 
       - name: Install Dependencies
-        run: poetry install
+        run: pixi install
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Build package
-        run: poetry build
+        run: pixi run -e dev build
         if: steps.cache.outputs.cache-hit != 'true'
         
