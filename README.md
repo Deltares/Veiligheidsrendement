@@ -43,7 +43,7 @@ We recommend you to check our `CONTRIBUTING.md` document and its [installation s
 
 #### D-Stability
 It is the responsibility of the user to have their own DStabilityConsole binaries locally available in order to run it with the `vrtool`.
-We are using the 2024.01 release of D-Stability.
+We are using the 2024.02 release of D-Stability.
 For a correct functioning we advise you to have a look on our tutorial section
 [Running a D-Stability model](https://deltares-research.github.io/VrtoolDocumentation/Achtergronden/Betrouwbaarheidsmodellen/Binnenwaartse%20macrostabiliteit.html#d-stability).
 
