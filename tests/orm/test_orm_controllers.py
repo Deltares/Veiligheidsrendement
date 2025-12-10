@@ -286,16 +286,11 @@ class TestOrmControllers:
         # 1. Define test data.
         _test_db = test_data.joinpath("test_db", "with_valid_data.db")
 
-        _output_directory = test_results.joinpath(request.node.name)
-        if _output_directory.exists():
-            shutil.rmtree(_output_directory)
-
         # Generate a custom `VrtoolConfig`
         _vrtool_config = VrtoolConfig(
             input_directory=_test_db.parent,
             input_database_name=_test_db.name,
             traject="38-1",
-            output_directory=_output_directory,
         )
         assert _vrtool_config.input_database_path.is_file()
 
@@ -1084,7 +1079,6 @@ class TestOrmControllers:
         _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
-        assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
         with open_database(_vrtool_config.input_database_path).connection_context():

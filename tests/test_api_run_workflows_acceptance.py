@@ -7,7 +7,12 @@ from typing import Iterator
 import pytest
 from peewee import SqliteDatabase
 
-from tests import get_clean_test_results_dir, test_data, test_externals
+from tests import (
+    get_clean_test_results_dir,
+    retrieve_test_result_dir_path,
+    test_data,
+    test_externals,
+)
 from tests.api_acceptance_cases.acceptance_test_case import (
     AcceptanceTestCase,
     vrtool_db_default_name,
@@ -133,7 +138,6 @@ class TestApiRunWorkflowsAcceptance:
         # Define the VrtoolConfig
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
-        _test_config.output_directory = _test_results_directory
         _test_config.traject = _test_case.traject_name
         _test_config.excluded_mechanisms = _test_case.excluded_mechanisms
         _test_config.externals = test_externals
@@ -167,12 +171,10 @@ class TestApiRunWorkflowsAcceptance:
 
         # Copy the test database to the results directory so it can be manually reviewed.
         if _test_config.input_database_path.exists():
-            _results_db_name = _test_config.output_directory.joinpath(
-                "vrtool_result.db"
-            )
+            _results_db_name = _test_results_directory.joinpath("vrtool_result.db")
             shutil.move(_test_config.input_database_path, _results_db_name)
 
-            # Copy the postprocessing report if it exists.
+            # Copy the postprocessing report, if it exists.
             # For now it assumes it's created at the same level as the results
             _report = _test_config.input_database_path.parent.joinpath(
                 "postprocessing_report_" + _test_config.input_database_path.stem
@@ -180,7 +182,7 @@ class TestApiRunWorkflowsAcceptance:
             if _report.exists():
                 shutil.move(
                     _report,
-                    _test_config.output_directory.joinpath("postprocessing_report"),
+                    _test_results_directory.joinpath("postprocessing_report"),
                 )
 
     @pytest.mark.parametrize(
@@ -438,6 +440,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # Run the main case
         run_full(api_vrtool_config)
+        _test_results_directory = retrieve_test_result_dir_path(request)
 
         def _get_copied_vrtool_config(suffix: str) -> VrtoolConfig:
             # Copy the config.
@@ -459,7 +462,7 @@ class TestApiRunWorkflowsAcceptance:
         def _copy_results(vrtool_config: VrtoolConfig, suffix: str) -> None:
             # Copy the results.
             if vrtool_config.input_database_path.exists():
-                _results_db_name = vrtool_config.output_directory.joinpath(
+                _results_db_name = _test_results_directory.joinpath(
                     f"vrtool_result{suffix}.db"
                 )
                 shutil.move(vrtool_config.input_database_path, _results_db_name)

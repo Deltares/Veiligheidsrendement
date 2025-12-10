@@ -20,7 +20,6 @@ class TestDikeSectionImporter:
     def _get_valid_config_fixture(self) -> Iterator[VrtoolConfig]:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
-        _vr_config.output_directory = test_results
 
         yield _vr_config
 

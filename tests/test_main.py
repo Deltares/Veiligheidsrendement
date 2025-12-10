@@ -118,7 +118,6 @@ class TestMain:
             "input_directory": str(_input_dir),
             "input_database_name": _test_db_file.name,
             "traject": "38-1",
-            "output_directory": str(_output_dir),
             "excluded_mechanisms": [
                 MechanismEnum.REVETMENT.name,
                 MechanismEnum.HYDRAULIC_STRUCTURES.name,

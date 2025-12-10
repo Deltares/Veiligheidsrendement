@@ -69,7 +69,6 @@ class TestApiReportedBugs:
         # Define the VrtoolConfig
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
-        _test_config.output_directory = _test_results_directory
         _test_config.traject = _test_case_dict["traject_name"]
         _test_config.externals = test_externals
         _test_config.excluded_mechanisms = _test_case_dict["excluded_mechanisms"]

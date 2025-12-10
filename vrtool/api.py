@@ -56,12 +56,6 @@ def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
     if not _vr_config.input_directory:
         _vr_config.input_directory = config_file.parent
 
-    if not _vr_config.output_directory:
-        _vr_config.output_directory = _vr_config.input_directory / "results"
-
-    if not _vr_config.output_directory.exists():
-        _vr_config.output_directory.mkdir(parents=True)
-
     return _vr_config
 
 

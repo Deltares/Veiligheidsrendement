@@ -14,17 +14,15 @@ if not test_results.is_dir():
     test_results.mkdir(parents=True)
 
 
-def get_clean_test_results_dir(request: FixtureRequest) -> Path:
+def retrieve_test_result_dir_path(request: FixtureRequest) -> Path:
     """
-    Gets a new results directory considering the test name and "cases".
-    When the results directory exists it gets removed to prevent data
-    from becoming corrupted.
+    Retrieve the test result directory path based on the test name and cases.
 
     Args:
         request (FixtureRequest): Contains information of the test name and cases.
 
     Returns:
-        Path: Generated directory where results can be exported.
+        Path: The path to the test results directory to be used (not created yet).
     """
     # Parts should contain the test class name and the test name.
     # The ultimate idea is to create a unique test results directory.
@@ -39,6 +37,23 @@ def get_clean_test_results_dir(request: FixtureRequest) -> Path:
             .replace(" ", "_")
         )
         _test_dir = _test_dir.joinpath(_normalized_case)
+
+    return _test_dir
+
+
+def get_clean_test_results_dir(request: FixtureRequest) -> Path:
+    """
+    Gets a new results directory considering the test name and "cases".
+    When the results directory exists it gets removed to prevent data
+    from becoming corrupted.
+
+    Args:
+        request (FixtureRequest): Contains information of the test name and cases.
+
+    Returns:
+        Path: Generated directory where results can be exported.
+    """
+    _test_dir = retrieve_test_result_dir_path(request)
 
     if _test_dir.exists():
         shutil.rmtree(_test_dir)
@@ -101,7 +116,5 @@ def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConf
     # Set new configuration values.
     _vrtool_config.input_directory = _test_results_directory
     _vrtool_config.input_database_name = _new_db_name
-    _vrtool_config.output_directory = _test_results_directory.joinpath("output")
-    _vrtool_config.output_directory.mkdir()
 
     return _vrtool_config

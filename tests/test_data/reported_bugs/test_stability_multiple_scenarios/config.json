@@ -12,6 +12,5 @@
         "HYDRAULIC_STRUCTURES"
     ],
     "input_database_name": "traject_7_2.db",
-    "input_directory": ".",
-    "output_directory": "Basisberekening"
+    "input_directory": "."
 }
