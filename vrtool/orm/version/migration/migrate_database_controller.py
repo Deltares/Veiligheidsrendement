@@ -18,6 +18,8 @@ class MigrateDatabaseController:
         self.script_versions = self._read_scripts(scripts_dir)
 
     def _read_scripts(self, scripts_dir: Path) -> list[ScriptVersion]:
+        for _script in scripts_dir.rglob("*.sql"):
+            logging.info("Gevonden migratiescript: %s", _script.stem)
         return sorted(
             list(
                 ScriptVersion.from_script(_script)
