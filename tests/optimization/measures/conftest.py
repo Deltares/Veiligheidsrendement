@@ -23,9 +23,9 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 
 @pytest.fixture(name="probability_collection_factory")
-def get_valid_probability_collection_factory() -> Iterator[
-    Callable[[MechanismEnum], MechanismPerYearProbabilityCollection]
-]:
+def get_valid_probability_collection_factory() -> (
+    Iterator[Callable[[MechanismEnum], MechanismPerYearProbabilityCollection]]
+):
     def create_mpy_prob_collection(
         mechanism_type: MechanismEnum,
     ) -> MechanismPerYearProbabilityCollection:
@@ -41,7 +41,7 @@ def get_valid_probability_collection_factory() -> Iterator[
 def get_measure_as_input_factory_fixture(
     probability_collection_factory: Callable[
         [MechanismEnum], MechanismPerYearProbabilityCollection
-    ]
+    ],
 ) -> Iterable[Callable[[dict], MeasureAsInputProtocol]]:
     def create_measure_as_input(**kwargs) -> MeasureAsInputProtocol:
         default_values = dict(
@@ -64,7 +64,7 @@ def get_measure_as_input_factory_fixture(
 
 @pytest.fixture(name="combined_measure_factory_fixture")
 def get_combined_measure_factory_fixture(
-    measure_as_input_factory: Callable[[dict], MeasureAsInputProtocol]
+    measure_as_input_factory: Callable[[dict], MeasureAsInputProtocol],
 ) -> Iterable[Callable[[type[CombinedMeasureBase], dict, dict], CombinedMeasureBase]]:
     def create_combined_measure(
         combined_measure_type: type[ShCombinedMeasure | SgCombinedMeasure],
@@ -74,9 +74,9 @@ def get_combined_measure_factory_fixture(
         # This method only supports `ShCombinedMeasure` and `SgCombinedMeasure`.
         return combined_measure_type(
             primary=measure_as_input_factory(**primary_dict),
-            secondary=measure_as_input_factory(**secondary_dict)
-            if secondary_dict
-            else None,
+            secondary=(
+                measure_as_input_factory(**secondary_dict) if secondary_dict else None
+            ),
             mechanism_year_collection=None,
             sequence_nr=-1,
         )

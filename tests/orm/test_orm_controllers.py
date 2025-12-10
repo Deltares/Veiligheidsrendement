@@ -1325,10 +1325,10 @@ class TestCustomMeasureDetail:
                     _time_beta_tuples = [
                         (_cm["TIME"], _cm["BETA"]) for _cm in _mechanism_dicts_list
                     ]
-                    _expected_mechanism_values[
-                        _mechanism_name
-                    ] = CustomMeasureTimeBetaCalculator.get_interpolated_time_beta_collection(
-                        _time_beta_tuples, _known_computation_periods
+                    _expected_mechanism_values[_mechanism_name] = (
+                        CustomMeasureTimeBetaCalculator.get_interpolated_time_beta_collection(
+                            _time_beta_tuples, _known_computation_periods
+                        )
                     )
 
                 for _fm_result_mechanism in _fm_result.measure_result_mechanisms:

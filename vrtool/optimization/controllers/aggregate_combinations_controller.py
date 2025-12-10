@@ -80,7 +80,7 @@ class AggregateCombinationsController:
         """
 
         def combinations_can_be_aggregated(
-            combinations: tuple[CombinedMeasureBase, CombinedMeasureBase]
+            combinations: tuple[CombinedMeasureBase, CombinedMeasureBase],
         ) -> bool:
             return combinations[0].compares_to(combinations[1])
 

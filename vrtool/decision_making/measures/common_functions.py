@@ -92,10 +92,10 @@ def implement_berm_widening(
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
             # model, hence RERUN_STIX set to True, but only for the investment year.
-            berm_input[
-                "STIXNAAM"
-            ] = _dstability_berm_widening.create_new_dstability_model(
-                path_intermediate_stix
+            berm_input["STIXNAAM"] = (
+                _dstability_berm_widening.create_new_dstability_model(
+                    path_intermediate_stix
+                )
             )
             if is_first_year_with_widening:
                 berm_input["RERUN_STIX"] = True
@@ -104,10 +104,10 @@ def implement_berm_widening(
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
             berm_input["beta"] = berm_input["beta"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta"], _safety_factor_increase
+                berm_input["beta"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta"], _safety_factor_increase
+                    )
                 )
         else:
             raise NotImplementedError(

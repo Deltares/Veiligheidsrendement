@@ -12,9 +12,9 @@ from vrtool.orm.models.section_data import SectionData
 
 
 @pytest.fixture(name="create_required_mechanism_per_section")
-def create_required_mechanism_per_section_fixture() -> Iterator[
-    Callable[[SectionData, list[MechanismEnum]], None]
-]:
+def create_required_mechanism_per_section_fixture() -> (
+    Iterator[Callable[[SectionData, list[MechanismEnum]], None]]
+):
     """
     Yields a generator of many `MechanismPerSection`.
     """

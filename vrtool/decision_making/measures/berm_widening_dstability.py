@@ -267,7 +267,7 @@ class BermWideningDStability:
             The Path of the new stix file
         """
 
-        for (scenario_id, stage_id) in self.dstability_wrapper.get_all_stage_ids():
+        for scenario_id, stage_id in self.dstability_wrapper.get_all_stage_ids():
             self.modify_geometry(
                 fill_polygons=fill_polygons, scenario_id=scenario_id, stage_id=stage_id
             )
