@@ -105,13 +105,13 @@ class TestVrtoolConfig:
 
     def test_serialize_vrtool_config(self):
         # 1. Define test data.
+        _traject_name = "test_traject"
         _vrtool_config = VrtoolConfig(
             input_directory=Path("input"),
             output_directory=Path("output"),
             externals=Path("externals"),
-            traject="test_traject",
+            traject=_traject_name,
         )
-        _vrtool_config.traject = "test_traject"
 
         # 2. Run test
         _json_str = _vrtool_config.serialize()
@@ -123,7 +123,7 @@ class TestVrtoolConfig:
         assert _loaded_json["output_directory"] == "output"
         assert _loaded_json["externals"] == "externals"
         assert _loaded_json["language"] == "EN"
-        assert _loaded_json["traject"] == _vrtool_config.traject
+        assert _loaded_json["traject"] == _traject_name
         assert _loaded_json["t_0"] == 2025
         assert _loaded_json["T"] == [0, 19, 20, 25, 50, 75, 100]
         assert _loaded_json["excluded_mechanisms"] == [
