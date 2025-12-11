@@ -10572,7 +10572,7 @@ packages:
 - pypi: ./
   name: vrtool
   version: 1.1.1
-  sha256: f26016da71650502968b68735d02fbfa1b6849af350faae8a5fd9c710e9e1d56
+  sha256: f0dd3a5641c7b42e5fe54dc165ea0602d063b86f9637aed5c39aba85eb5cff9d
   requires_dist:
   - matplotlib
   - numpy
@@ -10586,7 +10586,7 @@ packages:
   - peewee
   - d-geolib>=2.8.0,<3
   - tqdm
-  requires_python: '>=3.12,<3.13'
+  requires_python: '>=3.12,<3.14'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/wayland-1.24.0-hd6090a7_1.conda
   sha256: 3aa04ae8e9521d9b56b562376d944c3e52b69f9d2a0667f77b8953464822e125
