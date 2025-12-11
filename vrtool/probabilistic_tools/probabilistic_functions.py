@@ -95,6 +95,9 @@ class TableDist(ot.PythonDistribution):
         )
         return [mu]
 
+    def getRange(self):
+        return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])
+
 
 def add_load_char_vals(
     input, t_0: int, load, p_h: float, p_dh: float, year: float
