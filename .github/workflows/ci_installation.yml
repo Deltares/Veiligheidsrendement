@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ci/add-support-python-313
     
 jobs:
   install-package:
