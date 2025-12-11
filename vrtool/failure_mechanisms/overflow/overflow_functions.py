@@ -19,7 +19,7 @@ def calculate_overflow_hydra_ring_design(
         Tuple[float, float]: A tuple with the calculated height of the new crest and the reliability.
     """
 
-    t_beta_interp = interpolate.interp2d(
+    t_beta_interp = interpolate.RectBivariateSpline(
         input["hc_beta"].columns.values.astype(np.float32),
         input["hc_beta"].index.values,
         input["hc_beta"],
@@ -93,12 +93,12 @@ def calculate_overflow_simple_assessment(
     """
 
     if q_c[0] != q_c[-1:]:
-        beta_hc = interpolate.interp2d(
+        beta_hc = interpolate.RectBivariateSpline(
             h_c, q_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
-        beta_hc = interpolate.interp1d(
+        beta_hc = interpolate.RectBivariateSpline(
             h_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest), [8.0]])
