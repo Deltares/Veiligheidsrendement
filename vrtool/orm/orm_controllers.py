@@ -537,9 +537,10 @@ def add_custom_measures(
     _exported_measures = []
 
     with open_database(vrtool_config.input_database_path) as _db:
-        _exported_measures = ListOfDictToCustomMeasureExporter(_db).export_dom(
-            custom_measure_details
-        )
+        with vrtool_db.atomic():
+            _exported_measures = ListOfDictToCustomMeasureExporter(_db).export_dom(
+                custom_measure_details
+            )
 
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)
