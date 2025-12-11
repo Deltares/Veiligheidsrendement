@@ -267,20 +267,20 @@ def export_results_measures(result: ResultsMeasures) -> None:
     Args:
         result (ResultsMeasures): result of measure step
     """
-
-    _connected_db = open_database(result.vr_config.input_database_path)
-
     logging.info("Start export resultaten maatregelen naar database.")
+    
+    with open_database(result.vr_config.input_database_path):
 
-    _exporter = SolutionsExporter()
-    for _solution in tqdm(
-        result.solutions_dict.values(),
-        desc="Aantal geexporteerde dijkvakken:",
-        total=len(result.solutions_dict),
-        unit="vak",
-    ):
-        _exporter.export_dom(_solution)
-    _connected_db.close()
+        _exporter = SolutionsExporter()
+        
+        with vrtool_db.atomic():
+            for _solution in tqdm(
+                result.solutions_dict.values(),
+                desc="Aantal geexporteerde dijkvakken:",
+                total=len(result.solutions_dict),
+                unit="vak",
+            ):
+                _exporter.export_dom(_solution)
 
     logging.debug("Export van resultaten maatregelen afgerond.")
 
