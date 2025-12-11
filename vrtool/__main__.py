@@ -56,15 +56,17 @@ def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
     """
     Runs the step assessment.
     """
+    _config_file = Path(str(config_file))
+    
     # Retrieve parameter and initialize logging.
     if log_dir is None:
-        log_dir = config_file.parent
+        log_dir = _config_file.parent
     _initialize_log_file(log_dir)
 
-    logging.info("Start beoordeling met configuratie %s", str(config_file))
+    logging.info("Start beoordeling met configuratie %s", config_file)
 
     # Get the selected Traject.
-    _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _vr_config = api.get_valid_vrtool_config(_config_file)
     _set_externals_path(_vr_config)
     api.run_step_assessment(_vr_config)
 
@@ -79,18 +81,20 @@ def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
     """
     Runs step measures.
     """
+    _config_file = Path(str(config_file))
+    
     # Retrieve parameter and initialize logging.
     if log_dir is None:
-        log_dir = config_file.parent
+        log_dir = _config_file.parent
     _initialize_log_file(log_dir)
 
     logging.info(
         "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s",
-        str(config_file),
+        config_file,
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _vr_config = api.get_valid_vrtool_config(_config_file)
     _set_externals_path(_vr_config)
     api.run_step_measures(_vr_config)
 
@@ -108,13 +112,14 @@ def run_step_optimization(
     """
     Runs step optimization.
     """
+    _config_file = Path(str(config_file))
+    
     # Retrieve parameter and initialize logging.
     if log_dir is None:
-        log_dir = config_file.parent
+        log_dir = _config_file.parent
     _initialize_log_file(log_dir)
 
-    _config_file = Path(config_file)
-    logging.info("Start optimalisatie met configuratie %s", str(config_file))
+    logging.info("Start optimalisatie met configuratie %s", config_file)
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(_config_file)
@@ -135,14 +140,16 @@ def run_full(config_file: click.Path, log_dir: click.Path | None):
     """
     Runs all the veiligheidsrendement steps (assessment, measures and optimization).
     """
+    _config_file = Path(str(config_file))
+    
     # Retrieve parameter and initialize logging.
     if log_dir is None:
-        log_dir = config_file.parent
+        log_dir = _config_file.parent
     _initialize_log_file(log_dir)
-    logging.info("Start volledige berekening met configuratie %s!", str(config_file))
+    logging.info("Start volledige berekening met configuratie %s!", _config_file)
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(config_file))
+    _vr_config = api.get_valid_vrtool_config(_config_file)
     _set_externals_path(_vr_config)
     api.run_full(_vr_config)
 
