@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
@@ -61,63 +59,6 @@ class TableDist(ot.PythonDistribution):
             self.xp = pgrid
             self.xp[-1:] = 1.0
 
-    def getParameterDescription(self):
-        descr1 = []
-        descr2 = []
-        for i in range(0, len(self.x)):
-            descr1.append("x_" + str(i))
-            descr2.append("xp_" + str(i))
-        return descr1 + descr2
-
-    def getParameter(self):
-        x = []
-        xp = []
-        for i in range(0, len(self.x)):
-            x.append(self.x[i])
-            xp.append(self.xp[i])
-        return ot.Point(x + xp)
-
-    def computeCDF(self, X):
-        if X < self.x[0]:
-            return 0.0
-        elif X >= self.x[-1:]:
-            return 1.0
-        else:
-            # find first value that is larger:
-            # Option 1, seems to be slightly slower:
-            # idx_up = min(np.argwhere(self.x>X))
-            # xx = self.x[int(idx_up)-1:int(idx_up)+1]
-            # pp = self.xp[int(idx_up)-1:int(idx_up)+1]
-            # f = interp1d(xx,pp)
-            # p = f(X)
-            X = X[0]
-
-            # idx_up = np.min(np.argwhere(self.x > X))
-            idx_up = np.argmax(self.x > X)
-            xx = self.x[idx_up - 1 : idx_up + 1]
-            pp = self.xp[idx_up - 1 : idx_up + 1]
-            dp = pp[1] - pp[0]
-            dx = xx[1] - xx[0]
-            p = pp[0] + dp * ((X - xx[0]) / dx)
-
-            return p
-
-    def computeQuantile_alternative(self, p, tail=False):
-        if tail:  # if input p is to be interpreted as exceedence probability
-            p = 1 - p
-        # Linearly interpolate between two values
-
-        # idx_up = np.min(np.argwhere(self.x > X))
-        # find index above
-        idx_up = np.argmax(self.xp > p)
-
-        xx = self.x[idx_up - 1 : idx_up + 1]
-        pp = self.xp[idx_up - 1 : idx_up + 1]
-        dp = pp[1] - pp[0]
-        dx = xx[1] - xx[0]
-        x = xx[0] + dx * ((p - pp[0]) / dp)
-        return x
-
     def getMean(self):
         high = np.min(np.argwhere(self.xp > 0.53))
         low = np.min(np.argwhere(self.xp > 0.47))
@@ -128,32 +69,6 @@ class TableDist(ot.PythonDistribution):
             0.5, self.xp[index - 1 : index + 1], self.x[index - 1 : index + 1]
         )
         return [mu]
-
-    def getRange(self):
-        return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])
-
-    def getRealization(self):
-        X = []
-        p = ot.RandomGenerator.Generate()
-        idx_up = min(np.argwhere(self.xp > p))  # CHECK
-        pp = self.xp[int(idx_up) - 1 : int(idx_up) + 1]
-        xx = self.x[int(idx_up) - 1 : int(idx_up) + 1]
-        f = interp1d(pp, xx)
-        X = float(f(p))
-        return ot.Point(1, X)
-
-        # sample = h.getSample(50000)
-        # from openturns.viewer import View
-        # graph = ot.VisualTest_DrawEmpiricalCDF(sample)
-        # orig = ot.Curve(wls, p_nexc)
-        # graph.add(orig)
-        # View(graph).show()
-
-    def getSample(self, size):
-        X = []
-        for i in range(size):
-            X.append(self.getRealization())
-        return X
 
 
 def add_load_char_vals(
