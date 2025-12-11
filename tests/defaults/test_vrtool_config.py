@@ -66,7 +66,7 @@ class TestVrtoolConfig:
         assert _config.berm_step == [0, 5, 8, 10, 12, 15, 20, 30]
         assert _config.OI_horizon == 50
         assert _config.BC_stop == pytest.approx(0.1)
-        assert _config.max_greedy_iterations == 150
+        assert _config.max_greedy_iterations == 600
         assert _config.f_cautious == pytest.approx(1.5)
         assert _config.discount_rate == pytest.approx(0.03)
         assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
@@ -130,7 +130,7 @@ class TestVrtoolConfig:
         assert _loaded_json["berm_step"] == [0, 5, 8, 10, 12, 15, 20, 30]
         assert _loaded_json["OI_horizon"] == 50
         assert _loaded_json["BC_stop"] == 0.1
-        assert _loaded_json["max_greedy_iterations"] == 150
+        assert _loaded_json["max_greedy_iterations"] == 600
         assert _loaded_json["f_cautious"] == 1.5
         assert _loaded_json["discount_rate"] == 0.03
         assert _loaded_json["design_methods"] == [
