@@ -40,9 +40,9 @@ class SectionAsInput:
     combined_measures: list[CombinedMeasureBase] = field(
         default_factory=list[CombinedMeasureBase]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
-    aggregated_measure_combinations: Optional[
-        list[AggregatedMeasureCombination]
-    ] = field(default_factory=list[AggregatedMeasureCombination])
+    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
+        field(default_factory=list[AggregatedMeasureCombination])
+    )
 
     def get_measures_by_class(
         self,

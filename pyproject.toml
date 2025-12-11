@@ -103,6 +103,7 @@ exclude = '''
     | \.env
     | \.venv
     | \.devcontainer
+    | \.pixi
     | .pytest_cache
     | .scannerwork
     | .vscode
@@ -118,6 +119,7 @@ line_length = 88
 skip = [
   ".git",
   ".github",
+  ".pixi",
   ".env",
   ".venv",
   ".devcontainer",

@@ -3,11 +3,12 @@ name: ci-install-package
 on:
   push:
     branches:
-      - master
+      - main
     
 jobs:
   install-package:
     if: "${{ (!startsWith(github.event.head_commit.message, 'chore: autoformat isort & black')) && (!startsWith(github.event.head_commit.message, 'bump:')) }}"
+    name: "Install and build package in multiple environments"
     strategy:
       fail-fast: false
       matrix:

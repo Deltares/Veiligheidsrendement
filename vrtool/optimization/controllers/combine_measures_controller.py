@@ -48,7 +48,7 @@ class CombineMeasuresController:
         def valid_combination(
             combination: tuple[
                 MeasureAsInputProtocol | None, MeasureAsInputProtocol | None
-            ]
+            ],
         ) -> bool:
             _primary, _secondary = combination
             if _primary is None or (

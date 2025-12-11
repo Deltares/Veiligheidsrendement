@@ -36,7 +36,9 @@ class PostProcessingReport:
     report_dir: Path
 
     has_revetment: bool = True  # Whether a revetment is present or not
-    take_last: bool = False  # If True, the last step is taken, if False, the step with minimal total cost is taken
+    take_last: bool = (
+        False  # If True, the last step is taken, if False, the step with minimal total cost is taken
+    )
     colors: Any = field(default_factory=lambda: sns.color_palette("colorblind", 10))
 
     def __enter__(self):
@@ -193,12 +195,12 @@ class PostProcessingReport:
             MechanismEnum.REVETMENT,
         ]:
             if self.has_revetment or mechanism != MechanismEnum.REVETMENT:
-                assessment_results["reference"][
-                    mechanism
-                ] = daf.import_original_assessment(self.reference_db, mechanism)
-                assessment_results["result"][
-                    mechanism
-                ] = daf.import_original_assessment(self.result_db, mechanism)
+                assessment_results["reference"][mechanism] = (
+                    daf.import_original_assessment(self.reference_db, mechanism)
+                )
+                assessment_results["result"][mechanism] = (
+                    daf.import_original_assessment(self.result_db, mechanism)
+                )
 
         reliability_per_step = {
             "reference": dan.get_reliability_for_each_step(

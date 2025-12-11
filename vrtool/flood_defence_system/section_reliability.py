@@ -70,13 +70,13 @@ class SectionReliability:
                         if mechanism is MechanismEnum.PIPING
                         else cross_sectional_requirements.dike_traject_b_stability_inner
                     )
-                    _pf_mechanisms_time[
-                        _count, _range_idx
-                    ] = self._get_upscale_cross_sectional_probability(
-                        cross_sectional_requirements.dike_section_length,
-                        _pf,
-                        _mechanism_a,
-                        _mechanism_b,
+                    _pf_mechanisms_time[_count, _range_idx] = (
+                        self._get_upscale_cross_sectional_probability(
+                            cross_sectional_requirements.dike_section_length,
+                            _pf,
+                            _mechanism_a,
+                            _mechanism_b,
+                        )
                     )
 
             _count += 1
@@ -96,6 +96,6 @@ class SectionReliability:
         self.SectionReliability = pd.concat((_beta_mech_time, _beta_time))
 
         # replace values greater than the threshold with the threshold itself.
-        self.SectionReliability[
-            self.SectionReliability > BETA_THRESHOLD
-        ] = BETA_THRESHOLD
+        self.SectionReliability[self.SectionReliability > BETA_THRESHOLD] = (
+            BETA_THRESHOLD
+        )

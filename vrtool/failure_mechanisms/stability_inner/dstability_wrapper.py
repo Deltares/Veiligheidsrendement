@@ -107,7 +107,7 @@ class DStabilityWrapper:
         _end_screen = GeolibPoint(x=location, z=bottom_screen)
         _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
 
-        for (_scen_id, _stage_id) in self.get_all_stage_ids():
+        for _scen_id, _stage_id in self.get_all_stage_ids():
             self._dstability_model.add_reinforcement(
                 _stability_screen, scenario_index=_scen_id, stage_index=_stage_id
             )

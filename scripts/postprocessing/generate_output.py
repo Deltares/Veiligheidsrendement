@@ -64,7 +64,7 @@ def plot_traject_probability_for_step(
     """
 
     def calculate_traject_probability(
-        traject_prob: dict[MechanismEnum, dict[int, float]]
+        traject_prob: dict[MechanismEnum, dict[int, float]],
     ):
         p_nonf = [1] * len(list(traject_prob.values())[0].values())
         for _mechanism, _data in traject_prob.items():

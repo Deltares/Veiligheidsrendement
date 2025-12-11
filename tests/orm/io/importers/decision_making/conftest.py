@@ -18,9 +18,9 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 
 
 @pytest.fixture(name="create_valid_measure")
-def get_valid_measure_factory() -> Iterable[
-    Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure]
-]:
+def get_valid_measure_factory() -> (
+    Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure]]
+):
     """
     Creates a basic measure within a Vrtool database context.
     """

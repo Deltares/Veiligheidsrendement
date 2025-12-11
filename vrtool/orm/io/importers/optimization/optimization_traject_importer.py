@@ -28,7 +28,7 @@ class OptimizationTrajectImporter(OrmImporterProtocol):
 
     def _get_measure_results_to_import(
         self, dike_traject_info: DikeTrajectInfo
-    ) -> (dict[SectionData, dict[MeasureResult, list[int]]]):
+    ) -> dict[SectionData, dict[MeasureResult, list[int]]]:
         """
         Returns a dictionary of `orm.SectionData` containing dictionaries of their
         to-be-imported `orm.MeasureResult` with their respective `investment_year`.
