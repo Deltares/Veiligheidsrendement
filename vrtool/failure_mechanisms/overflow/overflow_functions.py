@@ -23,7 +23,6 @@ def calculate_overflow_hydra_ring_design(
         input["hc_beta"].columns.values.astype(np.float32),
         input["hc_beta"].index.values,
         input["hc_beta"],
-        bounds_error=False,
     )
     h_grid = np.linspace(
         input["hc_beta"].index.values.min(),
@@ -94,12 +93,14 @@ def calculate_overflow_simple_assessment(
 
     if q_c[0] != q_c[-1:]:
         beta_hc = interpolate.RectBivariateSpline(
-            h_c, q_c, beta, kind="linear", fill_value="extrapolate"
+            h_c, q_c, beta, kind="linear"
+            # h_c, q_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
         beta_hc = interpolate.RectBivariateSpline(
-            h_c, beta, kind="linear", fill_value="extrapolate"
+            h_c, beta, kind="linear"
+            # h_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest), [8.0]])
 
