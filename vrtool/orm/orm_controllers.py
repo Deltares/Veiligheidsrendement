@@ -268,11 +268,11 @@ def export_results_measures(result: ResultsMeasures) -> None:
         result (ResultsMeasures): result of measure step
     """
     logging.info("Start export resultaten maatregelen naar database.")
-    
+
     with open_database(result.vr_config.input_database_path):
 
         _exporter = SolutionsExporter()
-        
+
         with vrtool_db.atomic():
             for _solution in tqdm(
                 result.solutions_dict.values(),

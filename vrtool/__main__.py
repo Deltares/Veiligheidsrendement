@@ -17,7 +17,9 @@ __externals_path: Path | None = None
 
 @click.group()
 @click.version_option(__version__)
-@click.option("--externals", type=click.Path(path_type=Path), help="Path to externals directory.")
+@click.option(
+    "--externals", type=click.Path(path_type=Path), help="Path to externals directory."
+)
 def cli(externals: Path | None):
     """
     Set of general available calls for VeiligheidsrendementTool.
@@ -79,7 +81,7 @@ def run_step_measures(config_file: Path, log_dir: Path | None):
     """
     Runs step measures.
     """
-      
+
     # Retrieve parameter and initialize logging.
     if log_dir is None:
         log_dir = config_file.parent
