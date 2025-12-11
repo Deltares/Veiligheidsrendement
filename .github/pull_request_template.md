@@ -1,5 +1,5 @@
 ## Issue addressed
-Solves VRTOOL-<issue number>
+Solves #
 
 ## Code of conduct
 - [ ] I HAVE NOT added sensitive or compromised (test) data to the repository.
