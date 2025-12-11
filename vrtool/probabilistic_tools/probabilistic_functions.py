@@ -59,6 +59,31 @@ class TableDist(ot.PythonDistribution):
             self.xp = pgrid
             self.xp[-1:] = 1.0
 
+    def computeCDF(self, X):
+        if X < self.x[0]:
+            return 0.0
+        elif X >= self.x[-1:]:
+            return 1.0
+        else:
+            # find first value that is larger:
+            # Option 1, seems to be slightly slower:
+            # idx_up = min(np.argwhere(self.x>X))
+            # xx = self.x[int(idx_up)-1:int(idx_up)+1]
+            # pp = self.xp[int(idx_up)-1:int(idx_up)+1]
+            # f = interp1d(xx,pp)
+            # p = f(X)
+            X = X[0]
+
+            # idx_up = np.min(np.argwhere(self.x > X))
+            idx_up = np.argmax(self.x > X)
+            xx = self.x[idx_up - 1 : idx_up + 1]
+            pp = self.xp[idx_up - 1 : idx_up + 1]
+            dp = pp[1] - pp[0]
+            dx = xx[1] - xx[0]
+            p = pp[0] + dp * ((X - xx[0]) / dx)
+
+            return p
+
     def getMean(self):
         high = np.min(np.argwhere(self.xp > 0.53))
         low = np.min(np.argwhere(self.xp > 0.47))
