@@ -47,7 +47,7 @@ class VrtoolConfig:
     # Stop criterion for benefit-cost ratio
     BC_stop: float = 0.1
     # maximum number of iterations in the greedy search algorithm
-    max_greedy_iterations: int = 150
+    max_greedy_iterations: int = 600
     # cautiousness factor for the greedy search algorithm. Larger values result in larger steps but lower accuracy and larger probability of finding a local optimum
     f_cautious: float = 1.5
     discount_rate: float = 0.03
