@@ -19,9 +19,12 @@ class WaterLevelImporter(OrmImporterProtocol):
 
     def import_orm(self, orm_model: SectionData) -> LoadInput:
 
-        _available_years = orm_model.water_level_data_list.select(
-            WaterlevelData.year
-        ).distinct()
+        _available_years: list[int] = [
+            year
+            for (year,) in orm_model.water_level_data_list.select(WaterlevelData.year)
+            .distinct()
+            .tuples()
+        ]
         if not any(_available_years):
             logging.warning(
                 f"Geen waterstandsdata voor dijkvak {orm_model.section_name}."
@@ -30,9 +33,8 @@ class WaterLevelImporter(OrmImporterProtocol):
 
         _load_input = LoadInput([])
         _load_input.distribution = {}
-        for yr in _available_years:
-            year = yr.year
-            _water_level_list = (
+        for year in _available_years:
+            _water_level_list: list[WaterlevelData] = (
                 orm_model.water_level_data_list.select()
                 .where(WaterlevelData.year == year)
                 .order_by(WaterlevelData.water_level.asc())
