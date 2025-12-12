@@ -1,6 +1,8 @@
 import copy
 
 import numpy as np
+import openturns as ot
+from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -89,7 +91,12 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
     @staticmethod
     def _add_load_char_vals(
-        input, t_0: int, load, p_h: float, p_dh: float, year: float
+        input: dict,
+        t_0: int,
+        load: LoadInput,
+        p_h: float,
+        p_dh: float,
+        year: float,
     ) -> dict:
         # TODO this function should be moved elsewhere
         # input = list of all strength variables
@@ -104,7 +111,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                     )[0]
                 else:
                     # for each year, compute WL
-                    years = [np.int32(i) for i in list(load.distribution.keys())]
+                    years = [int(i) for i in list(load.distribution.keys())]
                     wls = []
                     for _dist_year in years:
                         wls.append(
@@ -112,8 +119,14 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                         )
                     h_norm = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
                     # then interpolate for given year
-            else:
+            elif isinstance(load.distribution, ot.Distribution):
                 h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
+            else:
+                raise ValueError(
+                    "Load distribution is of unknown type: {}".format(
+                        type(load.distribution)
+                    )
+                )
             input["h"] = h_norm
 
         if hasattr(load, "dist_change"):
