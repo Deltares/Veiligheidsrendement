@@ -133,9 +133,9 @@ class GreedyStrategy(StrategyProtocol):
             if mechanism not in (MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT):
                 raise ValueError(f"Mechanism {mechanism} not recognized")
 
-            new_mechanism_risk[
-                ind_highest_risk, :
-            ] = self.traject_risk.get_measure_risk(_measure, mechanism)
+            new_mechanism_risk[ind_highest_risk, :] = (
+                self.traject_risk.get_measure_risk(_measure, mechanism)
+            )
 
             LCC_values[ind_highest_risk] = np.min(
                 life_cycle_cost[
