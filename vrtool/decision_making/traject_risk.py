@@ -121,7 +121,7 @@ class TrajectRisk:
                         (zeros if the mechanism is not present in the traject)
         """
         if mechanism not in self._probability_of_failure:
-            return np.zeros([self.num_sections, self.num_years])
+            return np.zeros(self.num_years)
         _section = measure[0]
         if mechanism in ShMeasure.get_allowed_mechanisms():
             _measure = measure[1]

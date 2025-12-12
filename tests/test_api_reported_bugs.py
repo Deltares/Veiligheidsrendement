@@ -37,6 +37,10 @@ class TestApiReportedBugs:
                 "test_revetment_step_transition_level",
                 id="Revetment case with many transition levels [VRTOOL-330]",
             ),
+            pytest.param(
+                "test_export_without_soil_measures",
+                id="Export case without soil measures [#404]",
+            ),
         ],
     )
     def test_given_case_from_reported_bug_run_all_succeeds(
