@@ -1,4 +1,5 @@
 import pandas as pd
+from peewee import chunked
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
@@ -91,47 +92,59 @@ class MeasureResultExporter(OrmExporterProtocol):
             )
         )
 
-    def export_dom(self, measure_result: MeasureResultProtocol) -> None:
-        _orm_measure_result = MeasureResult.create(
-            measure_per_section=self._measure_per_section,
+    def _create_measure_results(
+        self, measure_result_collection: list[MeasureResultProtocol]
+    ) -> list[MeasureResult]:
+        _rm_dict = dict(measure_per_section=self._measure_per_section)
+        MeasureResult.insert_many([_rm_dict] * len(measure_result_collection)).execute()
+        return list(
+            MeasureResult.select().where(
+                MeasureResult.measure_per_section == self._measure_per_section
+            )
+        )
+
+    def export_dom(self, dom_model: list[MeasureResultProtocol]) -> None:
+        _orm_measure_result_list: list[MeasureResult] = self._create_measure_results(
+            dom_model
         )
 
         # Create the "group" of parameters for this measure.
-        def to_params_dict(dict_entry: tuple) -> list[dict]:
+        def to_params_dict(dict_entry: tuple, _mr_model: MeasureResult) -> list[dict]:
             _name, _value = dict_entry
-            return dict(
-                name=_name, value=float(_value), measure_result=_orm_measure_result
+            return dict(name=_name, value=float(_value), measure_result=_mr_model)
+
+        _mrp = []
+        _mrs = []
+        _mrm = []
+        for i, _result in enumerate(dom_model):
+            _mrp.extend(
+                [
+                    to_params_dict(param, _orm_measure_result_list[i])
+                    for param in self._get_parameters_dict(_result).items()
+                ]
             )
 
-        MeasureResultParameter.insert_many(
-            map(
-                to_params_dict,
-                self._get_parameters_dict(measure_result).items(),
-            )
-        ).execute()
-
-        # Create (per calculated time) a measure section and as many present mechanisms.
-        _measure_reliability = measure_result.section_reliability.SectionReliability
-        _measure_result_mechanisms_list_dict = []
-        _measure_result_section_list_dict = []
-        for time_column in _measure_reliability.columns:
-            _time = int(time_column)
-            _time_reliability = _measure_reliability[time_column]
-            _measure_result_section_list_dict.append(
-                self._get_measure_result_section_dict(
-                    measure_result,
-                    _orm_measure_result,
-                    _time,
-                    _time_reliability,
+            _measure_reliability = _result.section_reliability.SectionReliability
+            for time_column in _measure_reliability.columns:
+                _time = int(time_column)
+                _time_reliability = _measure_reliability[time_column]
+                _mrs.append(
+                    self._get_measure_result_section_dict(
+                        _result,
+                        _orm_measure_result_list[i],
+                        _time,
+                        _time_reliability,
+                    )
                 )
-            )
-            _measure_result_mechanisms_list_dict.extend(
-                self._get_measure_result_mechanism_list_dict(
-                    _orm_measure_result, _time, _time_reliability
+                _mrm.extend(
+                    self._get_measure_result_mechanism_list_dict(
+                        _orm_measure_result_list[i], _time, _time_reliability
+                    )
                 )
-            )
 
-        MeasureResultSection.insert_many(_measure_result_section_list_dict).execute()
-        MeasureResultMechanism.insert_many(
-            _measure_result_mechanisms_list_dict
-        ).execute()
+        for _mrp_chunk in chunked(_mrp, 200):
+            MeasureResultParameter.insert_many(_mrp_chunk).execute()
+        for _mrs_chunk in chunked(_mrs, 200):
+            MeasureResultSection.insert_many(_mrs_chunk).execute()
+        for _mrm_chunk in chunked(_mrm, 200):
+            MeasureResultMechanism.insert_many(_mrm_chunk).execute()
