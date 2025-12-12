@@ -87,6 +87,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             ]
         )
 
+    @staticmethod
     def _add_load_char_vals(
         input, t_0: int, load, p_h: float, p_dh: float, year: float
     ) -> dict:
