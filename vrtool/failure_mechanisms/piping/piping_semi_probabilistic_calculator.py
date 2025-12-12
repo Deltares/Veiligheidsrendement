@@ -19,11 +19,7 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
 from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
     PipingProbabilisticHelper,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import (
-    add_load_char_vals,
-    beta_to_pf,
-    pf_to_beta,
-)
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
@@ -91,6 +87,45 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             ]
         )
 
+    def _add_load_char_vals(
+        input, t_0: int, load, p_h: float, p_dh: float, year: float
+    ) -> dict:
+        # TODO this function should be moved elsewhere
+        # input = list of all strength variables
+
+        if load != None:
+            if isinstance(load.distribution, dict):
+                if str(np.int32(year + t_0)) in list(load.distribution.keys()):
+                    h_norm = np.array(
+                        load.distribution[str(np.int32(year + t_0))].computeQuantile(
+                            1 - p_h
+                        )
+                    )[0]
+                else:
+                    # for each year, compute WL
+                    years = [np.int32(i) for i in list(load.distribution.keys())]
+                    wls = []
+                    for _dist_year in years:
+                        wls.append(
+                            load.distribution[_dist_year].computeQuantile(1 - p_h)[0]
+                        )
+                    h_norm = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
+                    # then interpolate for given year
+            else:
+                h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
+            input["h"] = h_norm
+
+        if hasattr(load, "dist_change"):
+            if isinstance(load.dist_change, float):  # for SAFE input
+                # this is only for piping and stability. For overflow it should be extended with use of the HBN factor
+                input["dh"] = load.dist_change * year
+            else:
+                dh = np.array(load.dist_change.computeQuantile(p_dh))[0]
+                input["dh"] = dh * year
+        else:
+            input["dh"] = 0.0
+        return input
+
     def calculate(self, year: float) -> tuple[float, float]:
         # First calculate the SF without gamma for the three submechanisms
         # Piping:
@@ -120,7 +155,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
             # inputs['h'] = load.NormWaterLevel
             # TODO aanpassen met nieuwe belastingmodel
-            inputs = add_load_char_vals(
+            inputs = self._add_load_char_vals(
                 strength_new.input_ind,
                 self._initial_year,
                 self._load,

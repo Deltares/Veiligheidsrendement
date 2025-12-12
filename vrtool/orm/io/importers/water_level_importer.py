@@ -7,7 +7,8 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
-from vrtool.probabilistic_tools.probabilistic_functions import TableDist, beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
+from vrtool.probabilistic_tools.table_dist import TableDist
 
 
 class WaterLevelImporter(OrmImporterProtocol):
