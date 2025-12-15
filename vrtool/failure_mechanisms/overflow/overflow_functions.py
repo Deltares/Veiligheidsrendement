@@ -1,3 +1,4 @@
+from turtle import fill
 import numpy as np
 import pandas as pd
 from scipy import interpolate
@@ -92,14 +93,14 @@ def calculate_overflow_simple_assessment(
     """
 
     if q_c[0] != q_c[-1:]:
-        beta_hc = interpolate.RectBivariateSpline(
-            h_c, q_c, beta, kind="linear"
+        beta_hc = interpolate.RegularGridInterpolator(
+            (h_c, q_c), beta, method="linear", fill_value="extrapolate"
             # h_c, q_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
-        beta_hc = interpolate.RectBivariateSpline(
-            h_c, beta, kind="linear"
+        beta_hc = interpolate.RegularGridInterpolator(
+            h_c, beta, method="linear", fill_value="extrapolate"
             # h_c, beta, kind="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest), [8.0]])
