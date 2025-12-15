@@ -1,8 +1,6 @@
 import copy
 
 import numpy as np
-import openturns as ot
-from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -97,19 +95,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         p_h: float,
         year: float,
     ) -> dict:
-        if year + t_0 in list(load.distribution.keys()):
-            input_dict["h"] = np.array(
-                load.distribution[year + t_0].computeQuantile(1 - p_h)
-            )[0]
-        else:
-            # for each year, compute WL
-            years = [i for i in list(load.distribution.keys())]
-            wls = []
-            for _dist_year in years:
-                wls.append(load.distribution[_dist_year].computeQuantile(1 - p_h)[0])
-            # then interpolate for given year
-            input_dict["h"] = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
-
+        input_dict["h"] = load.compute_h(year + t_0, 1 - p_h)
         input_dict["dh"] = 0.0
 
         return input_dict

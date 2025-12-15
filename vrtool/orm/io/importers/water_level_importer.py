@@ -1,14 +1,12 @@
 import logging
 
 import numpy as np
-import openturns as ot
 
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
-from vrtool.probabilistic_tools.table_dist import TableDist
 
 
 class WaterLevelImporter(OrmImporterProtocol):
@@ -47,13 +45,11 @@ class WaterLevelImporter(OrmImporterProtocol):
                 p_nexc[index] = 1.0 - beta_to_pf(waterLevel.beta)
                 index += 1
 
-            _load_input.distribution[year] = ot.Distribution(
-                TableDist(
-                    wls,
-                    p_nexc,
-                    extrap=True,
-                    isload=True,
-                    gridpoints=self.gridpoint,
-                )
+            _load_input.set_distribution(
+                year,
+                wls,
+                p_nexc,
+                self.gridpoint,
             )
+
         return _load_input

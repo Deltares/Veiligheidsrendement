@@ -1,0 +1,46 @@
+import openturns as ot
+
+from vrtool.common.hydraulic_loads.load_input import LoadInput
+
+
+class TestLoadInput:
+
+    def test_compute_h_for_year(self):
+        class MockDist(ot.PythonDistribution):
+            def __init__(self):
+                super().__init__(1)
+
+            def computeQuantile(self, p):
+                return [3 - p]
+
+        # 1. Define test data.
+        _load = LoadInput()
+        _load.distribution[2030] = MockDist()
+
+        # 2. Run test.
+        h = _load.compute_h(2030, 0.2)
+
+        # 3. Verify expectations.
+        assert h == 2.8
+
+    def test_compute_h_for_interpolated_year(self):
+        class MockDist(ot.PythonDistribution):
+            offset: float
+
+            def __init__(self, offset):
+                super().__init__(1)
+                self.offset = offset
+
+            def computeQuantile(self, p):
+                return [3 - p + self.offset]
+
+        # 1. Define test data.
+        _load = LoadInput()
+        _load.distribution[2030] = MockDist(0)
+        _load.distribution[2050] = MockDist(2)
+
+        # 2. Run test.
+        h = _load.compute_h(2040, 0.2)
+
+        # 3. Verify expectations.
+        assert float(h) == 3.8

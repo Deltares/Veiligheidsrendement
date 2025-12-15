@@ -6,7 +6,14 @@ from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 
 class TableDist(ot.PythonDistribution):
-    def __init__(self, x=[0, 1], p=[1, 0], extrap=False, isload=False, gridpoints=2000):
+    def __init__(
+        self,
+        x: np.ndarray,
+        p: np.ndarray,
+        extrap: bool = False,
+        isload: bool = False,
+        gridpoints: int = 2000,
+    ):
         super(TableDist, self).__init__(1)
         # Check the input
         if len(x) != len(p):
