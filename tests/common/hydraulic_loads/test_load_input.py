@@ -1,9 +1,25 @@
+import numpy as np
 import openturns as ot
 
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 
 
 class TestLoadInput:
+
+    def test_set_distribution(self):
+        # 1. Define test data.
+        _load = LoadInput()
+        wls = np.array([0.0, 1.0, 2.0])
+        p = np.array([1.0, 1.5, 2.2])
+        year = 2030
+        gridpoint = 1000
+
+        # 2. Run test.
+        _load.set_distribution(year, wls, p, gridpoint)
+
+        # 3. Verify expectations.
+        assert year in _load.distribution
+        assert isinstance(_load.distribution[year], ot.Distribution)
 
     def test_compute_h_for_year(self):
         class MockDist(ot.PythonDistribution):

@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+import numpy as np
 import openturns as ot
 from scipy.interpolate import interp1d
 
@@ -12,10 +13,14 @@ class LoadInput:
     distribution: dict[int, ot.Distribution] = field(default_factory=dict)
 
     def set_distribution(
-        self, year: int, wls: list[float], p: list[float], gridpoint: int
+        self,
+        year: int,
+        wls: np.ndarray,
+        p_nexc: np.ndarray,
+        gridpoint: int,
     ):
         self.distribution[year] = ot.Distribution(
-            TableDist(wls, p, extrap=True, isload=True, gridpoints=gridpoint)
+            TableDist(wls, p_nexc, extrap=True, isload=True, gridpoints=gridpoint)
         )
 
     def compute_h(self, year: int, p: float) -> float:
