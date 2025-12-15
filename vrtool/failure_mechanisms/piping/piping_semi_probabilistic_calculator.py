@@ -89,55 +89,29 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             ]
         )
 
-    @staticmethod
     def _add_load_char_vals(
+        self,
         input: dict,
         t_0: int,
         load: LoadInput,
         p_h: float,
-        p_dh: float,
         year: float,
     ) -> dict:
-        # TODO this function should be moved elsewhere
-        # input = list of all strength variables
-
-        if load != None:
-            if isinstance(load.distribution, dict):
-                if str(np.int32(year + t_0)) in list(load.distribution.keys()):
-                    h_norm = np.array(
-                        load.distribution[str(np.int32(year + t_0))].computeQuantile(
-                            1 - p_h
-                        )
-                    )[0]
-                else:
-                    # for each year, compute WL
-                    years = [int(i) for i in list(load.distribution.keys())]
-                    wls = []
-                    for _dist_year in years:
-                        wls.append(
-                            load.distribution[_dist_year].computeQuantile(1 - p_h)[0]
-                        )
-                    h_norm = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
-                    # then interpolate for given year
-            elif isinstance(load.distribution, ot.Distribution):
-                h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
-            else:
-                raise ValueError(
-                    "Load distribution is of unknown type: {}".format(
-                        type(load.distribution)
-                    )
-                )
-            input["h"] = h_norm
-
-        if hasattr(load, "dist_change"):
-            if isinstance(load.dist_change, float):  # for SAFE input
-                # this is only for piping and stability. For overflow it should be extended with use of the HBN factor
-                input["dh"] = load.dist_change * year
-            else:
-                dh = np.array(load.dist_change.computeQuantile(p_dh))[0]
-                input["dh"] = dh * year
+        if year + t_0 in list(load.distribution.keys()):
+            input["h"] = np.array(
+                load.distribution[year + t_0].computeQuantile(1 - p_h)
+            )[0]
         else:
-            input["dh"] = 0.0
+            # for each year, compute WL
+            years = [i for i in list(load.distribution.keys())]
+            wls = []
+            for _dist_year in years:
+                wls.append(load.distribution[_dist_year].computeQuantile(1 - p_h)[0])
+            # then interpolate for given year
+            input["h"] = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
+
+        input["dh"] = 0.0
+
         return input
 
     def calculate(self, year: float) -> tuple[float, float]:
@@ -166,15 +140,12 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                 except:
                     pass  # TODO: make more clean, na measures doorloopt hij deze loop nogmaals, niet voor alle variabelen in strength_new.input is een array beschikbaar.
 
-            # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
-            # inputs['h'] = load.NormWaterLevel
             # TODO aanpassen met nieuwe belastingmodel
             inputs = self._add_load_char_vals(
                 strength_new.input_ind,
                 self._initial_year,
                 self._load,
                 self._traject_info.Pmax,
-                0.5,
                 year,
             )
 
@@ -244,7 +215,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         return [beta, failure_probability]
 
-    def _calculate_beta_piping(self, inputs: dict):
+    def _calculate_beta_piping(self, inputs: dict) -> np.ndarray:
         submechanism = PipingFailureSubmechanism.PIPING
         gamma_schem_pip = 1  # 1.05
 
@@ -260,7 +231,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             submechanism, SF_p * gamma_pip
         )
 
-    def _calculate_beta_heave(self, inputs: dict):
+    def _calculate_beta_heave(self, inputs: dict) -> np.ndarray:
         submechanism = PipingFailureSubmechanism.HEAVE
         gamma_schem_heave = 1  # 1.05
 
@@ -275,7 +246,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             submechanism, (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
-    def _calculate_beta_uplift(self, inputs: dict):
+    def _calculate_beta_uplift(self, inputs: dict) -> np.ndarray:
         submechanism = PipingFailureSubmechanism.UPLIFT
         gamma_schem_upl = 1  # 1.05
 

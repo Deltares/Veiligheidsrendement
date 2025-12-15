@@ -1,17 +1,10 @@
+from dataclasses import dataclass, field
+
 import openturns as ot
 
 
+@dataclass
 class LoadInput:
     # class to store load data
-    load_type: str
-    distribution: dict[int, ot.Distribution] | ot.Distribution
-    input: dict
-    dist_change: float | ot.Distribution
-
-    def __init__(self, section_fields: list[str]):
-        self.load_type = ""
-        self.input = {}
-        if "Load_2025" in section_fields:
-            self.load_type = "HRING"
-        elif "YearlyWLRise" in section_fields:
-            self.load_type = "SAFE"
+    distribution: dict[int, ot.Distribution] = field(default_factory=dict)
+    input: dict = field(default_factory=dict)

@@ -1,6 +1,7 @@
 import copy
 import math
 from itertools import groupby
+from typing import override
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -401,6 +402,7 @@ class RevetmentMeasure(MeasureProtocol):
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[MechanismEnum, MechanismReliability]:
         class RevetmentMeasureMechanismReliability(MechanismReliability):
+            @override
             def calculate_reliability(
                 self,
                 strength: MechanismInput,

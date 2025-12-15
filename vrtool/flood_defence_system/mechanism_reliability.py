@@ -98,7 +98,7 @@ class MechanismReliability:
             return self._get_hydra_ring_calculator(mechanism, self.Input)
 
         if self.mechanism_type == ComputationTypeEnum.SIMPLE:
-            return self._get_simple_calculator(mechanism, strength, load)
+            return self._get_simple_calculator(mechanism, strength)
 
         if self.mechanism_type == ComputationTypeEnum.SEMIPROB:
             return self._get_semi_probabilistic_calculator(
@@ -107,7 +107,7 @@ class MechanismReliability:
         if self.mechanism_type == ComputationTypeEnum.DSTABILITY:
             return self._get_d_stability_calculator(mechanism, strength)
 
-        raise Exception("Unknown computation type {}".format(self.mechanism_type))
+        raise ValueError("Unknown computation type {}".format(self.mechanism_type))
 
     def _get_direct_input_calculator(
         self, mechanism_input: MechanismInput
@@ -126,10 +126,10 @@ class MechanismReliability:
             )
             return OverflowHydraRingCalculator(_mechanism_input, self.t_0)
 
-        raise Exception("Unknown computation type HRING for {}".format(mechanism))
+        raise ValueError("Unknown computation type HRING for {}".format(mechanism))
 
     def _get_simple_calculator(
-        self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
+        self, mechanism: MechanismEnum, mechanism_input: MechanismInput
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
             _mechanism_input = MechanismSimpleInput.from_mechanism_input(
@@ -139,9 +139,9 @@ class MechanismReliability:
 
         if mechanism == MechanismEnum.OVERFLOW:  # specific for SAFE
             _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
-            return OverflowSimpleCalculator(_mechanism_input, load)
+            return OverflowSimpleCalculator(_mechanism_input)
 
-        raise Exception("Unknown computation type Simple for {}".format(mechanism))
+        raise ValueError("Unknown computation type Simple for {}".format(mechanism))
 
     def _get_semi_probabilistic_calculator(
         self,
@@ -160,7 +160,7 @@ class MechanismReliability:
                 mechanism_input.input["revetment_input"], self.t_0
             )
 
-        raise Exception("Unknown computation type SemiProb for {}".format(mechanism))
+        raise ValueError("Unknown computation type SemiProb for {}".format(mechanism))
 
     def _get_d_stability_calculator(
         self,

@@ -31,8 +31,7 @@ class WaterLevelImporter(OrmImporterProtocol):
             )
             return None
 
-        _load_input = LoadInput([])
-        _load_input.distribution = {}
+        _load_input = LoadInput()
         for year in _available_years:
             _water_level_list: list[WaterlevelData] = (
                 orm_model.water_level_data_list.select()
