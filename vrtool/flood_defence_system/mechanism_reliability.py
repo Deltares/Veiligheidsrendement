@@ -157,7 +157,7 @@ class MechanismReliability:
 
         if mechanism == MechanismEnum.REVETMENT:
             return RevetmentCalculator(
-                mechanism_input.input["revetment_input"], self.t_0
+                mechanism_input.input_dict["revetment_input"], self.t_0
             )
 
         raise ValueError("Unknown computation type SemiProb for {}".format(mechanism))
@@ -171,11 +171,11 @@ class MechanismReliability:
             raise ValueError(f"Unknown computation type DStability for {mechanism}")
 
         _wrapper = DStabilityWrapper(
-            stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),
-            externals_path=Path(mechanism_input.input.get("DStability_exe_path")),
+            stix_path=Path(mechanism_input.input_dict.get("STIXNAAM", "")),
+            externals_path=Path(mechanism_input.input_dict.get("DStability_exe_path")),
         )
 
-        if mechanism_input.input.get("RERUN_STIX"):
+        if mechanism_input.input_dict.get("RERUN_STIX"):
             _wrapper.rerun_stix()
 
         _mechanism_input = np.array([_wrapper.get_safety_factor()])

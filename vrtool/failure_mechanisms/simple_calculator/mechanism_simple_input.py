@@ -56,7 +56,7 @@ class MechanismSimpleInput:
             return input_value.lower() == "yes"
 
         _reliability_calculation_method = None
-        _beta = mechanism_input.input.get("beta", None)
+        _beta = mechanism_input.input_dict.get("beta", None)
 
         # If all input is defined, the safety factor takes precedence in which
         # reliability calculation method should be used
@@ -66,17 +66,17 @@ class MechanismSimpleInput:
             raise ValueError("Warning: No input values SF or Beta StabilityInner")
 
         _is_eliminated = _get_valid_bool_value(
-            mechanism_input.input.get("elimination", False)
+            mechanism_input.input_dict.get("elimination", False)
         )
 
-        _prob_solution_failure = mechanism_input.input.get("Pf", np.ndarray([]))
+        _prob_solution_failure = mechanism_input.input_dict.get("Pf", np.ndarray([]))
         _input = cls(
             beta=_beta,
-            scenario_probability=mechanism_input.input.get(
+            scenario_probability=mechanism_input.input_dict.get(
                 "P_scenario", np.ndarray([])
             ),
             initial_probability_of_failure=_prob_solution_failure,
-            mechanism_reduction_factor=mechanism_input.input.get(
+            mechanism_reduction_factor=mechanism_input.input_dict.get(
                 "piping_reduction_factor", 1
             ),
             reliability_calculation_method=_reliability_calculation_method,

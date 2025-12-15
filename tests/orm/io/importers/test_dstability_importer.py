@@ -96,19 +96,19 @@ class TestDStabilityImporter:
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER
-        assert len(_mechanism_input.input) == len(parameters) + 2
+        assert len(_mechanism_input.input_dict) == len(parameters) + 2
         assert (
-            _mechanism_input.input["STIXNAAM"]
+            _mechanism_input.input_dict["STIXNAAM"]
             == _stix_directory / _supporting_files[0]["filename"]
         )
-        assert _mechanism_input.input["DStability_exe_path"] == str(
+        assert _mechanism_input.input_dict["DStability_exe_path"] == str(
             _externals_directory
         )
 
         for parameter in parameters:
-            assert _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
-                parameter.get("value")
-            )
+            assert _mechanism_input.input_dict[
+                parameter.get("parameter")
+            ] == pytest.approx(parameter.get("value"))
 
     def test_import_orm_with_invalid_computation_type_raises_value_error(
         self,

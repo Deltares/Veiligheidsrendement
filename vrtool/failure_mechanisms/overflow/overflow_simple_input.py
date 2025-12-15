@@ -21,10 +21,10 @@ class OverflowSimpleInput:
         cls, mechanism_input: MechanismInput
     ) -> OverflowSimpleInput:
         return cls(
-            dhc_t=mechanism_input.input["dhc(t)"],
-            h_crest=mechanism_input.input["h_crest"],
-            q_crest=mechanism_input.input["q_crest"],
-            h_c=mechanism_input.input["h_c"],
-            q_c=mechanism_input.input["q_c"],
-            beta=mechanism_input.input["beta"],
+            dhc_t=mechanism_input.input_dict["dhc(t)"],
+            h_crest=mechanism_input.input_dict["h_crest"],
+            q_crest=mechanism_input.input_dict["q_crest"],
+            h_c=mechanism_input.input_dict["h_c"],
+            q_c=mechanism_input.input_dict["q_c"],
+            beta=mechanism_input.input_dict["beta"],
         )

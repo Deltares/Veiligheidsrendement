@@ -111,7 +111,7 @@ class TestDatabaseIntegration:
         assert actual.mechanism == MechanismEnum.OVERFLOW
 
         expected_parameters = expected.parameters.select()
-        assert len(actual.input) == len(expected_parameters) + 1
+        assert len(actual.input_dict) == len(expected_parameters) + 1
         self._assert_parameters(actual, expected_parameters)
 
         expected_mechanism_table_entries = expected.mechanism_tables.select()
@@ -119,7 +119,7 @@ class TestDatabaseIntegration:
             [str(table_entry.year) for table_entry in expected_mechanism_table_entries]
         )
 
-        actual_crest_height_beta = actual.input["hc_beta"]
+        actual_crest_height_beta = actual.input_dict["hc_beta"]
         assert len(expected_years.symmetric_difference(actual_crest_height_beta)) == 0
         assert actual_crest_height_beta.index.to_list() == [
             table_entry.value
@@ -142,7 +142,7 @@ class TestDatabaseIntegration:
         assert actual.mechanism == MechanismEnum.STABILITY_INNER
 
         expected_parameters = expected.parameters.select()
-        assert len(actual.input) == len(expected_parameters)
+        assert len(actual.input_dict) == len(expected_parameters)
         self._assert_parameters(actual, expected_parameters)
 
     def _assert_piping_mechanism_input(
@@ -153,18 +153,18 @@ class TestDatabaseIntegration:
         assert all(
             [
                 len(input_parameter) == len(expected)
-                for input_parameter in actual.input.values()
+                for input_parameter in actual.input_dict.values()
             ]
         )
 
-        assert len(actual.input) == expected[0].parameters.select().count() + 1
+        assert len(actual.input_dict) == expected[0].parameters.select().count() + 1
 
         for count, computation_scenario in enumerate(expected):
-            assert actual.input["P_scenario"][count] == pytest.approx(
+            assert actual.input_dict["P_scenario"][count] == pytest.approx(
                 computation_scenario.scenario_probability
             )
             for expected_parameter in computation_scenario.parameters.select():
-                assert actual.input[expected_parameter.parameter][
+                assert actual.input_dict[expected_parameter.parameter][
                     count
                 ] == pytest.approx(expected_parameter.value)
 
@@ -182,6 +182,6 @@ class TestDatabaseIntegration:
         expected_parameters: list[ComputationScenarioParameter],
     ) -> None:
         for expected_parameter in expected_parameters:
-            assert actual.input[expected_parameter.parameter] == pytest.approx(
+            assert actual.input_dict[expected_parameter.parameter] == pytest.approx(
                 expected_parameter.value
             )

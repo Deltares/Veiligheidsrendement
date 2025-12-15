@@ -174,7 +174,7 @@ class TestMechanismReliabilityCollectionImporter:
         ]
         assert all(
             [
-                _mr_input.input["DStability_exe_path"] == str(_config.externals)
+                _mr_input.input_dict["DStability_exe_path"] == str(_config.externals)
                 for _mr_input in mechanism_reliability_input
             ]
         )

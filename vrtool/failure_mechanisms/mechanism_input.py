@@ -11,4 +11,4 @@ class MechanismInput:
     """
 
     mechanism: MechanismEnum
-    input: dict[str, Any] = field(default_factory=dict)
+    input_dict: dict[str, Any] = field(default_factory=dict)

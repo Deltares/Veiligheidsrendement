@@ -21,12 +21,12 @@ class PipingImporter(OrmImporterProtocol):
         for parameter in parameters:
             key = parameter.parameter
             if index == 0:
-                mechanism_input.input[key] = np.zeros(scenarios_length)
+                mechanism_input.input_dict[key] = np.zeros(scenarios_length)
                 if key[-3:] == "(t)":
                     mechanism_input.temporals.append(key)
 
-            if key in mechanism_input.input:
-                mechanism_input.input[key][index] = parameter.value
+            if key in mechanism_input.input_dict:
+                mechanism_input.input_dict[key][index] = parameter.value
             else:
                 # note that we do not check on the presence of all keys
                 # except for the first scenario; if it is missing the value stays at 0.0
@@ -48,10 +48,10 @@ class PipingImporter(OrmImporterProtocol):
         )
         nr_of_scenarios = len(computation_scenarios)
         scenario_probablity_key = "P_scenario"
-        mechanism_input.input[scenario_probablity_key] = np.zeros(nr_of_scenarios)
-        mechanism_input.input["Beta"] = np.zeros(nr_of_scenarios)
+        mechanism_input.input_dict[scenario_probablity_key] = np.zeros(nr_of_scenarios)
+        mechanism_input.input_dict["Beta"] = np.zeros(nr_of_scenarios)
         _scenario_key = "Scenario"
-        mechanism_input.input[_scenario_key] = []
+        mechanism_input.input_dict[_scenario_key] = []
         for _c_scenario in computation_scenarios:
             self._set_parameters(
                 mechanism_input,
@@ -59,12 +59,12 @@ class PipingImporter(OrmImporterProtocol):
                 index,
                 nr_of_scenarios,
             )
-            mechanism_input.input[_scenario_key].append(_c_scenario.scenario_name)
-            mechanism_input.input[scenario_probablity_key][
+            mechanism_input.input_dict[_scenario_key].append(_c_scenario.scenario_name)
+            mechanism_input.input_dict[scenario_probablity_key][
                 index
             ] = _c_scenario.scenario_probability
             # TODO: VRTOOL-340. This does not support multiple scenarios.
-            mechanism_input.input["Pf"] = _c_scenario.probability_of_failure
+            mechanism_input.input_dict["Pf"] = _c_scenario.probability_of_failure
             index += 1
 
         return mechanism_input

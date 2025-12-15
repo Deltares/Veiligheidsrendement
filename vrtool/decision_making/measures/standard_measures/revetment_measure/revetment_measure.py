@@ -154,7 +154,7 @@ class RevetmentMeasure(MeasureProtocol):
             MechanismEnum.REVETMENT
         )
         _first_year = list(_reliability_collection.Reliability.keys())[0]
-        return _reliability_collection.Reliability[_first_year].Input.input[
+        return _reliability_collection.Reliability[_first_year].Input.input_dict[
             "revetment_input"
         ]
 
