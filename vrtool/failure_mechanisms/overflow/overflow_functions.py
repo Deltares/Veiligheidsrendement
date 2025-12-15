@@ -93,13 +93,15 @@ def calculate_overflow_simple_assessment(
     """
 
     if q_c[0] != q_c[-1:]:
-        beta_hc = interpolate.RegularGridInterpolator(
-            (h_c, q_c), beta, method="linear", fill_value="extrapolate"
+        # https://docs.scipy.org/doc/scipy/tutorial/interpolate/interp_transition_guide.html
+        beta_hc = interpolate.bisplrep(
             # h_c, q_c, beta, kind="linear", fill_value="extrapolate"
+            h_c, q_c, beta, kx=1, ky=1, s=0
+            # (h_c, q_c), beta, method="linear", fill_value="extrapolate"
         )
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
-        beta_hc = interpolate.RegularGridInterpolator(
+        beta_hc = interpolate.interp1d(
             h_c, beta, method="linear", fill_value="extrapolate"
             # h_c, beta, kind="linear", fill_value="extrapolate"
         )
