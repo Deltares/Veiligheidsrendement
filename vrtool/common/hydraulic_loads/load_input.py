@@ -7,4 +7,4 @@ import openturns as ot
 class LoadInput:
     # class to store load data
     distribution: dict[int, ot.Distribution] = field(default_factory=dict)
-    input: dict = field(default_factory=dict)
+    # input: dict = field(default_factory=dict)

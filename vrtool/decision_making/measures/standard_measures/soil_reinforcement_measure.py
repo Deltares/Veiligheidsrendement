@@ -248,7 +248,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         is_first_year_with_widening = True
         for (
             year_to_calculate,
-            reliability_input,
+            _,
         ) in mechanism_reliability_collection.Reliability.items():
             # for all time steps considered.
             # first copy the data
@@ -265,8 +265,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     dike_section.cover_layer_thickness
                     + modified_geometry_measure["l_stab_screen"]
                 )
-                reliability_input.input = implement_berm_widening(
-                    berm_input=reliability_input.input,
+                reliability_input.input_dict = implement_berm_widening(
+                    berm_input=reliability_input.input_dict,
                     measure_input=modified_geometry_measure,
                     measure_parameters=self.parameters,
                     mechanism=mechanism,

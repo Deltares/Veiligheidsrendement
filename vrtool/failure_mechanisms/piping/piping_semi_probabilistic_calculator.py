@@ -119,8 +119,8 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # Piping:
         strength_new = copy.deepcopy(self._mechanism_input)
         scenario_result = {}
-        scenario_result["Scenario"] = strength_new.input["Scenario"]
-        scenario_result["P_scenario"] = strength_new.input["P_scenario"]
+        scenario_result["Scenario"] = strength_new.input_dict["Scenario"]
+        scenario_result["P_scenario"] = strength_new.input_dict["P_scenario"]
         scenario_result["beta_cs_p"] = {}
         scenario_result["beta_cs_h"] = {}
         scenario_result["beta_cs_u"] = {}
@@ -128,15 +128,15 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         scenario_result["Beta"] = {}
 
         for i in self._mechanism_input.temporals:
-            strength_new.input[i] = self._mechanism_input.input[i] * year
+            strength_new.input_dict[i] = self._mechanism_input.input_dict[i] * year
 
         # TODO:below, remove self. in for example self.gamma_pip. This is just an scenario output value. do not store.
         # calculate beta per scenario and determine overall
-        for scenario in range(0, len(strength_new.input["Scenario"])):
+        for scenario in range(0, len(strength_new.input_dict["Scenario"])):
             strength_new.input_ind = {}
-            for i in strength_new.input:  # select values of scenario j
+            for i in strength_new.input_dict:  # select values of scenario j
                 try:
-                    strength_new.input_ind[i] = strength_new.input[i][scenario]
+                    strength_new.input_ind[i] = strength_new.input_dict[i][scenario]
                 except:
                     pass  # TODO: make more clean, na measures doorloopt hij deze loop nogmaals, niet voor alle variabelen in strength_new.input is een array beschikbaar.
 
@@ -159,8 +159,8 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             scenario_result["beta_cs_u"][scenario] = self._calculate_beta_uplift(inputs)
 
             # Check if there is an elimination measure present (VZG or diaphragm wall)
-            if "elimination" in self._mechanism_input.input.keys():
-                if self._mechanism_input.input["elimination"] == "yes":
+            if "elimination" in self._mechanism_input.input_dict.keys():
+                if self._mechanism_input.input_dict["elimination"] == "yes":
                     # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
                     scenario_beta = np.max(
                         [
@@ -171,7 +171,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                     )
 
                     scenario_result["Pf"][scenario] = self._get_scenario_pf(
-                        scenario_beta, self._mechanism_input.input
+                        scenario_beta, self._mechanism_input.input_dict
                     )
                     scenario_result["Beta"][scenario] = np.min(
                         [pf_to_beta(scenario_result["Pf"][scenario]), 8.0]
@@ -208,8 +208,8 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         )
 
         # apply sf_factor (from stability screen):
-        if "sf_factor" in self._mechanism_input.input.keys():
-            failure_probability /= self._mechanism_input.input["sf_factor"]
+        if "sf_factor" in self._mechanism_input.input_dict.keys():
+            failure_probability /= self._mechanism_input.input_dict["sf_factor"]
 
         beta = np.min([pf_to_beta(failure_probability), 8])
 
