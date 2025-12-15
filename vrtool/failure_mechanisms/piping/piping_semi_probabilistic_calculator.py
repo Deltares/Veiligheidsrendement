@@ -219,7 +219,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         submechanism = PipingFailureSubmechanism.PIPING
         gamma_schem_pip = 1  # 1.05
 
-        Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
+        Z, p_dh, p_dh_c = calculate_z_piping(inputs)
         gamma_pip = self._probabilistic_helper.calculate_gamma(submechanism)
 
         # Calculate needed safety factor
@@ -235,7 +235,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         submechanism = PipingFailureSubmechanism.HEAVE
         gamma_schem_heave = 1  # 1.05
 
-        Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
+        Z, h_i, h_i_c = calculate_z_heave(inputs)
         gamma_h = self._probabilistic_helper.calculate_gamma(submechanism)
 
         # Calculate
@@ -250,7 +250,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         submechanism = PipingFailureSubmechanism.UPLIFT
         gamma_schem_upl = 1  # 1.05
 
-        Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
+        Z, u_dh, u_dh_c = calculate_z_uplift(inputs)
         gamma_u = self._probabilistic_helper.calculate_gamma(submechanism)
 
         # Calculate
