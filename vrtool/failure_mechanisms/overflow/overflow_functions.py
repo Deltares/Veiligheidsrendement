@@ -101,10 +101,10 @@ def calculate_overflow_simple_assessment(
         )
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
-        beta_hc = interpolate.interp1d(
-            h_c, beta, method="linear", fill_value="extrapolate"
-            # h_c, beta, kind="linear", fill_value="extrapolate"
-        )
+        # beta_hc = interpolate.interp1d(
+        #     h_c, beta, method="linear", fill_value="extrapolate"
+        # )
+        beta_hc = interpolate.make_interp_spline(h_c, beta, k=1)
         beta = np.min([beta_hc(h_crest), [8.0]])
 
     return beta, beta_to_pf(beta)
