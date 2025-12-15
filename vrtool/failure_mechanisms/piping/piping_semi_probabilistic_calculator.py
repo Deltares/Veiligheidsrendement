@@ -91,14 +91,14 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
     def _add_load_char_vals(
         self,
-        input: dict,
+        input_dict: dict,
         t_0: int,
         load: LoadInput,
         p_h: float,
         year: float,
     ) -> dict:
         if year + t_0 in list(load.distribution.keys()):
-            input["h"] = np.array(
+            input_dict["h"] = np.array(
                 load.distribution[year + t_0].computeQuantile(1 - p_h)
             )[0]
         else:
@@ -108,11 +108,11 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             for _dist_year in years:
                 wls.append(load.distribution[_dist_year].computeQuantile(1 - p_h)[0])
             # then interpolate for given year
-            input["h"] = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
+            input_dict["h"] = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
 
-        input["dh"] = 0.0
+        input_dict["dh"] = 0.0
 
-        return input
+        return input_dict
 
     def calculate(self, year: float) -> tuple[float, float]:
         # First calculate the SF without gamma for the three submechanisms
