@@ -139,7 +139,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         if int(year_to_calculate) < self.measure_year:
             self._copy_results(mechanism_reliability, dike_section_piping_reliability)
 
-        mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["piping_reduction_factor"] = (
+        mechanism_reliability.Input.input_dict["elimination"] = "yes"
+        mechanism_reliability.Input.input_dict["piping_reduction_factor"] = (
             self.piping_reduction_factor
         )

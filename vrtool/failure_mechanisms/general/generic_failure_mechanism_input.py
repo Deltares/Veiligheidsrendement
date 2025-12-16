@@ -14,7 +14,7 @@ class GenericFailureMechanismInput:
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
     ) -> GenericFailureMechanismInput:
-        _time_grid = list(mechanism_input.input["beta"].keys())
-        _beta_grid = list(mechanism_input.input["beta"].values())
+        _time_grid = list(mechanism_input.input_dict["beta"].keys())
+        _beta_grid = list(mechanism_input.input_dict["beta"].values())
 
         return cls(time_grid=_time_grid, beta_grid=_beta_grid)

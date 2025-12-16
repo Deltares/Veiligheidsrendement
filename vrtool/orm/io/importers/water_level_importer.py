@@ -1,13 +1,12 @@
 import logging
 
 import numpy as np
-import openturns as ot
 
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
-from vrtool.probabilistic_tools.probabilistic_functions import TableDist, beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class WaterLevelImporter(OrmImporterProtocol):
@@ -18,20 +17,21 @@ class WaterLevelImporter(OrmImporterProtocol):
 
     def import_orm(self, orm_model: SectionData) -> LoadInput:
 
-        _available_years = orm_model.water_level_data_list.select(
-            WaterlevelData.year
-        ).distinct()
+        _available_years: list[int] = [
+            year
+            for (year,) in orm_model.water_level_data_list.select(WaterlevelData.year)
+            .distinct()
+            .tuples()
+        ]
         if not any(_available_years):
             logging.warning(
                 f"Geen waterstandsdata voor dijkvak {orm_model.section_name}."
             )
             return None
 
-        _load_input = LoadInput([])
-        _load_input.distribution = {}
-        for yr in _available_years:
-            year = yr.year
-            _water_level_list = (
+        _load_input = LoadInput()
+        for year in _available_years:
+            _water_level_list: list[WaterlevelData] = (
                 orm_model.water_level_data_list.select()
                 .where(WaterlevelData.year == year)
                 .order_by(WaterlevelData.water_level.asc())
@@ -45,13 +45,11 @@ class WaterLevelImporter(OrmImporterProtocol):
                 p_nexc[index] = 1.0 - beta_to_pf(waterLevel.beta)
                 index += 1
 
-            _load_input.distribution[year] = ot.Distribution(
-                TableDist(
-                    wls,
-                    p_nexc,
-                    extrap=True,
-                    isload=True,
-                    gridpoints=self.gridpoint,
-                )
+            _load_input.set_distribution(
+                year,
+                wls,
+                p_nexc,
+                self.gridpoint,
             )
+
         return _load_input

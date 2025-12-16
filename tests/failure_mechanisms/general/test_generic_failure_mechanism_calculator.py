@@ -13,7 +13,7 @@ class TestGenericFailureMechanismCalculator:
         # Setup
         beta_table = {1: 0.1, 2: 0.2, 3: 0.3}
         _mechanism_input = MechanismInput("")
-        _mechanism_input.input["beta"] = beta_table
+        _mechanism_input.input_dict["beta"] = beta_table
 
         _input = GenericFailureMechanismInput.from_mechanism_input(_mechanism_input)
 

@@ -1,27 +1,38 @@
-import openturns as ot
+from dataclasses import dataclass, field
+
+import numpy as np
+from scipy.interpolate import interp1d
+
+from vrtool.probabilistic_tools.table_dist import TableDist
 
 
+@dataclass
 class LoadInput:
+    """
+    Class to store the load data per year.
+    """
+
     # class to store load data
-    load_type: str
+    distribution: dict[int, TableDist] = field(default_factory=dict)
 
-    def __init__(self, section_fields: list[str]):
-        self.load_type = ""
-        self.input = {}
-        if "Load_2025" in section_fields:
-            self.load_type = "HRING"
-        elif "YearlyWLRise" in section_fields:
-            self.load_type = "SAFE"
-
-    def set_annual_change(
-        self, change_type: str = "determinist", parameters: list[float] = [0]
+    def set_distribution(
+        self,
+        year: int,
+        wls: np.ndarray,  # water levels
+        p_nexc: np.ndarray,  # probability of non-exceedance
+        gridpoints: int,
     ):
-        # set an annual change of the water level
-        if change_type == "determinist":
-            self.dist_change = ot.Dirac(parameters)
-        elif change_type == "SAFE":  # specific formulation for SAFE
-            self.dist_change = parameters[0]
-            self.HBN_factor = parameters[1]
-        elif change_type == "gamma":
-            self.dist_change = ot.Gamma()
-            self.dist_change.setParameter(ot.GammaMuSigma()(parameters))
+        self.distribution[year] = TableDist(
+            wls, p_nexc, extrap=True, isload=True, gridpoints=gridpoints
+        )
+
+    def compute_h(self, year: int, p: float) -> float:
+        def compute(year: int) -> float:
+            return self.distribution[year].computeQuantile(p)
+
+        if year in self.distribution.keys():
+            return compute(year)
+
+        _years = list(self.distribution.keys())
+        _values = [compute(_year) for _year in _years]
+        return float(interp1d(_years, _values, fill_value="extrapolate")(year))

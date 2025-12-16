@@ -18,7 +18,7 @@ class OverflowHydraRingInput:
         cls, mechanism_input: MechanismInput
     ) -> OverflowHydraRingInput:
         return cls(
-            h_crest=mechanism_input.input.get("h_crest", float("nan")),
-            d_crest=mechanism_input.input.get("d_crest", float("nan")),
-            hc_beta=mechanism_input.input["hc_beta"],
+            h_crest=mechanism_input.input_dict.get("h_crest", float("nan")),
+            d_crest=mechanism_input.input_dict.get("d_crest", float("nan")),
+            hc_beta=mechanism_input.input_dict["hc_beta"],
         )

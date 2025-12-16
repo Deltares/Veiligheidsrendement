@@ -106,7 +106,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
     ) -> None:
         _probability_overflow = traject_info.Pmax * traject_info.omegaOverflow
 
-        mechanism_input = mechanism_reliability.Input.input
+        mechanism_input = mechanism_reliability.Input.input_dict
         if mechanism_reliability.mechanism_type == ComputationTypeEnum.SIMPLE:
             if hasattr(dike_section, "HBNRise_factor"):
                 hc = probabilistic_design(
@@ -147,7 +147,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
     def _configure_piping_or_stability_inner(
         self, mechanism_reliability: MechanismReliability
     ) -> None:
-        mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["piping_reduction_factor"] = self.parameters[
-            "piping_reduction_factor"
-        ]
+        mechanism_reliability.Input.input_dict["elimination"] = "yes"
+        mechanism_reliability.Input.input_dict["piping_reduction_factor"] = (
+            self.parameters["piping_reduction_factor"]
+        )

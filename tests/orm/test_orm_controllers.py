@@ -43,6 +43,7 @@ from vrtool.decision_making.strategies.target_reliability_strategy import (
     TargetReliabilityStrategy,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.flood_defence_system.failure_mechanism_collection import (
@@ -349,10 +350,14 @@ class TestOrmControllers:
         _general_info.aStabilityInner = 1
 
         # Stability Inner
-        _water_load_input = LoadInput([])
-        _water_load_input.input["d_cover"] = None
-        _water_load_input.input["beta"] = np.array([42.24])
-        _water_load_input.input["piping_reduction_factor"] = 1000
+        _mechanism_input = MechanismInput(
+            mechanism=MechanismEnum.STABILITY_INNER,
+            input_dict={
+                "d_cover": None,
+                "beta": np.array([42.24]),
+                "piping_reduction_factor": 1000,
+            },
+        )
         _stability_inner_collection = MechanismReliabilityCollection(
             MechanismEnum.STABILITY_INNER,
             ComputationTypeEnum.SIMPLE,
@@ -360,8 +365,8 @@ class TestOrmControllers:
             2023,
             2025,
         )
-        _stability_inner_collection.Reliability["0"].Input = _water_load_input
-        _dike_section.section_reliability.load = _water_load_input
+        _stability_inner_collection.Reliability["0"].Input = _mechanism_input
+        _dike_section.section_reliability.load = LoadInput()
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.STABILITY_INNER
         ] = _stability_inner_collection

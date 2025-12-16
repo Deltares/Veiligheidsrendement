@@ -13,9 +13,9 @@ class TestOverflowHydraRingCalculator:
     def test_init_with_valid_data(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _mechanism_input.input["h_crest"] = 0.1
-        _mechanism_input.input["d_crest"] = 0.2
-        _mechanism_input.input["hc_beta"] = pd.DataFrame(
+        _mechanism_input.input_dict["h_crest"] = 0.1
+        _mechanism_input.input_dict["d_crest"] = 0.2
+        _mechanism_input.input_dict["hc_beta"] = pd.DataFrame(
             {"col1": [1, 2], "col2": [3, 4]}
         )
 
@@ -46,9 +46,9 @@ class TestOverflowHydraRingCalculator:
     def test_init_with_invalid_load_input(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _mechanism_input.input["h_crest"] = 0.1
-        _mechanism_input.input["d_crest"] = 0.2
-        _mechanism_input.input["hc_beta"] = pd.DataFrame(
+        _mechanism_input.input_dict["h_crest"] = 0.1
+        _mechanism_input.input_dict["d_crest"] = 0.2
+        _mechanism_input.input_dict["hc_beta"] = pd.DataFrame(
             {"col1": [1, 2], "col2": [3, 4]}
         )
 

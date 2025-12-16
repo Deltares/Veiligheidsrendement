@@ -66,13 +66,13 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
             )
 
         mechanism_input = MechanismInput(MechanismEnum.OVERFLOW)
-        mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
+        mechanism_input.input_dict["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )
-        mechanism_input.input["h_crest"] = (
+        mechanism_input.input_dict["h_crest"] = (
             orm_model.mechanism_per_section.section.crest_height
         )
-        mechanism_input.input["d_crest"] = (
+        mechanism_input.input_dict["d_crest"] = (
             orm_model.mechanism_per_section.section.annual_crest_decline
         )
 

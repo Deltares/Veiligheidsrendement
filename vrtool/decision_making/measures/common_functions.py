@@ -29,15 +29,15 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
 
 
 def implement_berm_widening(
-    berm_input,
-    measure_input,
-    measure_parameters,
+    berm_input: dict,
+    measure_input: dict,
+    measure_parameters: dict,
     mechanism: MechanismEnum,
     computation_type: ComputationTypeEnum,
     is_first_year_with_widening: bool,
     path_intermediate_stix: Path,
     depth_screen: Optional[float] = None,
-):
+) -> dict:
     """
 
     Args:
@@ -56,7 +56,7 @@ def implement_berm_widening(
     """
 
     def calculate_stability_inner_reliability_with_safety_screen(
-        reliability: np.ndarray, safety_factor_increase: float
+        reliability: float, safety_factor_increase: float
     ):
         # convert to SF and back:
         return calculate_reliability(
@@ -119,7 +119,6 @@ def implement_berm_widening(
     elif mechanism == MechanismEnum.PIPING:
         if computation_type == ComputationTypeEnum.SEMIPROB:
             berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
-            # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
             berm_input["l_achter"] = (
                 berm_input["l_achter"] - measure_input["dberm"]
             ).clip(0)

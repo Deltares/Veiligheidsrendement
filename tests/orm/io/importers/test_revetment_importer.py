@@ -150,9 +150,9 @@ class TestRevetmentImporter:
 
         assert isinstance(_mechanism_input, MechanismInput)
         assert _mechanism_input.mechanism == MechanismEnum.REVETMENT
-        assert len(_mechanism_input.input) == 1
+        assert len(_mechanism_input.input_dict) == 1
 
-        revetment_input = _mechanism_input.input["revetment_input"]
+        revetment_input = _mechanism_input.input_dict["revetment_input"]
         assert isinstance(revetment_input, RevetmentDataClass)
         self._assert_slope_parts(revetment_input.slope_parts, slope_parts)
         self._assert_grass_revetment_relations(
@@ -210,7 +210,7 @@ class TestRevetmentImporter:
         _mechanism_input = importer.import_orm(computation_scenario)
 
         # Assert
-        revetment_input = _mechanism_input.input["revetment_input"]
+        revetment_input = _mechanism_input.input_dict["revetment_input"]
         self._assert_slope_parts(revetment_input.slope_parts, slope_parts)
 
     def test_import_revetment_with_unsorted_grass_relations_returns_input_with_sorted_relations(
@@ -248,7 +248,7 @@ class TestRevetmentImporter:
         _mechanism_input = importer.import_orm(computation_scenario)
 
         # Assert
-        revetment_input = _mechanism_input.input["revetment_input"]
+        revetment_input = _mechanism_input.input_dict["revetment_input"]
         self._assert_grass_revetment_relations(
             revetment_input.grass_relations, grass_relations
         )

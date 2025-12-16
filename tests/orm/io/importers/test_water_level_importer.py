@@ -97,8 +97,8 @@ class TestWaterLevelImporter:
         _load = _importer.import_orm(water_level_importer_orm_dike_section)
 
         # 3. Verify expectations.
-        sd = _load.distribution[2030].getStandardDeviation()[0]
-        assert sd == approx(2.0278)
+        sd = _load.distribution[2030].getMean()
+        assert sd == approx(-1.36956)
 
     @pytest.mark.parametrize(
         "water_level_importer_orm_dike_section",
@@ -119,11 +119,7 @@ class TestWaterLevelImporter:
         _load = _importer.import_orm(water_level_importer_orm_dike_section)
 
         # 3. Verify expectations.
-        sd2030 = _load.distribution[2030].getStandardDeviation()[0]
-        assert sd2030 == approx(2.0278)
-        sd2050 = _load.distribution[2050].getStandardDeviation()[0]
-        assert sd2050 == approx(2.0278)
-        mean2030 = _load.distribution[2030].getMean()[0]
-        mean2050 = _load.distribution[2050].getMean()[0]
+        mean2030 = _load.distribution[2030].getMean()
+        mean2050 = _load.distribution[2050].getMean()
         diff = mean2050 - mean2030
         assert diff == approx(0.3)
