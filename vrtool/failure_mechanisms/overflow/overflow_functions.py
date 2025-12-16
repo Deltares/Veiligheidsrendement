@@ -24,9 +24,9 @@ def calculate_overflow_hydra_ring_design(
     """
 
     t_beta_interp = RectBivariateSpline(
-        input["hc_beta"].columns.values.astype(np.float32),
-        input["hc_beta"].index.values,
-        input["hc_beta"],
+        input_dict["hc_beta"].columns.values.astype(np.float32),
+        input_dict["hc_beta"].index.values,
+        input_dict["hc_beta"],
     )
     h_grid = np.linspace(
         input_dict["hc_beta"].index.values.min(),
