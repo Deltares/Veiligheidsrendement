@@ -84,6 +84,6 @@ class RevetmentImporter(OrmImporterProtocol):
             )
 
         mechanism_input = MechanismInput(MechanismEnum.REVETMENT)
-        mechanism_input.input["revetment_input"] = revetment_input
+        mechanism_input.input_dict["revetment_input"] = revetment_input
 
         return mechanism_input

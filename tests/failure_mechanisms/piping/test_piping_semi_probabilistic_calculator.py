@@ -14,7 +14,7 @@ class TestPipingSemiProbabilisticCalculator:
     def test_init_with_valid_data(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _load = LoadInput([])
+        _load = LoadInput()
 
         # Call
         _calculator = PipingSemiProbabilisticCalculator(
@@ -27,7 +27,7 @@ class TestPipingSemiProbabilisticCalculator:
 
     def test_init_with_invalid_mechanism_input(self):
         # Setup
-        _load = LoadInput([])
+        _load = LoadInput()
 
         # Call
         with pytest.raises(ValueError) as exception_error:
@@ -54,7 +54,7 @@ class TestPipingSemiProbabilisticCalculator:
     def test_init_with_invalid_initial_year(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _load = LoadInput([])
+        _load = LoadInput()
 
         # Call
         with pytest.raises(ValueError) as exception_error:
@@ -71,7 +71,7 @@ class TestPipingSemiProbabilisticCalculator:
     def test_init_with_invalid_trajec_info(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _load = LoadInput([])
+        _load = LoadInput()
 
         # Call
         with pytest.raises(ValueError) as exception_error:
@@ -94,7 +94,7 @@ class TestPipingSemiProbabilisticCalculator:
             PipingSemiProbabilisticCalculator: Valid calculator instance.
         """
         _mechanism_input = MechanismInput("")
-        _load = LoadInput([])
+        _load = LoadInput()
 
         yield PipingSemiProbabilisticCalculator(
             _mechanism_input, _load, 0, DikeTrajectInfo(traject_name="")

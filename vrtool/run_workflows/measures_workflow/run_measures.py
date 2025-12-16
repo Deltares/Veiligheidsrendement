@@ -57,11 +57,6 @@ class RunMeasures(VrToolRunProtocol):
             )
         )
 
-        for i in self.selected_traject.sections:
-            _results_measures.solutions_dict[i.name].solutions_to_dataframe(
-                filtering=False, splitparams=True
-            )
-
         logging.info("Stap 2: Bepaling effecten en kosten van maatregelen afgerond.")
 
         return _results_measures

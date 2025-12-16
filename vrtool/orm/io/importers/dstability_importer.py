@@ -32,11 +32,11 @@ class DStabilityImporter(OrmImporterProtocol):
     ) -> None:
         for parameter in parameters:
             _key = parameter.parameter.lower().strip()
-            if _key not in mech_input.input.keys():
-                mech_input.input[_key] = np.array([float(parameter.value)])
+            if _key not in mech_input.input_dict.keys():
+                mech_input.input_dict[_key] = np.array([float(parameter.value)])
             else:
-                mech_input.input[_key] = np.append(
-                    mech_input.input[_key], float(parameter.value)
+                mech_input.input_dict[_key] = np.append(
+                    mech_input.input_dict[_key], float(parameter.value)
                 )
 
     def import_orm(self, orm_model: MechanismPerSection) -> MechanismInput:
@@ -69,10 +69,10 @@ class DStabilityImporter(OrmImporterProtocol):
         if len(supporting_files) != 1:
             raise ValueError("Invalid number of stix files.")
 
-        mechanism_input.input["STIXNAAM"] = (
+        mechanism_input.input_dict["STIXNAAM"] = (
             self._stix_directory / supporting_files.get().filename
         )
-        mechanism_input.input["DStability_exe_path"] = str(
+        mechanism_input.input_dict["DStability_exe_path"] = str(
             self._dstability_exe_directory
         )
 

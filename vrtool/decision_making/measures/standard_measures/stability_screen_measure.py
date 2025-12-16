@@ -108,10 +108,10 @@ class StabilityScreenMeasure(MeasureProtocol):
                 )
             elif mechanism == MechanismEnum.PIPING:
                 self._copy_results(_collection, dike_section_mechanism_reliability)
-                _collection.Input.input["piping_reduction_factor"] = sf_factor_piping(
-                    length
+                _collection.Input.input_dict["piping_reduction_factor"] = (
+                    sf_factor_piping(length)
                 )
-                _collection.Input.input["elimination"] = "yes"
+                _collection.Input.input_dict["elimination"] = "yes"
             elif mechanism == MechanismEnum.OVERFLOW:
                 self._copy_results(
                     _collection, dike_section_mechanism_reliability
@@ -138,7 +138,7 @@ class StabilityScreenMeasure(MeasureProtocol):
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1]
 
-        mechanism_reliability_input = mechanism_reliability.Input.input
+        mechanism_reliability_input = mechanism_reliability.Input.input_dict
         _safety_factor_increase = get_safety_factor_increase(length)
         _depth_screen = dike_section.cover_layer_thickness + length
         if _calc_type == ComputationTypeEnum.DSTABILITY:

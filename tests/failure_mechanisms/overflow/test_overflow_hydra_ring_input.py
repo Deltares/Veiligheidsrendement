@@ -8,9 +8,9 @@ class TestOverflowHydraRingInput:
     def test_from_mechanism_input_creates_expected_input(self):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["h_crest"] = 0.1
-        mechanism_input.input["d_crest"] = 0.2
-        mechanism_input.input["hc_beta"] = pd.DataFrame(
+        mechanism_input.input_dict["h_crest"] = 0.1
+        mechanism_input.input_dict["d_crest"] = 0.2
+        mechanism_input.input_dict["hc_beta"] = pd.DataFrame(
             {"col1": [1, 2], "col2": [3, 4]}
         )
 
@@ -20,8 +20,12 @@ class TestOverflowHydraRingInput:
         )
 
         # Assert
-        assert overflow_hydra_ring_input.h_crest == mechanism_input.input["h_crest"]
-        assert overflow_hydra_ring_input.d_crest == mechanism_input.input["d_crest"]
+        assert (
+            overflow_hydra_ring_input.h_crest == mechanism_input.input_dict["h_crest"]
+        )
+        assert (
+            overflow_hydra_ring_input.d_crest == mechanism_input.input_dict["d_crest"]
+        )
         assert overflow_hydra_ring_input.hc_beta.equals(
-            mechanism_input.input["hc_beta"]
+            mechanism_input.input_dict["hc_beta"]
         )

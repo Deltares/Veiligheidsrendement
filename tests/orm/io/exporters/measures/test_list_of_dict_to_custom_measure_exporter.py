@@ -327,3 +327,27 @@ class TestListOfDictToCustomMeasureExporter:
             0
         ].mechanism_per_section.mechanism.name
         assert MechanismEnum.get_enum(_orm_mechanism_name) == MechanismEnum.OVERFLOW
+
+    def test_export_with_conflicting_costs_raises(
+        self,
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
+    ):
+        # 1. Define test data.
+        _custom_measure_base_dict = dict(
+            MEASURE_NAME="ROCKS",
+            SECTION_NAME="01A",
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+            TIME=0,
+            BETA=8,
+        )
+        _list_of_dict = [
+            _custom_measure_base_dict | dict(COST=_cost) for _cost in [1000, 2000]
+        ]
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            exporter_with_db_without_custom_measures.export_dom(_list_of_dict)
+
+        # 3. Verify expectations.
+        assert "Conflicting cost values found" in str(exc_err.value)

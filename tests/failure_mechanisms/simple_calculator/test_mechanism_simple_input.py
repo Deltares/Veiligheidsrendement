@@ -26,7 +26,9 @@ class TestMechanismSimpleInput:
             failure_mechanism_input.reliability_calculation_method
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
-        assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
+        assert (
+            failure_mechanism_input.beta == mechanism_input_fixture.input_dict["beta"]
+        )
         assert failure_mechanism_input.mechanism_reduction_factor == 1
 
     def test_from_mechanism_input_without_any_reliability_raises_exception(
@@ -49,9 +51,11 @@ class TestMechanismSimpleInput:
         self, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input_fixture.input["elimination"] = "yes"
-        mechanism_input_fixture.input["pf_elim"] = np.array([0.2], dtype=float)
-        mechanism_input_fixture.input["pf_with_elim"] = np.array([0.3], dtype=float)
+        mechanism_input_fixture.input_dict["elimination"] = "yes"
+        mechanism_input_fixture.input_dict["pf_elim"] = np.array([0.2], dtype=float)
+        mechanism_input_fixture.input_dict["pf_with_elim"] = np.array(
+            [0.3], dtype=float
+        )
 
         # Call
         failure_mechanism_input = MechanismSimpleInput.from_mechanism_input(

@@ -66,9 +66,9 @@ class RunOptimization(VrToolRunProtocol):
 
         _greedy_strategy.evaluate(
             setting="cautious",
-            f_cautious=1.5,
-            max_count=600,
-            BCstop=0.1,
+            BCstop=self.vr_config.BC_stop,
+            max_count=self.vr_config.max_greedy_iterations,
+            f_cautious=self.vr_config.f_cautious,
         )
         return _greedy_strategy
 

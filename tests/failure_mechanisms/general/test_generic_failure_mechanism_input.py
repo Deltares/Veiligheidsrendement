@@ -7,7 +7,7 @@ class TestGenericFailureMechanismInput:
         # Setup
         beta_table = {1: 0.1, 2: 0.2, 3: 0.3}
         mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = beta_table
+        mechanism_input.input_dict["beta"] = beta_table
 
         # Call
         generic_failure_mechanism_input = (

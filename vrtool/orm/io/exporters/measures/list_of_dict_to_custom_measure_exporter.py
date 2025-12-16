@@ -60,6 +60,12 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _measure_unique_keys,
             _grouped_custom_measures,
         ) in self._get_grouped_dictionaries_by_measure(dom_model).items():
+            # Check if all entries in the grouped measure have the same cost
+            if len(set(_cm["COST"] for _cm in _grouped_custom_measures)) > 1:
+                raise ValueError(
+                    f"Conflicting cost values found for measure {_measure_unique_keys[0]} in section {_measure_unique_keys[2]}"
+                )
+
             _measure_name = _measure_unique_keys[0]
             _section_name = _measure_unique_keys[2]
 
