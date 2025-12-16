@@ -24,7 +24,7 @@ class LoadInput:
 
     def compute_h(self, year: int, p: float) -> float:
         def compute(year: int) -> float:
-            return self.distribution[year].computeQuantile(p)[0]
+            return self.distribution[year].computeQuantile(p)
 
         if year in self.distribution.keys():
             return compute(year)
