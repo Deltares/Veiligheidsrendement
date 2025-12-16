@@ -6,7 +6,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 
 def calculate_overflow_hydra_ring_design(
-    input: dict, year: int, start_year: int, failure_probability: float
+    input_dict: dict, year: int, start_year: int, failure_probability: float
 ) -> tuple[float, float]:
     """
     Calculates the overflow based on a HydraRing design calculation.
@@ -20,14 +20,14 @@ def calculate_overflow_hydra_ring_design(
     """
 
     t_beta_interp = interpolate.interp2d(
-        input["hc_beta"].columns.values.astype(np.float32),
-        input["hc_beta"].index.values,
-        input["hc_beta"],
+        input_dict["hc_beta"].columns.values.astype(np.float32),
+        input_dict["hc_beta"].index.values,
+        input_dict["hc_beta"],
         bounds_error=False,
     )
     h_grid = np.linspace(
-        input["hc_beta"].index.values.min(),
-        input["hc_beta"].index.values.max(),
+        input_dict["hc_beta"].index.values.min(),
+        input_dict["hc_beta"].index.values.max(),
         50,
     )
     h_beta = t_beta_interp(year + start_year, h_grid).flatten()
@@ -36,7 +36,7 @@ def calculate_overflow_hydra_ring_design(
     ).item()
 
     # add expected crest decline
-    new_crest += year * input["d_crest"]
+    new_crest += year * input_dict["d_crest"]
 
     return new_crest, pf_to_beta(failure_probability)
 

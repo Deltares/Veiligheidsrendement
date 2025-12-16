@@ -80,18 +80,20 @@ class TestMechanismSimpleImporter:
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == MechanismEnum.OVERFLOW
-        assert len(_mechanism_input.input) == len(parameters) + 3
-        assert _mechanism_input.input["Scenario"] == [
+        assert len(_mechanism_input.input_dict) == len(parameters) + 3
+        assert _mechanism_input.input_dict["Scenario"] == [
             _computation_scenario.scenario_name
         ]
-        assert _mechanism_input.input["P_scenario"] == [
+        assert _mechanism_input.input_dict["P_scenario"] == [
             _computation_scenario.scenario_probability
         ]
-        assert _mechanism_input.input["Pf"] == [
+        assert _mechanism_input.input_dict["Pf"] == [
             _computation_scenario.probability_of_failure
         ]
         for parameter in parameters:
-            mechanism_parameter = _mechanism_input.input[parameter.get("parameter")]
+            mechanism_parameter = _mechanism_input.input_dict[
+                parameter.get("parameter")
+            ]
             assert isinstance(mechanism_parameter, np.ndarray)
             assert mechanism_parameter == pytest.approx(parameter.get("value"))
 

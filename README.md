@@ -47,10 +47,6 @@ We are using the 2024.02 release of D-Stability.
 For a correct functioning we advise you to have a look on our tutorial section
 [Running a D-Stability model](https://deltares-research.github.io/VrtoolDocumentation/Achtergronden/Betrouwbaarheidsmodellen/Binnenwaartse%20macrostabiliteit.html#d-stability).
 
-#### openturns
-We found out a hard dependency when working under a Windows environment with the [library `openturns`](https://openturns.github.io/www/index.html), which forced us to work under the version 1.19. This is automatically resolved for you when following the steps specified for [development mode](#development-mode).
-When using your own environment, you might have to follow the openturns installation steps for version 1.19.
-
 ### How to run tests
 Tests can be run with the pytest command `pytest run`. However, when working under a [development mode](#development-mode) environment, we advise to run the command `pixi run -e test pytest` instead.
 

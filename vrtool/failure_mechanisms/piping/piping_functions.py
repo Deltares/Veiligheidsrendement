@@ -5,7 +5,9 @@ import numpy as np
 
 ## This script contains limit state functions for the different mechanisms.
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
+def calculate_lsf_heave(
+    r_exit: float, h: float, h_exit: float, d_cover: float, kwelscherm: str | int
+) -> tuple[float, float, float]:
     # lambd,h,h_b,d,i_ch
     if isinstance(kwelscherm, str):
         if kwelscherm == "Ja":
@@ -15,10 +17,10 @@ def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
 
     # For semiprob
     if d_cover <= 0:  # geen deklaag = heave treedt altijd op
-        i_c = 0
-    elif int(kwelscherm) == 1:
+        i_c = 0.0
+    elif kwelscherm == 1:
         i_c = 0.5
-    elif int(kwelscherm) == 0:
+    elif kwelscherm == 0:
         i_c = 0.3
     else:
         logging.debug("The LSF of heave has no clue what to do")
@@ -41,7 +43,16 @@ def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     return g_h, i, i_c
 
 
-def calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
+def calculate_lsf_sellmeijer(
+    h: float,
+    h_exit: float,
+    d_cover: float,
+    L: float,
+    D: float,
+    d70: float,
+    k: float,
+    mPiping: float,
+) -> tuple[float, float, float]:
     delta_h_c = mPiping * calculate_sellmeijer_2017(
         L, D, d70, k
     )  # Critical head difference (resistance):
@@ -53,7 +64,9 @@ def calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
     return g_p, delta_h, delta_h_c
 
 
-def calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
+def calculate_lsf_uplift(
+    r_exit: float, h: float, h_exit: float, d_cover: float, gamma_sat: float
+) -> tuple[float, float, float]:
     gamma_w = 9.81
     # lambd,h,h_b,d,gamma_sat,m_u
     m_u = 1.0
@@ -119,274 +132,39 @@ def calculate_sellmeijer_2017(
     return delta_h_c
 
 
-def calculate_z_uplift(z_input, mode: str = "Prob"):
-    # if it is a dictionary: split according to names
-    if isinstance(z_input, dict):
-        d_cover = z_input["d_cover"]
-        h_exit = z_input["h_exit"]
-        r_exit = z_input["r_exit"]
-        L = z_input["l_voor"] + z_input["l_achter"]
-        d70 = z_input["d70"]
-        k = z_input["k"]
-        gamma_sat = z_input["gamma_sat"]
-        kwelscherm = z_input["kwelscherm"]
-        mPiping = 1.0
-        h_exit = h_exit - z_input["dh_exit(t)"]
-        h = z_input["h"] + z_input["dh"]
-    # with ageing & water level change:
-    else:
-        if len(z_input) == 13:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-                dh,
-            ) = z_input
-            h_exit = h_exit - dh_exit
-            h = h + dh  # with ageing:
-        if len(z_input) == 12:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-            ) = z_input
-            h_exit = h_exit - dh_exit
-        # without ageing:
-        elif len(z_input) == 11:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                h,
-            ) = z_input
-    g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
-    if mode == "Prob":
-        return [g_u]
-    else:
-        return g_u, dh_u, dhc_u
+def calculate_z_uplift(z_input: dict) -> tuple[float, float, float]:
+    h = z_input["h"] + z_input["dh"]
 
-
-def calculate_z_heave(inp: dict, mode: str = "Prob"):
-    # if it is a dictionary: split according to names
-    if isinstance(inp, dict):
-        d_cover = inp["d_cover"]
-        h_exit = inp["h_exit"]
-        r_exit = inp["r_exit"]
-        L = inp["l_voor"] + inp["l_achter"]
-        d70 = inp["d70"]
-        k = inp["k"]
-        gamma_sat = inp["gamma_sat"]
-        kwelscherm = inp["kwelscherm"]
-        mPiping = 1.0
-        h_exit = h_exit - inp["dh_exit(t)"]
-        h = inp["h"] + inp["dh"]
-    # with ageing & water level change:
-    else:
-        if len(inp) == 13:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-                dh,
-            ) = inp
-            h_exit = h_exit - dh_exit
-            h = h + dh  # with ageing:
-        if len(inp) == 12:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-            ) = inp
-            h_exit = h_exit - dh_exit
-        # without ageing:
-        elif len(inp) == 11:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                h,
-            ) = inp
-
-    g_h, i, i_c = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
-    if mode == "Prob":
-        return [g_h]
-    else:
-        return g_h, i, i_c
-
-
-def calculate_z_piping(piping_input, mode: str = "Prob"):
-    # if it is a dictionary: split according to names
-    if isinstance(piping_input, dict):
-        D = piping_input["d_wvp"]
-        d_cover = piping_input["d_cover"]
-        h_exit = piping_input["h_exit"]
-        r_exit = piping_input["r_exit"]
-        L = piping_input["l_voor"] + piping_input["l_achter"]
-        d70 = piping_input["d70"]
-        k = piping_input["k"]
-        gamma_sat = piping_input["gamma_sat"]
-        kwelscherm = piping_input["kwelscherm"]
-        mPiping = 1.0  # inp['mPiping']
-        h_exit = h_exit - piping_input["dh_exit(t)"]
-        h = piping_input["h"] + piping_input["dh"]
-    # with ageing & water level change:
-    else:
-        if len(piping_input) == 13:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-                dh,
-            ) = piping_input
-            h_exit = h_exit - dh_exit
-            h = h + dh  # with ageing:
-        if len(piping_input) == 12:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                dh_exit,
-                h,
-            ) = piping_input
-            h_exit = h_exit - dh_exit
-        # without ageing:
-        elif len(piping_input) == 11:
-            (
-                D,
-                d_cover,
-                h_exit,
-                r_exit,
-                L,
-                d70,
-                k,
-                gamma_sat,
-                kwelscherm,
-                mPiping,
-                h,
-            ) = piping_input
-
-    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(
-        h, h_exit, d_cover, L, D, d70, k, mPiping
+    return calculate_lsf_uplift(
+        z_input["r_exit"],
+        h,
+        z_input["h_exit"],
+        z_input["d_cover"],
+        z_input["gamma_sat"],
     )
-    if mode == "Prob":
-        return [g_p]
-    else:
-        return g_p, dh_p, dhc_p
 
 
-def calculate_z_piping_total(inp):
-    # with ageing & water level change:
-    if len(inp) == 13:
-        (
-            D,
-            d_cover,
-            h_exit,
-            r_exit,
-            L,
-            d70,
-            k,
-            gamma_sat,
-            kwelscherm,
-            mPiping,
-            dh_exit,
-            h,
-            dh,
-        ) = inp
-        h_exit = h_exit - dh_exit
-        h = h + dh
-    # with ageing:
-    if len(inp) == 12:
-        (
-            D,
-            d_cover,
-            h_exit,
-            r_exit,
-            L,
-            d70,
-            k,
-            gamma_sat,
-            kwelscherm,
-            mPiping,
-            dh_exit,
-            h,
-        ) = inp
-        h_exit = h_exit - dh_exit
-    # without ageing:
-    elif len(inp) == 11:
-        D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
-    # r_exit, h, h_exit,d,i_ch, gamma_sat,m_u,L,D,theta,d70,k,m_p = inp
+def calculate_z_heave(z_input: dict) -> tuple[float, float, float]:
+    h_exit = z_input["h_exit"] - z_input["dh_exit(t)"]
+    h = z_input["h"] + z_input["dh"]
 
-    g_h, i, i_c = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
-    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(
-        h, h_exit, d_cover, L, D, d70, k, mPiping
+    return calculate_lsf_heave(
+        z_input["r_exit"], h, h_exit, z_input["d_cover"], z_input["kwelscherm"]
     )
-    g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
-    z_piping = max(g_p, g_u, g_h)
-    # import pdb; pdb.set_trace()
-    return [z_piping]
+
+
+def calculate_z_piping(piping_input: dict) -> tuple[float, float, float]:
+    L = piping_input["l_voor"] + piping_input["l_achter"]
+    h_exit = piping_input["h_exit"] - piping_input["dh_exit(t)"]
+    h = piping_input["h"] + piping_input["dh"]
+
+    return calculate_lsf_sellmeijer(
+        h,
+        h_exit,
+        piping_input["d_cover"],
+        L,
+        piping_input["d_wvp"],
+        piping_input["d70"],
+        piping_input["k"],
+        1.0,
+    )

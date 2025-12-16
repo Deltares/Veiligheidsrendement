@@ -94,15 +94,16 @@ class TestOverflowHydraRingImporter:
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == MechanismEnum.OVERFLOW
-        assert len(_mechanism_input.input) == 3
-        assert _mechanism_input.input["h_crest"] == _orm_section_data.crest_height
+        assert len(_mechanism_input.input_dict) == 3
+        assert _mechanism_input.input_dict["h_crest"] == _orm_section_data.crest_height
         assert (
-            _mechanism_input.input["d_crest"] == _orm_section_data.annual_crest_decline
+            _mechanism_input.input_dict["d_crest"]
+            == _orm_section_data.annual_crest_decline
         )
 
-        _mechanism_table_data = _mechanism_input.input["hc_beta"]
-        assert _mechanism_input.input["h_crest"] == 24
-        assert _mechanism_input.input["d_crest"] == 42
+        _mechanism_table_data = _mechanism_input.input_dict["hc_beta"]
+        assert _mechanism_input.input_dict["h_crest"] == 24
+        assert _mechanism_input.input_dict["d_crest"] == 42
         assert isinstance(_mechanism_table_data, pd.DataFrame)
 
         assert list(_mechanism_table_data.columns) == [str(year) for year in years]
