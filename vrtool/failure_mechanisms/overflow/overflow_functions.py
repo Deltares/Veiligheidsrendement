@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
-from scipy import interpolate
+from scipy.interpolate import RectBivariateSpline
 
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import (
+    beta_to_pf,
+    interpolate,
+    pf_to_beta,
+)
 
 
 def calculate_overflow_hydra_ring_design(
@@ -19,11 +23,10 @@ def calculate_overflow_hydra_ring_design(
         Tuple[float, float]: A tuple with the calculated height of the new crest and the reliability.
     """
 
-    t_beta_interp = interpolate.interp2d(
+    t_beta_interp = RectBivariateSpline(
         input["hc_beta"].columns.values.astype(np.float32),
         input["hc_beta"].index.values,
         input["hc_beta"],
-        bounds_error=False,
     )
     h_grid = np.linspace(
         input["hc_beta"].index.values.min(),
@@ -31,9 +34,7 @@ def calculate_overflow_hydra_ring_design(
         50,
     )
     h_beta = t_beta_interp(year + start_year, h_grid).flatten()
-    new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
-        pf_to_beta(failure_probability)
-    ).item()
+    new_crest = interpolate(pf_to_beta(failure_probability), h_beta, h_grid)
 
     # add expected crest decline
     new_crest += year * input["d_crest"]
@@ -57,19 +58,17 @@ def calculate_overflow_hydra_ring_assessment(
     """
 
     h_t = h_crest - d_crest * (year)
-    years = hc_beta.columns.values.astype(np.int32)
+    years = hc_beta.columns.values.astype(np.int32).tolist()
     betas = []
     for j in years:
         betas.append(
-            interpolate.interp1d(
+            interpolate(
+                h_t,
                 hc_beta.index.values,
                 hc_beta[str(j)],
-                fill_value="extrapolate",
-            )(h_t)
+            )
         )
-    beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(
-        year + initial_year
-    )
+    beta = interpolate(year + initial_year, years, betas)
     return beta, beta_to_pf(beta)
 
 
@@ -93,15 +92,11 @@ def calculate_overflow_simple_assessment(
     """
 
     if q_c[0] != q_c[-1:]:
-        beta_hc = interpolate.interp2d(
-            h_c, q_c, beta, kind="linear", fill_value="extrapolate"
-        )
+        beta_hc = RectBivariateSpline(h_c, q_c, beta)
         beta = np.min([beta_hc(h_crest, q_crest), 8.0])
     else:
-        beta_hc = interpolate.interp1d(
-            h_c, beta, kind="linear", fill_value="extrapolate"
-        )
-        beta = np.min([beta_hc(h_crest), [8.0]])
+        beta_hc = interpolate(h_crest.tolist(), h_c.tolist(), beta.tolist())
+        beta = np.min([beta_hc, [8.0]])
 
     return beta, beta_to_pf(beta)
 
@@ -130,14 +125,10 @@ def calculate_overflow_simple_design(
     beta_t = pf_to_beta(failure_probability)
     if design_variable == "h_crest":
         if q_c[0] != q_c[-1:]:
-            beta_hc = interpolate.interp2d(
-                beta, q_c, h_c, kind="linear", fill_value="extrapolate"
-            )
+            beta_hc = interpolate.RectBivariateSpline(beta, q_c, h_c)
             h_crest = beta_hc(beta_t, q_crest)
         else:
-            beta_hc = interpolate.interp1d(
-                beta, h_c, kind="linear", fill_value="extrapolate"
-            )
+            beta_hc = interpolate(beta, h_c, kind="linear", fill_value="extrapolate")
             h_crest = beta_hc(beta_t)
 
         return h_crest, beta_t

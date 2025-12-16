@@ -1,4 +1,3 @@
-import logging
 from typing import Callable, Optional
 
 import numpy as np
@@ -226,7 +225,7 @@ def interpolator(
         _xs0, _xsN = xs[0], xs[-1]
         _ys0, _ysN = ys[0], ys[-1]
 
-        _x_list = [x] if isinstance(x, float) else x
+        _x_list = x if isinstance(x, list) else [x]
         _results = []
 
         for _x in _x_list:
@@ -247,7 +246,7 @@ def interpolator(
 
             _results.append(_y)
 
-        return _results[0] if isinstance(x, float) else _results
+        return _results if isinstance(x, list) else _results[0]
 
     return _interpolator
 

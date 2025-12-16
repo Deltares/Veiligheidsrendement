@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.interpolate import interp1d
 from scipy.special import ndtri
 
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
@@ -16,7 +15,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, interpolate
 
 
 class RevetmentCalculator(FailureMechanismCalculatorProtocol):
@@ -62,16 +61,14 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
             self._revetment.beta_stone = _stone_revetment_beta[0]
             return _beta_per_year[0], beta_to_pf(_beta_per_year[0])
 
-        _interpolate_beta_stone = interp1d(
-            _given_years, _beta_stone_per_year, fill_value=("extrapolate")
+        _calculated_beta_stone = interpolate(
+            self._initial_year + year, _given_years, _beta_stone_per_year
         )
-        _calculated_beta_stone = _interpolate_beta_stone(self._initial_year + year)
         self._revetment.beta_stone = np.nanmin(_calculated_beta_stone)
 
-        _interpolate_beta = interp1d(
-            _given_years, _beta_per_year, fill_value=("extrapolate")
+        _calculated_beta = interpolate(
+            self._initial_year + year, _given_years, _beta_per_year
         )
-        _calculated_beta = _interpolate_beta(self._initial_year + year)
         return _calculated_beta, beta_to_pf(_calculated_beta)
 
     @staticmethod
@@ -126,11 +123,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
                 if grass_relation.year == evaluation_year
             )
         )
-
-        _interpolate_grass = interp1d(
-            _transitions, _beta_failure, fill_value=("extrapolate")
-        )
-        return _interpolate_grass(current_transition_level)
+        return interpolate(current_transition_level, _transitions, _beta_failure)
 
     @staticmethod
     def evaluate_block_relations(
@@ -156,8 +149,4 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
                 if slope_relation.year == evaluation_year
             )
         )
-
-        _interpolate_block = interp1d(
-            _top_layer_thickness, _beta_failure, fill_value=("extrapolate")
-        )
-        return _interpolate_block(top_layer_thickness)
+        return interpolate(top_layer_thickness, _top_layer_thickness, _beta_failure)
