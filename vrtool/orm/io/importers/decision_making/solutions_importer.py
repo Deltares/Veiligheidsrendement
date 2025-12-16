@@ -26,37 +26,6 @@ class SolutionsImporter(OrmImporterProtocol):
         _measure_importer = MeasureImporter(self._config)
         return list(map(_measure_importer.import_orm, orm_measures))
 
-    @staticmethod
-    def set_solution_measure_table(solution: Solutions):
-        """
-        Sets the measure table for a given imported solution.
-
-        Args:
-            solution (Solutions): Entity whose `measure_table` property needs to be set.
-        """
-        _combinables = []
-        _partials = []
-        for i, measure in enumerate(solution.measures):
-            solution.measure_table.loc[i] = [
-                str(measure.parameters["ID"]),
-                measure.parameters["Name"],
-            ]
-            # also add the potential combined solutions up front
-            if measure.parameters["Class"] == "combinable":
-                _combinables.append(
-                    (measure.parameters["ID"], measure.parameters["Name"])
-                )
-            if measure.parameters["Class"] == "partial":
-                _partials.append((measure.parameters["ID"], measure.parameters["Name"]))
-        count = 0
-        for i in range(0, len(_partials)):
-            for j in range(0, len(_combinables)):
-                solution.measure_table.loc[count + len(solution.measures) + 1] = [
-                    str(_partials[i][0]) + "+" + str(_combinables[j][0]),
-                    str(_partials[i][1]) + "+" + str(_combinables[j][1]),
-                ]
-                count += 1
-
     def import_orm(self, orm_model: OrmBaseModel) -> Solutions:
         if not orm_model:
             raise ValueError(f"No valid value given for {SectionData.__name__}.")
@@ -80,5 +49,4 @@ class SolutionsImporter(OrmImporterProtocol):
                 )
             )
         )
-        self.set_solution_measure_table(_solutions)
         return _solutions

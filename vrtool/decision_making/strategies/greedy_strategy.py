@@ -129,18 +129,13 @@ class GreedyStrategy(StrategyProtocol):
                 sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
                 sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
             )
-            if mechanism == MechanismEnum.OVERFLOW:
-                new_mechanism_risk[ind_highest_risk, :] = (
-                    self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
-                )
-            elif mechanism == MechanismEnum.REVETMENT:
-                new_mechanism_risk[ind_highest_risk, :] = (
-                    self.traject_risk.get_measure_risk(
-                        _measure, MechanismEnum.REVETMENT
-                    )
-                )
-            else:
-                raise ValueError("Mechanism {} not recognized".format(mechanism))
+
+            if mechanism not in (MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT):
+                raise ValueError(f"Mechanism {mechanism} not recognized")
+
+            new_mechanism_risk[ind_highest_risk, :] = (
+                self.traject_risk.get_measure_risk(_measure, mechanism)
+            )
 
             LCC_values[ind_highest_risk] = np.min(
                 life_cycle_cost[
