@@ -1,4 +1,5 @@
 from math import isnan
+from typing import Callable
 
 import numpy as np
 
@@ -23,7 +24,7 @@ from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRAS
 from vrtool.probabilistic_tools.probabilistic_functions import interpolator
 
 
-def bisection(f, a, b, tol):
+def bisection(f: Callable[[float], float], a: float, b: float, tol: float) -> float:
     # approximates a root, R, of f bounded
     # by a and b to within tolerance
     # | f(m) | < tol with m the midpoint
@@ -31,7 +32,7 @@ def bisection(f, a, b, tol):
 
     # check if a and b bound a root
     if np.sign(f(a)) == np.sign(f(b)):
-        raise Exception("The scalars a and b do not bound a root")
+        raise ValueError("The scalars a and b do not bound a root")
 
     # get midpoint
     m = (a + b) / 2
@@ -47,6 +48,8 @@ def bisection(f, a, b, tol):
         # case where m is an improvement on b.
         # Make recursive call with b = m
         return bisection(f, a, m, tol)
+
+    raise ValueError("Bisection method failed")
 
 
 class RevetmentMeasureResultBuilder:
