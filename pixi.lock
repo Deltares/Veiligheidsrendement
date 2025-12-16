@@ -11494,7 +11494,7 @@ packages:
 - pypi: ./
   name: vrtool
   version: 1.1.1
-  sha256: edcbb0d1895f29dfeff5e3952299263ea1e67522bf728738c4511dd9ee096718
+  sha256: f8e2da10cbb217f6e7e97db15dbf31f1a80c95d78af8255b728acf2d7262ec93
   requires_dist:
   - matplotlib
   - numpy
