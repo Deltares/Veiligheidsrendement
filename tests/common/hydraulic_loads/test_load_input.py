@@ -1,5 +1,4 @@
 import numpy as np
-import openturns as ot
 
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.probabilistic_tools.table_dist import TableDist
