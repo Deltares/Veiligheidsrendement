@@ -1,5 +1,3 @@
-from typing import override
-
 import numpy as np
 import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
@@ -13,21 +11,22 @@ class TableDist(ot.PythonDistribution):
         extrap: bool = False,
         isload: bool = False,
         gridpoints: int = 2000,
-    ):
+    ) -> None:
         super(TableDist, self).__init__(1)
-        # Check the input
+
         if len(x) != len(p):
             raise ValueError("Input arrays have unequal lengths")
+
         if not extrap:
-            if p[0] != 1 or p[-1:] != 0:
+            if p[0] != 0.0 or p[-1] != 1.0:
                 raise ValueError(
                     "Probability bounds are not equal to 0 and 1. Allow for extrapolation or change input"
                 )
-        for i in range(1, len(x)):
-            if x[i - 1] > x[i]:
-                raise ValueError("Values should be increasing")
-            if p[i - 1] > p[i]:
-                raise ValueError("Non-exceedance probabilities should be increasing")
+
+        if np.any(np.diff(x) < 0):
+            raise ValueError("Values should be increasing")
+        if np.any(np.diff(p) < 0):
+            raise ValueError("Non-exceedance probabilities should be increasing")
 
         # Define the distribution
         if isload:
@@ -43,51 +42,40 @@ class TableDist(ot.PythonDistribution):
             pgrid = np.logspace(0, -8, gridpoints)
 
         # do inter/extrapolation
-        s = InterpolatedUnivariateSpline(p, x, k=1)
-        xgrid = s(pgrid)
-        if xgrid[0] - xgrid[-1:] > 0:
-            self.x = np.flip(xgrid, 0)
-            self.xp = np.flip(pgrid, 0)
-            self.xp[0] = 0.0
-
+        spline = InterpolatedUnivariateSpline(p, x, k=1)
+        xgrid = spline(pgrid)
+        if xgrid[0] > xgrid[-1]:
+            self.x = np.flip(xgrid)
+            self.p = np.flip(pgrid)
+            self.p[0] = 0.0
         else:
             self.x = xgrid
-            self.xp = pgrid
-            self.xp[-1:] = 1.0
+            self.p = pgrid
+            self.p[-1] = 1.0
 
     @staticmethod
-    def _compute_decimation_height(h, p, n=2):
+    def _compute_decimation_height(h: np.ndarray, p: np.ndarray, n: int = 2):
         # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
         hp = interp1d(p, h)
         h_low = hp(p[0])  # lower limit
         h_high = hp((p[0]) / (10 * n))
         return (h_high - h_low) / n
 
-    @override
-    def computeCDF(self, X):
+    def computeCDF(self, X: float) -> float:
         if X < self.x[0]:
             return 0.0
         elif X >= self.x[-1:]:
             return 1.0
-        else:
-            X = X[0]
-            idx_up = np.argmax(self.x > X)
-            xx = self.x[idx_up - 1 : idx_up + 1]
-            pp = self.xp[idx_up - 1 : idx_up + 1]
-            dp = pp[1] - pp[0]
-            dx = xx[1] - xx[0]
-            p = pp[0] + dp * ((X - xx[0]) / dx)
+        return float(np.interp(X, self.x, self.p))
 
-            return p
-
-    def getMean(self):
-        high = np.min(np.argwhere(self.xp > 0.53))
-        low = np.min(np.argwhere(self.xp > 0.47))
-        index = low + (np.abs(0.5 - self.xp[low:high])).argmin()
+    def getMean(self) -> float:
+        high = np.min(np.argwhere(self.p > 0.53))
+        low = np.min(np.argwhere(self.p > 0.47))
+        index = low + (np.abs(0.5 - self.p[low:high])).argmin()
         mu = np.interp(
-            0.5, self.xp[index - 1 : index + 1], self.x[index - 1 : index + 1]
+            0.5, self.p[index - 1 : index + 1], self.x[index - 1 : index + 1]
         )
-        return [mu]
+        return float(mu)
 
-    def getRange(self):
+    def getRange(self) -> ot.Interval:
         return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])

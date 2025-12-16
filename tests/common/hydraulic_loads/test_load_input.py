@@ -9,17 +9,17 @@ class TestLoadInput:
     def test_set_distribution(self):
         # 1. Define test data.
         _load = LoadInput()
-        wls = np.array([0.0, 1.0, 2.0])
-        p = np.array([1.0, 1.5, 2.2])
-        year = 2030
-        gridpoint = 1000
+        _wls = np.array([0.0, 1.0, 2.0])
+        _p = np.array([1.0, 1.5, 2.2])
+        _year = 2030
+        _gridpoints = 1000
 
         # 2. Run test.
-        _load.set_distribution(year, wls, p, gridpoint)
+        _load.set_distribution(_year, _wls, _p, _gridpoints)
 
         # 3. Verify expectations.
-        assert year in _load.distribution
-        assert isinstance(_load.distribution[year], ot.Distribution)
+        assert _year in _load.distribution
+        assert isinstance(_load.distribution[_year], ot.Distribution)
 
     def test_compute_h_for_year(self):
         class MockDist(ot.PythonDistribution):

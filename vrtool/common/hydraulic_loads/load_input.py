@@ -17,10 +17,10 @@ class LoadInput:
         year: int,
         wls: np.ndarray,
         p_nexc: np.ndarray,
-        gridpoint: int,
+        gridpoints: int,
     ):
         self.distribution[year] = ot.Distribution(
-            TableDist(wls, p_nexc, extrap=True, isload=True, gridpoints=gridpoint)
+            TableDist(wls, p_nexc, extrap=True, isload=True, gridpoints=gridpoints)
         )
 
     def compute_h(self, year: int, p: float) -> float:
