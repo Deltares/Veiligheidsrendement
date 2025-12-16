@@ -218,6 +218,12 @@ def interpolator(
     left: Optional[float] = None,
     right: Optional[float] = None,
 ) -> Callable[[float | list[float]], float | list[float]]:
+    # Sort values
+    sorted_indices = sorted(range(len(xs)), key=lambda i: xs[i])
+    xs = [xs[i] for i in sorted_indices]
+    ys = [ys[i] for i in sorted_indices]
+
+    # Define slopes for extrapolation
     _left_slope = (ys[1] - ys[0]) / (xs[1] - xs[0])
     _right_slope = (ys[-1] - ys[-2]) / (xs[-1] - xs[-2])
 

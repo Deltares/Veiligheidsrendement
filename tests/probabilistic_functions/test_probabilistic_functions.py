@@ -25,6 +25,20 @@ class TestProbabilisticFunctions:
         # 3. Verify results.
         assert _result == expected
 
+    def test_interpolator_unsorted_data(self):
+        # 1. Define test data.
+        _xs = [2.0, 0.0, 1.0]
+        _ys = [20.0, 0.0, 10.0]
+        _interpolator = interpolator(_xs, _ys)
+
+        # 2. Execute test.
+        x = 0.5
+        expected = 5.0
+        _result = _interpolator(x)
+
+        # 3. Verify results.
+        assert _result == expected
+
     @pytest.mark.parametrize(
         "x, expected",
         [
