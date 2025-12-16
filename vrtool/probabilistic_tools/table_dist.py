@@ -75,7 +75,7 @@ class TableDist(ot.PythonDistribution):
         mu = np.interp(
             0.5, self.p[index - 1 : index + 1], self.x[index - 1 : index + 1]
         )
-        return float(mu)
+        return [mu]
 
     def getRange(self) -> ot.Interval:
         return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])

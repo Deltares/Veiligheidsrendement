@@ -126,7 +126,7 @@ class TestTableDist:
         _dist = TableDist(_x, _p)
 
         # 2. Run test.
-        mean = _dist.getMean()
+        mean = _dist.getMean()[0]
 
         # 3. Verify expectations.
         assert mean == pytest.approx(_x[1], rel=1e-3)
