@@ -23,7 +23,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Physics',
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 dependencies = ["d-geolib==2.6.0"]
 
 [project.urls]
@@ -49,7 +49,7 @@ migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databas
 update_reference_dbs = "scripts.update_reference_dbs:update_reference_dbs"
 
 [tool.pixi.dependencies]
-python = ">=3.12,<3.14"
+python = ">=3.12,<3.15"
 matplotlib = ">3.7.0"
 numpy = ">=1.26.4"
 pandas = ">=1.5.3"
@@ -88,6 +88,8 @@ python = "3.12.*"
 [tool.pixi.feature.py313.dependencies]
 python = "3.13.*"
 
+[tool.pixi.feature.py314.dependencies]
+python = "3.14.*"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
@@ -95,6 +97,7 @@ test = { features = ["test"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
 py312 = ["py312", "default"]
 py313 = ["py313", "default"]
+py314 = ["py314", "default"]
 
 
 [tool.black]
