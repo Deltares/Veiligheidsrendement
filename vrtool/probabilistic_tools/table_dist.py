@@ -64,7 +64,7 @@ class TableDist:
     def computeCDF(self, x: float) -> float:
         if x <= self.x[0]:
             return 0.0
-        elif x >= self.x[-1:]:
+        elif x >= self.x[-1]:
             return 1.0
         return float(np.interp(x, self.x, self.p))
 
