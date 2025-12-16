@@ -2,6 +2,7 @@ import numpy as np
 import openturns as ot
 
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.probabilistic_tools.table_dist import TableDist
 
 
 class TestLoadInput:
@@ -19,19 +20,18 @@ class TestLoadInput:
 
         # 3. Verify expectations.
         assert _year in _load.distribution
-        assert isinstance(_load.distribution[_year], ot.Distribution)
+        assert isinstance(_load.distribution[_year], TableDist)
 
     def test_compute_h_for_year(self):
-        class MockDist(ot.PythonDistribution):
-            def __init__(self):
-                super().__init__(1)
-
+        class MockDist(TableDist):
             def computeQuantile(self, p):
                 return [3 - p]
 
         # 1. Define test data.
         _load = LoadInput()
-        _load.distribution[2030] = MockDist()
+        wls = np.array([0.0, 1.0, 2.0])
+        p = np.array([0.0, 0.5, 1.0])
+        _load.distribution[2030] = MockDist(wls, p)
 
         # 2. Run test.
         h = _load.compute_h(2030, 0.2)

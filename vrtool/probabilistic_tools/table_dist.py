@@ -1,9 +1,8 @@
 import numpy as np
-import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 
-class TableDist(ot.PythonDistribution):
+class TableDist:
     def __init__(
         self,
         x: np.ndarray,
@@ -11,9 +10,7 @@ class TableDist(ot.PythonDistribution):
         extrap: bool = False,
         isload: bool = False,
         gridpoints: int = 2000,
-    ) -> None:
-        super(TableDist, self).__init__(1)
-
+    ):
         if len(x) != len(p):
             raise ValueError("Input arrays have unequal lengths")
 
@@ -61,21 +58,18 @@ class TableDist(ot.PythonDistribution):
         h_high = hp((p[0]) / (10 * n))
         return (h_high - h_low) / n
 
-    def computeCDF(self, X: float) -> float:
-        if X < self.x[0]:
+    def computeQuantile(self, p: float) -> float:
+        return float(np.interp(p, self.p, self.x))
+
+    def computeCDF(self, x: float) -> float:
+        if x <= self.x[0]:
             return 0.0
-        elif X >= self.x[-1:]:
+        elif x >= self.x[-1:]:
             return 1.0
-        return float(np.interp(X, self.x, self.p))
+        return float(np.interp(x, self.x, self.p))
 
     def getMean(self) -> float:
-        high = np.min(np.argwhere(self.p > 0.53))
-        low = np.min(np.argwhere(self.p > 0.47))
-        index = low + (np.abs(0.5 - self.p[low:high])).argmin()
-        mu = np.interp(
-            0.5, self.p[index - 1 : index + 1], self.x[index - 1 : index + 1]
-        )
-        return float(mu)
+        return self.computeQuantile(0.5)
 
-    def getRange(self) -> ot.Interval:
-        return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])
+    def getRange(self) -> tuple[float, float]:
+        return float(self.x[0]), float(self.x[-1:])

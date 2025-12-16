@@ -141,5 +141,5 @@ class TestTableDist:
         _range = _dist.getRange()
 
         # 3. Verify expectations.
-        assert _range.getLowerBound()[0] == pytest.approx(_x[0], rel=1e-5)
-        assert _range.getUpperBound()[0] == pytest.approx(_x[-1], rel=1e-5)
+        assert _range[0] == pytest.approx(_x[0], rel=1e-5)
+        assert _range[1] == pytest.approx(_x[-1], rel=1e-5)
