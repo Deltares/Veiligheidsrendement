@@ -23,8 +23,8 @@ class TestLoadInput:
 
     def test_compute_h_for_year(self):
         class MockDist(TableDist):
-            def computeQuantile(self, p):
-                return [3 - p]
+            def computeQuantile(self, p: float) -> float:
+                return 3 - p
 
         # 1. Define test data.
         _load = LoadInput()
@@ -46,8 +46,8 @@ class TestLoadInput:
                 super().__init__(wls, p)
                 self.offset = offset
 
-            def computeQuantile(self, p):
-                return [3 - p + self.offset]
+            def computeQuantile(self, p: float) -> float:
+                return 3 - p + self.offset
 
         # 1. Define test data.
         _load = LoadInput()
