@@ -3,6 +3,10 @@ from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 
 class TableDist:
+    """
+    Implements the table distribution logic.
+    """
+
     def __init__(
         self,
         x: np.ndarray,
@@ -50,8 +54,7 @@ class TableDist:
             self.p = pgrid
             self.p[-1] = 1.0
 
-    @staticmethod
-    def _compute_decimation_height(h: np.ndarray, p: np.ndarray, n: int = 2):
+    def _compute_decimation_height(self, h: np.ndarray, p: np.ndarray, n: int = 2):
         # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
         hp = interp1d(p, h)
         h_low = hp(p[0])  # lower limit

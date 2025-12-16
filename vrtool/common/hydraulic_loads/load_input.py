@@ -8,14 +8,18 @@ from vrtool.probabilistic_tools.table_dist import TableDist
 
 @dataclass
 class LoadInput:
+    """
+    Class to store the load data per year.
+    """
+
     # class to store load data
     distribution: dict[int, TableDist] = field(default_factory=dict)
 
     def set_distribution(
         self,
         year: int,
-        wls: np.ndarray,
-        p_nexc: np.ndarray,
+        wls: np.ndarray,  # water levels
+        p_nexc: np.ndarray,  # probability of non-exceedance
         gridpoints: int,
     ):
         self.distribution[year] = TableDist(
@@ -28,7 +32,7 @@ class LoadInput:
 
         if year in self.distribution.keys():
             return compute(year)
-        else:
-            _years = list(self.distribution.keys())
-            _values = [compute(_year) for _year in _years]
-            return float(interp1d(_years, _values, fill_value="extrapolate")(year))
+
+        _years = list(self.distribution.keys())
+        _values = [compute(_year) for _year in _years]
+        return float(interp1d(_years, _values, fill_value="extrapolate")(year))
