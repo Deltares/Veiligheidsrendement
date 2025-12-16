@@ -24,7 +24,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
 requires-python = ">=3.12,<3.13"
-dependencies = ["matplotlib", "numpy", "pandas", "shapely", "scipy", "seaborn", "openturns", "openpyxl", "click", "peewee", "d-geolib>=2.8.0,<3", "tqdm"]
+dependencies = ["matplotlib", "numpy", "pandas", "shapely", "scipy", "seaborn", "openpyxl", "click", "peewee", "d-geolib>=2.8.0,<3", "tqdm"]
 
 [project.urls]
 homepage = "https://deltares-research.github.io/VrtoolDocumentation/"
