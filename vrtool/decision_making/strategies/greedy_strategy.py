@@ -187,7 +187,7 @@ class GreedyStrategy(StrategyProtocol):
                         .sg_combinations[investment_id_sg]
                         .mechanism_year_collection.get_probabilities(
                             MechanismEnum.STABILITY_INNER,
-                            np.arange(0, self.traject_risk.num_years),
+                            np.arange(0, self.traject_risk.num_years).tolist(),
                         )
                     )
                 else:  # return list of same size  with zeros
@@ -203,7 +203,7 @@ class GreedyStrategy(StrategyProtocol):
                         .sg_combinations[investment_id_sg]
                         .mechanism_year_collection.get_probabilities(
                             MechanismEnum.PIPING,
-                            np.arange(0, self.traject_risk.num_years),
+                            np.arange(0, self.traject_risk.num_years).tolist(),
                         )
                     )
                 else:
@@ -247,7 +247,7 @@ class GreedyStrategy(StrategyProtocol):
                     .sh_combinations[investment_id_sh]
                     .mechanism_year_collection.get_probabilities(
                         MechanismEnum.OVERFLOW,
-                        np.arange(0, self.traject_risk.num_years),
+                        np.arange(0, self.traject_risk.num_years).tolist(),
                     )
                 )
                 if (
@@ -259,7 +259,7 @@ class GreedyStrategy(StrategyProtocol):
                         .sh_combinations[investment_id_sh]
                         .mechanism_year_collection.get_probabilities(
                             MechanismEnum.REVETMENT,
-                            np.arange(0, self.traject_risk.num_years),
+                            np.arange(0, self.traject_risk.num_years).tolist(),
                         )
                     )
                 else:
@@ -375,7 +375,7 @@ class GreedyStrategy(StrategyProtocol):
                     section_no
                 ].initial_assessment.get_probabilities(
                     MechanismEnum.OVERFLOW,
-                    np.arange(0, self.traject_risk.num_years),
+                    np.arange(0, self.traject_risk.num_years).tolist(),
                 )
                 measure_pfs = self.traject_risk.get_section_probabilities(
                     section_no, MechanismEnum.OVERFLOW
@@ -391,7 +391,7 @@ class GreedyStrategy(StrategyProtocol):
                         section_no
                     ].initial_assessment.get_probabilities(
                         MechanismEnum.REVETMENT,
-                        np.arange(0, self.traject_risk.num_years),
+                        np.arange(0, self.traject_risk.num_years).tolist(),
                     )
                     measure_pfs = self.traject_risk.get_section_probabilities(
                         section_no, MechanismEnum.REVETMENT
