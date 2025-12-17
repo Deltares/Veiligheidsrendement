@@ -1,6 +1,6 @@
 [project]
 name = "vrtool"
-version = "1.1.1"
+version = "1.2.0"
 description = "veiligheidsrendement tool (core and orm)"
 authors = [{name = "Wouter Jan Klerk", email = "wouterjan.klerk@deltares.nl"}]
 maintainers = [
@@ -148,7 +148,7 @@ markers = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.1.1"
+version = "1.2.0"
 tag_format = "v$major.$minor.$patch"
 changelog_file = "docs/changelog.md"
 version_files = ["vrtool/__init__.py", "pyproject.toml:version"]

@@ -1,3 +1,14 @@
+## v1.2.0 (2025-12-17)
+
+### Feat
+
+- main config parameters are now shown in logging (#410)
+- location of log file not logical (#411)
+
+### Fix
+
+- #404 export measures without soil measures fails (#418)
+
 ## v1.1.1 (2025-06-24)
 
 ### Feat
