@@ -26,7 +26,11 @@ from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDa
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import (
+    beta_to_pf,
+    interpolator,
+    pf_to_beta,
+)
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -337,24 +341,18 @@ class RevetmentMeasure(MeasureProtocol):
     ) -> list[RevetmentMeasureResult]:
         _corrected_revetment_years = [ry - self.t_0 for ry in revetment_years]
 
-        def _interpolate(values_to_interpolate: list[float], year: int) -> float:
-            return float(
-                interp1d(
-                    _corrected_revetment_years,
-                    values_to_interpolate,
-                    fill_value=("extrapolate"),
-                )(year)
-            )
+        _beta_interpolator = interpolator(
+            _corrected_revetment_years, [am.beta_combined for am in available_measures]
+        )
+        _cost_interpolator = interpolator(
+            _corrected_revetment_years, [am.cost for am in available_measures]
+        )
 
         _interpolated_measures = []
         _sample = available_measures[-1]
         for _year in config_years:
-            _interpolated_beta = _interpolate(
-                [am.beta_combined for am in available_measures], _year
-            )
-            _interpolated_cost = _interpolate(
-                [am.cost for am in available_measures], _year
-            )
+            _interpolated_beta = _beta_interpolator(_year)
+            _interpolated_cost = _cost_interpolator(_year)
             _interpolated_measure = RevetmentMeasureResult(
                 year=_year,
                 beta_target=_sample.beta_target,

@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *
 from vrtool.orm.orm_controllers import open_database
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, interpolate
 
 
 def get_minimal_tc_step(steps):
@@ -190,14 +190,13 @@ def assessment_for_each_step(assessment_input, reliability_per_step):
         # Get betas for extra times by interpolation
         for _mech in assessment_input.keys():
             for _section in assessment_input[_mech]:
-                _betas = interp1d(
+                _betas = interpolate(
+                    list(_diff_times),
                     assessment_input[_mech][_section]["time"],
                     assessment_input[_mech][_section]["beta"],
                 )
                 assessment_per_step[0][_mech][_section]["time"].extend(_diff_times)
-                assessment_per_step[0][_mech][_section]["beta"].extend(
-                    _betas(list(_diff_times))
-                )
+                assessment_per_step[0][_mech][_section]["beta"].extend(_betas)
         return assessment_per_step
 
     assessment_per_step = get_assessment()
