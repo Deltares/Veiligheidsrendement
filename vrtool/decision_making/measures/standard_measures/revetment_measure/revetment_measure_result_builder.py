@@ -1,7 +1,6 @@
 from math import isnan
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
@@ -21,9 +20,10 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     StoneSlopePart,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
+from vrtool.probabilistic_tools.probabilistic_functions import interpolator
 
 
-def bisection(f, a, b, tol):
+def bisection(f: Callable[[float], float], a: float, b: float, tol: float) -> float:
     # approximates a root, R, of f bounded
     # by a and b to within tolerance
     # | f(m) | < tol with m the midpoint
@@ -31,7 +31,7 @@ def bisection(f, a, b, tol):
 
     # check if a and b bound a root
     if np.sign(f(a)) == np.sign(f(b)):
-        raise Exception("The scalars a and b do not bound a root")
+        raise ValueError("The scalars a and b do not bound a root")
 
     # get midpoint
     m = (a + b) / 2
@@ -47,6 +47,8 @@ def bisection(f, a, b, tol):
         # case where m is an improvement on b.
         # Make recursive call with b = m
         return bisection(f, a, m, tol)
+
+    raise ValueError("Bisection method failed")
 
 
 class RevetmentMeasureResultBuilder:
@@ -253,17 +255,16 @@ class RevetmentMeasureResultBuilder:
                 if spr.year == stone_revetment.year
             )
         )
-        stone_interpolation = interp1d(
+        stone_interpolation = interpolator(
             _top_layer_thickness_collection,
-            np.array(_revetment_betas_collection) - calculated_beta,
-            fill_value=("extrapolate"),
+            [x - calculated_beta for x in _revetment_betas_collection],
         )
 
         try:
             _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.001)
             _recalculated_beta = calculated_beta
             _is_reinforced = True
-        except:
+        except Exception:
             _top_layer_thickness = slope_part.top_layer_thickness
 
         if (

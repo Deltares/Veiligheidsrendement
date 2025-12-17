@@ -3,7 +3,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *

@@ -4,7 +4,6 @@ from itertools import groupby
 from typing import override
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum

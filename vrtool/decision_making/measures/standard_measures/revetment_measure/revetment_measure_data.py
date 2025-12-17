@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import interpolate
 
 
 @dataclass
@@ -42,13 +42,11 @@ class RevetmentMeasureData:
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
         # Make sure values are sorted (check for consistency is done with import of unit_costs)
-        _block_revetment_installation = interp1d(
+        _cost_new_block = interpolate(
+            self.top_layer_thickness,
             [key / 100 for key in sorted(unit_costs.installation_of_blocks.keys())],
             sorted(list(unit_costs.installation_of_blocks.values())),
-            fill_value=("extrapolate"),
         )
-
-        _cost_new_block = _block_revetment_installation(self.top_layer_thickness)
 
         _slope_part_difference = self.end_part - self.begin_part
         x = _slope_part_difference / self.tan_alpha

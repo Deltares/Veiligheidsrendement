@@ -1,12 +1,10 @@
-from scipy.interpolate import interp1d
-
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
 from vrtool.failure_mechanisms.general.generic_failure_mechanism_input import (
     GenericFailureMechanismInput,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, interpolate
 
 
 class GenericFailureMechanismCalculator(FailureMechanismCalculatorProtocol):
@@ -21,11 +19,10 @@ class GenericFailureMechanismCalculator(FailureMechanismCalculatorProtocol):
         self._mechanism_input = mechanism_input
 
     def calculate(self, year: int) -> tuple[float, float]:
-        betat = interp1d(
+        beta = interpolate(
+            year,
             self._mechanism_input.time_grid,
             self._mechanism_input.beta_grid,
-            fill_value="extrapolate",
         )
-        beta = float(betat(year))
 
         return (beta, beta_to_pf(beta))
