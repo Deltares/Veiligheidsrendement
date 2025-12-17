@@ -2,14 +2,17 @@ import itertools
 from collections import defaultdict
 
 from numpy import prod
-from scipy.interpolate import interp1d
 
 from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import (
+    beta_to_pf,
+    interpolator,
+    pf_to_beta,
+)
 
 
 class CustomMeasureTimeBetaCalculator:
@@ -89,15 +92,13 @@ class CustomMeasureTimeBetaCalculator:
             return {_t: custom_values[0][1] for _t in computation_periods}
 
         _times, _betas = zip(*custom_values)
-        _interpolate_function = interp1d(
+        _interpolate_function = interpolator(
             _times,
             _betas,
-            fill_value=(custom_values[0][1], custom_values[-1][1]),
-            bounds_error=False,
+            left=custom_values[0][1],
+            right=custom_values[-1][1],
         )
-        return {
-            _year: float(_interpolate_function(_year)) for _year in computation_periods
-        }
+        return {_year: _interpolate_function(_year) for _year in computation_periods}
 
     @staticmethod
     def get_custom_mechanism_values_to_section_combination(
