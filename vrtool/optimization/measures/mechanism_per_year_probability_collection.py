@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, interpolate
 
 
 class MechanismPerYearProbabilityCollection:
@@ -90,7 +89,7 @@ class MechanismPerYearProbabilityCollection:
         if not _years:
             return []
         _betas = list(map(lambda x: self.get_beta(mechanism, x), _years))
-        return interp1d(_years, _betas, fill_value="extrapolate")(years).tolist()
+        return interpolate(years, _years, _betas)
 
     def get_mechanisms(self) -> set[MechanismEnum]:
         """
@@ -226,9 +225,7 @@ class MechanismPerYearProbabilityCollection:
                 _years.append(p.year)
                 _betas.append(p.beta)
 
-        _beta_interp = interp1d(_years, _betas, fill_value="extrapolate")(
-            added_years
-        ).tolist()
+        _beta_interp = interpolate(added_years, _years, _betas)
         if not _beta_interp:
             return
         for i, _year in enumerate(added_years):
