@@ -1,4 +1,5 @@
 from math import isnan
+from typing import Callable
 
 import numpy as np
 
