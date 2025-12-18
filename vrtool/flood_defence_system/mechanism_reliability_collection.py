@@ -9,7 +9,7 @@ from vrtool.flood_defence_system.mechanism_reliability import MechanismReliabili
 class MechanismReliabilityCollection:
     """Represents a collection of MechanismReliability objects over time."""
 
-    Reliability: dict[str, MechanismReliability]
+    Reliability: dict[int, MechanismReliability]
     mechanism: MechanismEnum
 
     def __init__(
@@ -41,11 +41,11 @@ class MechanismReliabilityCollection:
 
         for _computation_year in computation_years:
             if measure_year > _computation_year:
-                self.Reliability[str(_computation_year)] = MechanismReliability(
+                self.Reliability[_computation_year] = MechanismReliability(
                     mechanism, computation_type, self.t_0, copy_or_calculate="copy"
                 )
             else:
-                self.Reliability[str(_computation_year)] = MechanismReliability(
+                self.Reliability[_computation_year] = MechanismReliability(
                     mechanism, computation_type, self.t_0
                 )
 

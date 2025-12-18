@@ -45,17 +45,18 @@ class SectionReliability:
         _available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
         _calculation_years = self.failure_mechanisms.get_calculation_years()
 
-        _t_range = [int(_year_str) for _year_str in _calculation_years]
-        _pf_mechanisms_time = np.zeros((len(_available_mechanisms), len(_t_range)))
+        _pf_mechanisms_time = np.zeros(
+            (len(_available_mechanisms), len(_calculation_years))
+        )
         _count = 0
         for mechanism in _available_mechanisms:  # mechanisms
-            for _range_idx, _range_val in enumerate(_t_range):
+            for _range_idx, _range_val in enumerate(_calculation_years):
                 _mechanism_collection = (
                     self.failure_mechanisms.get_mechanism_reliability_collection(
                         mechanism
                     )
                 )
-                _pf = _mechanism_collection.Reliability[str(_range_val)].Pf
+                _pf = _mechanism_collection.Reliability[_range_val].Pf
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                     _pf_mechanisms_time[_count, _range_idx] = _pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:

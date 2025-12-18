@@ -142,9 +142,7 @@ def measure_per_section_to_df(measures_per_section, section_parameters):
         return " + ".join([parameter["name"] for parameter in parameters])
 
     def concatenate_investment_years(investment_years):
-        return " + ".join(
-            [str(investment_year) for investment_year in investment_years]
-        )
+        return " + ".join(str(investment_year) for investment_year in investment_years)
 
     def get_parameters(parameters):
         # for each measure in parameters, if the key is there, add it to the combined dict

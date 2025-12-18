@@ -63,7 +63,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         for _asr in section_data.assessment_section_results.order_by(
             AssessmentSectionResult.time.asc()
         ):
-            _columns.append(str(_asr.time))
+            _columns.append(_asr.time)
             _section_reliability_dict["Section"].append(_asr.beta)
             for _amr in (
                 AssessmentMechanismResult.select()

@@ -237,7 +237,7 @@ class TestRevetmentMeasure:
             """
 
             def __init__(self):
-                self.SectionReliability = {"0": {"REVETMENT": beta}}
+                self.SectionReliability = {0: {"REVETMENT": beta}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost

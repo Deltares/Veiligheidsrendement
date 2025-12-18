@@ -195,4 +195,4 @@ class TestFailureMechanismCollection:
         years = collection.get_calculation_years()
 
         # Assert
-        assert years == ["4", "5", "6"]
+        assert years == [4, 5, 6]
