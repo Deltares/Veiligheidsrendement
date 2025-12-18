@@ -251,7 +251,7 @@ class TestMechanismReliabilityCollectionImporter:
     ) -> None:
         assert collection.T == config.T
         assert collection.t_0 == config.t_0
-        assert list(collection.Reliability.keys()) == [str(year) for year in config.T]
+        assert list(collection.Reliability.keys()) == [year for year in config.T]
 
     def _assert_mechanism_properties(
         self,

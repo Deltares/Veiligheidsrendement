@@ -22,11 +22,11 @@ class FailureMechanismCollection:
         """
         return self._failure_mechanisms
 
-    def get_calculation_years(self) -> list[str]:
+    def get_calculation_years(self) -> list[int]:
         """Gets the collection of years that are calculated.
 
         Returns:
-            list[str]: A collection of the years that are calculated. Empty when the collection contains no failure mechanisms.
+            list[int]: A collection of the years that are calculated. Empty when the collection contains no failure mechanisms.
         """
         if not self._failure_mechanisms:
             return []

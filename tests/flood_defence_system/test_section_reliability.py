@@ -41,7 +41,7 @@ class TestSectionReliability:
                 measure_year=5,
             )
             for _yt in _years:
-                _mrc.Reliability[str(_yt)].Pf = 0.42 / (100 * max(1, _yt))
+                _mrc.Reliability[_yt].Pf = 0.42 / (100 * max(1, _yt))
             return _mrc
 
         def build_section_reliability_for_mechanism(
@@ -80,7 +80,7 @@ class TestSectionReliability:
                 str(mechanism): expected_values,
                 "Section": expected_values,
             },
-            columns=["0", "10"],
+            columns=[0, 10],
             orient="index",
         )
         _cross_sectional_requirements = CrossSectionalRequirements(

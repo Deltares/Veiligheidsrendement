@@ -116,7 +116,7 @@ class TestDatabaseIntegration:
 
         expected_mechanism_table_entries = expected.mechanism_tables.select()
         expected_years = set(
-            [str(table_entry.year) for table_entry in expected_mechanism_table_entries]
+            [table_entry.year for table_entry in expected_mechanism_table_entries]
         )
 
         actual_crest_height_beta = actual.input_dict["hc_beta"]
@@ -129,7 +129,7 @@ class TestDatabaseIntegration:
         ]
 
         for expected_year in iter(expected_years):
-            assert list(actual_crest_height_beta[str(expected_year)]) == [
+            assert list(actual_crest_height_beta[expected_year]) == [
                 table_entry.beta
                 for table_entry in expected_mechanism_table_entries.where(
                     MechanismTable.year == int(expected_year)

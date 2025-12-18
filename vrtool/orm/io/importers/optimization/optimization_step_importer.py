@@ -29,7 +29,7 @@ class OptimizationStepImporter(OrmImporterProtocol):
         for _osrs in optimization_step.optimization_step_results_section.order_by(
             OptimizationStepResultSection.time.asc()
         ):
-            _columns.append(str(_osrs.time))
+            _columns.append(_osrs.time)
             _step_result_dict["Section"].append(_osrs.beta)
             for _osrm in optimization_step.optimization_step_results_mechanism.where(
                 OptimizationStepResultMechanism.time == _osrs.time
