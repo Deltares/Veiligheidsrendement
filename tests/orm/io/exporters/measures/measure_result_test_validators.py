@@ -103,15 +103,16 @@ class MeasureResultTestInputData:
     @staticmethod
     def create_section_reliability(years: list[int]) -> SectionReliability:
         _section_reliability = SectionReliability()
-        _section_reliability.section_pf = {
-            _year: beta_to_pf(_year / 10) for _year in years
-        }
-        _section_reliability.mechanism_pf = {
-            MechanismEnum.OVERFLOW: {_year: beta_to_pf(_year / 12) for _year in years},
-            MechanismEnum.STABILITY_INNER: {
-                _year: beta_to_pf(_year / 13) for _year in years
-            },
-        }
+        _section_reliability.set_reliabilities(
+            {_year: beta_to_pf(_year / 10) for _year in years}
+        )
+        _section_reliability.set_reliabilities_for_mechanism(
+            MechanismEnum.OVERFLOW, {_year: beta_to_pf(_year / 12) for _year in years}
+        )
+        _section_reliability.set_reliabilities_for_mechanism(
+            MechanismEnum.STABILITY_INNER,
+            {_year: beta_to_pf(_year / 13) for _year in years},
+        )
 
         return _section_reliability
 
@@ -195,7 +196,7 @@ def validate_measure_result_section_year(
 
     assert isinstance(_retrieved_result_section, MeasureResultSection)
     assert _retrieved_result_section.beta == pytest.approx(
-        pf_to_beta(input_data.section_reliability.section_pf[year])
+        pf_to_beta(input_data.section_reliability.get_reliability_for_year(year))
     )
 
     assert _retrieved_result_section.cost == input_data.expected_cost
@@ -221,7 +222,11 @@ def validate_measure_result_mechanisms_year(
 
         assert isinstance(_retrieved_result_section, MeasureResultMechanism)
         assert _retrieved_result_section.beta == pytest.approx(
-            pf_to_beta(input_data.section_reliability.mechanism_pf[_mechanism][year])
+            pf_to_beta(
+                input_data.section_reliability.get_reliability_for_mechanism_year(
+                    _mechanism, year
+                )
+            )
         )
 
 

@@ -31,13 +31,13 @@ class MeasureResultImporter(OrmImporterProtocol):
         for _smr in measure_result.measure_result_section.order_by(
             MeasureResultSection.time.asc()
         ):
-            _section_reliability.set_reliability_for_section(
+            _section_reliability.set_reliability_for_year(
                 _smr.time, beta_to_pf(_smr.beta)
             )
             for _mrm in measure_result.measure_result_mechanisms.where(
                 MeasureResultMechanism.time == _smr.time
             ):
-                _section_reliability.set_reliability_for_mechanism(
+                _section_reliability.set_reliability_for_mechanism_year(
                     MechanismEnum.get_enum(_mrm.mechanism_per_section.mechanism.name),
                     _mrm.time,
                     beta_to_pf(_mrm.beta),

@@ -36,7 +36,10 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
             "STARTED exporting Mechanism's reliability (Beta) over time for section %s",
             self._section_data.section_name,
         )
-        for _mechanism, _reliability in section_reliability.mechanism_pf.items():
+        for (
+            _mechanism,
+            _reliability,
+        ) in section_reliability.get_reliabilities_for_mechanisms().items():
             _assessment_list = []
             for _year, _pf in _reliability.items():
                 logging.debug(

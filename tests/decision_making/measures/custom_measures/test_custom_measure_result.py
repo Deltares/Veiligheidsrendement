@@ -36,11 +36,9 @@ class TestCustomMeasureResult:
         # Define section reliability
         _section_reliability = SectionReliability()
         _mechanisms = [_me for _me in MechanismEnum]
-        _years = [0, 5, 42]
-        _data_values = {_year: _pf for _pf, _year in enumerate(_years)}
-        _section_reliability.mechanism_pf = {
-            _mech: _data_values for _mech in _mechanisms
-        }
+        _data_values = {0: 0.1, 5: 0.05, 42: 0.01}
+        for _mech in _mechanisms:
+            _section_reliability.set_reliabilities_for_mechanism(_mech, _data_values)
 
         _measure_result.section_reliability = _section_reliability
 

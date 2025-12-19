@@ -46,17 +46,21 @@ def get_section_reliability_with_values() -> Iterator[SectionReliability]:
     assert _reliability_file.exists()
 
     _reliability_df = pd.read_csv(_reliability_file, index_col=0)
-    _section_reliability.section_pf = {
-        int(_year): beta_to_pf(_beta)
-        for _year, _beta in _reliability_df.loc["Section"].items()
-    }
-    _section_reliability.mechanism_pf = {
-        MechanismEnum.get_enum(_mech): {
+    _section_reliability.set_reliabilities(
+        {
             int(_year): beta_to_pf(_beta)
-            for _year, _beta in _reliability_df.loc[_mech].items()
+            for _year, _beta in _reliability_df.loc["Section"].items()
         }
-        for _mech in _reliability_df.index
-        if _mech != "Section"
-    }
+    )
+    for _mech in _reliability_df.index:
+        if _mech == "Section":
+            continue
+        _section_reliability.set_reliabilities_for_mechanism(
+            MechanismEnum.get_enum(_mech),
+            {
+                int(_year): beta_to_pf(_beta)
+                for _year, _beta in _reliability_df.loc[_mech].items()
+            },
+        )
 
     yield _section_reliability

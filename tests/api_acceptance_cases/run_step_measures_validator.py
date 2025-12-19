@@ -196,7 +196,7 @@ class RunStepMeasuresValidator(RunStepValidator):
                 _res_section_reliability = _res_section_measure_dict.get(
                     _ref_params, SectionReliability()
                 )
-                if not _res_section_reliability.section_pf:
+                if not _res_section_reliability.get_reliabilities():
                     _parameters = [f"{k}={v}" for k, v in _ref_params]
                     _parameters_as_str = ", ".join(_parameters)
                     _errors.append(

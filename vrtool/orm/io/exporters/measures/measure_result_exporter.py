@@ -102,7 +102,10 @@ class MeasureResultExporter(OrmExporterProtocol):
 
         # Create (per calculated time) a measure section and as many present mechanisms.
         _measure_result_section_list_dict = []
-        for _year, _pf in measure_result.section_reliability.section_pf.items():
+        for (
+            _year,
+            _pf,
+        ) in measure_result.section_reliability.get_reliabilities().items():
             _measure_result_section_list_dict.append(
                 self._get_measure_result_section_dict(
                     measure_result,
@@ -117,7 +120,9 @@ class MeasureResultExporter(OrmExporterProtocol):
         for (
             _mech,
             _reliabilities,
-        ) in measure_result.section_reliability.mechanism_pf.items():
+        ) in (
+            measure_result.section_reliability.get_reliabilities_for_mechanisms().items()
+        ):
             for _year, _pf in _reliabilities.items():
                 _measure_result_mechanisms_list_dict.append(
                     self._get_measure_result_mechanism_dict(
