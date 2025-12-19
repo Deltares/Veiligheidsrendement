@@ -1,7 +1,6 @@
-import numpy as np
-import pandas as pd
+from collections import defaultdict
+from typing import Any
 
-import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.cross_sectional_requirements import (
@@ -19,11 +18,36 @@ class SectionReliability:
     load: LoadInput
     failure_mechanisms: FailureMechanismCollection
     # Result stored during calculate_section_reliability
-    SectionReliability: pd.DataFrame
+    section_pf: dict[int, float]
+    mechanism_pf: dict[MechanismEnum, dict[int, float]]
 
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
-        self.SectionReliability = pd.DataFrame()
+        self.section_pf = {}
+        self.mechanism_pf = {}
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SectionReliability):
+            return False
+
+        def reliability_dicts_are_equal(
+            left_dict: dict[Any, Any], right_dict: dict[Any, Any]
+        ) -> bool:
+            if left_dict.keys() != right_dict.keys():
+                return False
+            for _key, _left_value in left_dict.items():
+                _right_value = right_dict[_key]
+                if isinstance(_left_value, dict):
+                    if not reliability_dicts_are_equal(_left_value, _right_value):
+                        return False
+                    continue
+                if abs(_left_value - _right_value) > 1e-6:
+                    return False
+            return True
+
+        return reliability_dicts_are_equal(
+            self.section_pf, other.section_pf
+        ) and reliability_dicts_are_equal(self.mechanism_pf, other.mechanism_pf)
 
     def _get_upscale_cross_sectional_probability(
         self,
@@ -40,63 +64,69 @@ class SectionReliability:
         self, cross_sectional_requirements: CrossSectionalRequirements
     ):
         # This routine translates cross-sectional to section reliability indices
-
-        # TODO Add optional interpolation here.
-        _available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
-        _calculation_years = self.failure_mechanisms.get_calculation_years()
-
-        _pf_mechanisms_time = np.zeros(
-            (len(_available_mechanisms), len(_calculation_years))
-        )
-        _count = 0
-        for mechanism in _available_mechanisms:  # mechanisms
-            for _range_idx, _range_val in enumerate(_calculation_years):
-                _mechanism_collection = (
-                    self.failure_mechanisms.get_mechanism_reliability_collection(
-                        mechanism
-                    )
+        for _mech in self.failure_mechanisms.get_available_mechanisms():
+            for _year in self.failure_mechanisms.get_calculation_years():
+                _pf = self.failure_mechanisms.get_mechanism_year_reliability(
+                    _mech, _year
                 )
-                _pf = _mechanism_collection.Reliability[_range_val].Pf
-                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    _pf_mechanisms_time[_count, _range_idx] = _pf
-                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+                if not _pf:
+                    raise ValueError(
+                        f"Could not retrieve failure probability for mechanism {_mech} in year {_year}."
+                    )
+
+                if _mech in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    self.set_reliability_for_mechanism(_mech, _year, _pf)
+                elif _mech in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     # underneath one can choose whether to upscale within sections or not:
                     _mechanism_a = (
                         cross_sectional_requirements.dike_section_a_piping
-                        if mechanism is MechanismEnum.PIPING
+                        if _mech is MechanismEnum.PIPING
                         else cross_sectional_requirements.dike_section_a_stability_inner
                     )
                     _mechanism_b = (
                         cross_sectional_requirements.dike_traject_b_piping
-                        if mechanism is MechanismEnum.PIPING
+                        if _mech is MechanismEnum.PIPING
                         else cross_sectional_requirements.dike_traject_b_stability_inner
                     )
-                    _pf_mechanisms_time[_count, _range_idx] = (
+                    self.set_reliability_for_mechanism(
+                        _mech,
+                        _year,
                         self._get_upscale_cross_sectional_probability(
                             cross_sectional_requirements.dike_section_length,
                             _pf,
                             _mechanism_a,
                             _mechanism_b,
-                        )
+                        ),
                     )
 
-            _count += 1
+                if _year not in self.section_pf.keys():
+                    self.section_pf[_year] = 0.0
+                self.section_pf[_year] += self.mechanism_pf[_mech][_year]
 
-        # Do we want beta or failure probability? Preferably beta as output
-        _beta_mech_time = pd.DataFrame(
-            pb_functions.pf_to_beta(_pf_mechanisms_time),
-            columns=_calculation_years,
-            index=list(map(str, _available_mechanisms)),
-        )
-        _beta_time = pd.DataFrame(
-            [pb_functions.pf_to_beta(np.sum(_pf_mechanisms_time, axis=0))],
-            columns=_calculation_years,
-            index=["Section"],
-        )
+    def set_reliability_for_mechanism(
+        self, mechanism: MechanismEnum, year: int, pf: float
+    ) -> None:
+        """Sets the reliability (failure probability) for a given mechanism and year.
 
-        self.SectionReliability = pd.concat((_beta_mech_time, _beta_time))
+        Args:
+            mechanism (MechanismEnum): The failure mechanism to set the reliability for.
+            year (int): The year to set the reliability for.
+            pf (float): The failure probability to set.
+        """
+        if mechanism not in self.mechanism_pf:
+            self.mechanism_pf[mechanism] = {}
+        self.mechanism_pf[mechanism][year] = pf
 
-        # replace values greater than the threshold with the threshold itself.
-        self.SectionReliability[self.SectionReliability > BETA_THRESHOLD] = (
-            BETA_THRESHOLD
-        )
+    def set_reliability_for_section(self, year: int, pf: float) -> None:
+        """Sets the reliability (failure probability) for the section in a given year.
+
+        Args:
+            year (int): The year to set the reliability for.
+            pf (float): The failure probability to set.
+        """
+        self.section_pf[year] = pf
+
+    def get_reliability_for_mechanism(
+        self, mechanism: MechanismEnum, year: int
+    ) -> float | None:
+        return self.mechanism_pf.get(mechanism, {}).get(year, None)

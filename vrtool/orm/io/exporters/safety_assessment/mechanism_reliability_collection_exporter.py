@@ -7,6 +7,7 @@ from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismRes
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
@@ -32,24 +33,20 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
 
     def export_dom(self, section_reliability: SectionReliability) -> None:
         logging.debug(
-            "STARTED exporting Mechanism's reliability (Beta) over time for section {}".format(
-                self._section_data.section_name
-            )
+            "STARTED exporting Mechanism's reliability (Beta) over time for section %s",
+            self._section_data.section_name,
         )
-        _section_reliability = section_reliability.SectionReliability
-
-        for row_idx, mechanism_row in (
-            _section_reliability.loc[_section_reliability.index != "Section"]
-        ).iterrows():
-            _mechanism = MechanismEnum.get_enum(row_idx)
-            logging.debug(f"Exporting reliability for mechanism: '{_mechanism}'.")
-            _mechanism_per_section = self._get_mechanism_per_section(_mechanism)
+        for _mechanism, _reliability in section_reliability.mechanism_pf.items():
             _assessment_list = []
-            for time_idx, beta_value in enumerate(mechanism_row):
+            for _year, _pf in _reliability.items():
+                logging.debug(
+                    "Exporting reliability for mechanism: '%s'.", _mechanism.name
+                )
+                _mechanism_per_section = self._get_mechanism_per_section(_mechanism)
                 _assessment_list.append(
                     dict(
-                        beta=beta_value,
-                        time=int(mechanism_row.index[time_idx]),
+                        beta=pf_to_beta(_pf),
+                        time=_year,
                         mechanism_per_section=_mechanism_per_section,
                     )
                 )

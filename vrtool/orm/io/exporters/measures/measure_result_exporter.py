@@ -1,5 +1,3 @@
-import pandas as pd
-
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
@@ -13,6 +11,7 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class MeasureResultExporter(OrmExporterProtocol):
@@ -57,38 +56,29 @@ class MeasureResultExporter(OrmExporterProtocol):
         measure_result: MeasureResultProtocol,
         orm_measure_result: MeasureResult,
         time_value: int,
-        time_reliability: pd.Series,
+        time_beta: float,
     ) -> dict:
         return dict(
             time=time_value,
-            beta=time_reliability["Section"],
+            beta=time_beta,
             cost=measure_result.cost,
             measure_result=orm_measure_result,
         )
 
-    def _get_measure_result_mechanism_list_dict(
+    def _get_measure_result_mechanism_dict(
         self,
         orm_measure_result: MeasureResult,
+        mechanism: MechanismEnum,
         time_value: int,
-        time_reliability: pd.Series,
-    ) -> list[dict]:
-        _available_mechanisms = [
-            MechanismEnum.get_enum(m_idx)
-            for m_idx in time_reliability.index
-            if m_idx != "Section"
-        ]
-        return list(
-            map(
-                lambda mechanism: dict(
-                    time=time_value,
-                    beta=time_reliability[mechanism.name],
-                    measure_result=orm_measure_result,
-                    mechanism_per_section=self.get_mechanism_per_section(
-                        self._measure_per_section, mechanism
-                    ),
-                ),
-                _available_mechanisms,
-            )
+        time_beta: float,
+    ) -> dict:
+        return dict(
+            time=time_value,
+            beta=time_beta,
+            measure_result=orm_measure_result,
+            mechanism_per_section=self.get_mechanism_per_section(
+                self._measure_per_section, mechanism
+            ),
         )
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
@@ -111,27 +101,29 @@ class MeasureResultExporter(OrmExporterProtocol):
         ).execute()
 
         # Create (per calculated time) a measure section and as many present mechanisms.
-        _measure_reliability = measure_result.section_reliability.SectionReliability
-        _measure_result_mechanisms_list_dict = []
         _measure_result_section_list_dict = []
-        for time_column in _measure_reliability.columns:
-            _time = int(time_column)
-            _time_reliability = _measure_reliability[time_column]
+        for _year, _pf in measure_result.section_reliability.section_pf.items():
             _measure_result_section_list_dict.append(
                 self._get_measure_result_section_dict(
                     measure_result,
                     _orm_measure_result,
-                    _time,
-                    _time_reliability,
+                    _year,
+                    pf_to_beta(_pf),
                 )
             )
-            _measure_result_mechanisms_list_dict.extend(
-                self._get_measure_result_mechanism_list_dict(
-                    _orm_measure_result, _time, _time_reliability
-                )
-            )
-
         MeasureResultSection.insert_many(_measure_result_section_list_dict).execute()
+
+        _measure_result_mechanisms_list_dict = []
+        for (
+            _mech,
+            _reliabilities,
+        ) in measure_result.section_reliability.mechanism_pf.items():
+            for _year, _pf in _reliabilities.items():
+                _measure_result_mechanisms_list_dict.append(
+                    self._get_measure_result_mechanism_dict(
+                        _orm_measure_result, _mech, _year, pf_to_beta(_pf)
+                    )
+                )
         MeasureResultMechanism.insert_many(
             _measure_result_mechanisms_list_dict
         ).execute()
