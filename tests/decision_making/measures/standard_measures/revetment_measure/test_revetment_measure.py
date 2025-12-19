@@ -18,7 +18,7 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class TestRevetmentMeasure:
@@ -231,7 +231,7 @@ class TestRevetmentMeasure:
             """
 
             def __init__(self):
-                self._mechanism_pf = {MechanismEnum.REVETMENT: {0: beta}}
+                self._mechanism_pf = {MechanismEnum.REVETMENT: {0: beta_to_pf(beta)}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost
