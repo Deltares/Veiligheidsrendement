@@ -1,5 +1,3 @@
-from numpy import concatenate
-
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
