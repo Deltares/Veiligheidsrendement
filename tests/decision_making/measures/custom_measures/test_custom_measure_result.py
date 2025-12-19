@@ -1,5 +1,4 @@
 import pytest
-from pandas import DataFrame
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
