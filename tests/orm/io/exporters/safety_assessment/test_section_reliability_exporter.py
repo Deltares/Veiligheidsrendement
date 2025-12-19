@@ -32,7 +32,7 @@ class TestSectionReliabilityExporter:
         _test_section_data = get_orm_basic_dike_section()
         assert not any(_test_section_data.assessment_section_results)
 
-        _expected_entries = len(section_reliability_with_values.section_pf)
+        _expected_entries = len(section_reliability_with_values.get_reliabilities())
 
         # 2. Run test.
         SectionReliabilityExporter(_test_section_data).export_dom(
@@ -46,6 +46,8 @@ class TestSectionReliabilityExporter:
             assert _orm_assessment.section_data == _test_section_data
             assert _orm_assessment.beta == pytest.approx(
                 pf_to_beta(
-                    section_reliability_with_values.section_pf.get(_orm_assessment.time)
+                    section_reliability_with_values.get_reliability_for_year(
+                        _orm_assessment.time
+                    )
                 )
             )

@@ -1,5 +1,4 @@
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -68,14 +67,6 @@ class FailureMechanismCollection:
         """
         return self._failure_mechanisms.get(mechanism)
 
-    def get_mechanism_year_reliability(
-        self, mechanism: MechanismEnum, year: int
-    ) -> float | None:
-        _mrc = self.get_mechanism_reliability_collection(mechanism)
-        if not _mrc:
-            return None
-        return _mrc.get_reliability_for_year(year)
-
     def get_all_mechanism_reliability_collections(
         self,
     ) -> list[MechanismReliabilityCollection]:
@@ -85,3 +76,11 @@ class FailureMechanismCollection:
             list[MechanismReliabilityCollection]: The collection of stored mechanism reliability collections
         """
         return list(self._failure_mechanisms.values())
+
+    def get_mechanism_year_reliability(
+        self, mechanism: MechanismEnum, year: int
+    ) -> float | None:
+        _mrc = self.get_mechanism_reliability_collection(mechanism)
+        if not _mrc:
+            return None
+        return _mrc.get_reliability_for_year(year)

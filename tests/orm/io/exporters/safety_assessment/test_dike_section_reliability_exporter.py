@@ -112,7 +112,7 @@ class TestDikeSectionReliabilityExporter:
         )
         _test_dike_section.section_reliability = section_reliability_with_values
         _expected_mechanisms_reliability = (
-            _test_dike_section.section_reliability.mechanism_pf
+            _test_dike_section.section_reliability.get_reliabilities_for_mechanisms()
         )
         _mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _mechanisms)
@@ -124,6 +124,8 @@ class TestDikeSectionReliabilityExporter:
         _assessment_section_data = len(AssessmentSectionResult.select())
         _assessment_mechanisms = len(AssessmentMechanismResult.select())
 
-        _time_entries = len(section_reliability_with_values.section_pf.values())
+        _time_entries = len(
+            section_reliability_with_values.get_reliabilities().values()
+        )
         assert _assessment_section_data == _time_entries
         assert _assessment_mechanisms == len(_mechanisms) * _time_entries

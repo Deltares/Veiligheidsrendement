@@ -231,7 +231,7 @@ class TestRevetmentMeasure:
             """
 
             def __init__(self):
-                self.mechanism_pf = {MechanismEnum.REVETMENT: {0: beta}}
+                self._mechanism_pf = {MechanismEnum.REVETMENT: {0: beta}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost

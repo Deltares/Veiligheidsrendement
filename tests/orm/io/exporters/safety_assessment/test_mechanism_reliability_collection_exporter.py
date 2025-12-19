@@ -38,8 +38,12 @@ class TestMechanismReliabilityCollectionExporter:
         _test_section_data = get_orm_basic_dike_section()
         assert not any(AssessmentMechanismResult.select())
 
-        _expected_time_entries = len(section_reliability_with_values.section_pf)
-        _expected_mechanisms_reliability = section_reliability_with_values.mechanism_pf
+        _expected_time_entries = len(
+            section_reliability_with_values.get_reliabilities()
+        )
+        _expected_mechanisms_reliability = (
+            section_reliability_with_values.get_reliabilities_for_mechanisms()
+        )
         _expected_mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         assert any(Mechanism.select())
@@ -96,8 +100,12 @@ class TestMechanismReliabilityCollectionExporter:
         )
         assert not any(AssessmentMechanismResult.select())
 
-        _expected_time_entries = len(section_reliability_with_values.section_pf)
-        _expected_mechanisms_reliability = section_reliability_with_values.mechanism_pf
+        _expected_time_entries = len(
+            section_reliability_with_values.get_reliabilities()
+        )
+        _expected_mechanisms_reliability = (
+            section_reliability_with_values.get_reliabilities_for_mechanisms()
+        )
         _expected_mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         create_required_mechanism_per_section(
@@ -131,7 +139,9 @@ class TestMechanismReliabilityCollectionExporter:
         assert not any(AssessmentMechanismResult.select())
         assert not any(Mechanism.select())
 
-        _mechanisms = list(section_reliability_with_values.mechanism_pf.keys())
+        _mechanisms = list(
+            section_reliability_with_values.get_reliabilities_for_mechanisms().keys()
+        )
         _expected_mechanism_not_found = _mechanisms[0]
 
         # 2. Run test.

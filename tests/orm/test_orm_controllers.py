@@ -424,7 +424,7 @@ class TestOrmControllers:
         _dummy_section.TrajectInfo = DikeTrajectInfo(
             traject_name=_test_section_data.dike_traject.traject_name
         )
-        _dummy_section.section_reliability.section_pf = _section_reliability
+        _dummy_section.section_reliability.set_reliabilities(_section_reliability)
         _test_traject = DikeTraject()
         _test_traject.sections = [_dummy_section]
 

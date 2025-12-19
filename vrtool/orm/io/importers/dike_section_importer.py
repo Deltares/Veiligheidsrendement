@@ -67,7 +67,7 @@ class DikeSectionImporter(OrmImporterProtocol):
             AssessmentSectionResult.time.asc()
         ):
             _columns.append(_asr.time)
-            _section_reliability.set_reliability_for_section(
+            _section_reliability.set_reliability_for_year(
                 _asr.time, beta_to_pf(_asr.beta)
             )
             for _amr in (
@@ -81,7 +81,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                     ),
                 )
             ):
-                _section_reliability.set_reliability_for_mechanism(
+                _section_reliability.set_reliability_for_mechanism_year(
                     MechanismEnum.get_enum(_amr.mechanism_per_section.mechanism.name),
                     _amr.time,
                     beta_to_pf(_amr.beta),
@@ -157,11 +157,14 @@ class DikeSectionImporter(OrmImporterProtocol):
             section_data
         )
         for _mechanism_data in _mechanism_collection:
-            if _mechanism_data.mechanism in _section_reliability.mechanism_pf.keys():
-                for _year, _pf in _section_reliability.mechanism_pf[
+            if (
+                _mechanism_data.mechanism
+                in _section_reliability.get_reliabilities_for_mechanisms().keys()
+            ):
+                for _year, _pf in _section_reliability.get_reliabilities_for_mechanisms(
                     _mechanism_data.mechanism
-                ].items():
-                    _mechanism_data.Reliability[_year].Beta = beta_to_pf(_pf)
+                ).items():
+                    _mechanism_data.set_reliability_for_year(_year, _pf)
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )

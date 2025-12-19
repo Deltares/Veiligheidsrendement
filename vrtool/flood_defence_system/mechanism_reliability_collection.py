@@ -3,6 +3,7 @@ from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 # A collection of MechanismReliability objects in time
@@ -77,3 +78,7 @@ class MechanismReliabilityCollection:
         if not _reliability:
             return None
         return _reliability.Pf
+
+    def set_reliability_for_year(self, year: int, pf: float) -> None:
+        self.Reliability[year].Pf = pf
+        self.Reliability[year].Beta = pf_to_beta(pf)

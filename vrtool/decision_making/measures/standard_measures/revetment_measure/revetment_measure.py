@@ -203,11 +203,15 @@ class RevetmentMeasure(MeasureProtocol):
                 for j, cmp in enumerate(self.measures.result_collection):
                     if i == j:
                         continue
-                    beta_msr = msr.section_reliability.get_reliability_for_mechanism(
-                        MechanismEnum.REVETMENT, 0
+                    beta_msr = pf_to_beta(
+                        msr.section_reliability.get_reliability_for_mechanism_year(
+                            MechanismEnum.REVETMENT, 0
+                        )
                     )
-                    beta_cmp = cmp.section_reliability.get_reliability_for_mechanism(
-                        MechanismEnum.REVETMENT, 0
+                    beta_cmp = pf_to_beta(
+                        cmp.section_reliability.get_reliability_for_mechanism_year(
+                            MechanismEnum.REVETMENT, 0
+                        )
                     )
                     cmp_betas = self._compare_betas(beta_msr, beta_cmp)
                     cmp_costs = self._compare_costs(msr.cost, cmp.cost)
