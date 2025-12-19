@@ -1,6 +1,5 @@
 from typing import Callable, Iterator
 
-import pandas as pd
 import pytest
 
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum

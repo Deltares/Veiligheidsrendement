@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from math import isclose
 from pathlib import Path
 
 import pandas as pd
@@ -22,7 +20,6 @@ from vrtool.orm.io.importers.mechanism_reliability_collection_importer import (
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.io.validators.section_data_validator import SectionDataValidator
-from vrtool.orm.models import mechanism
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.buildings import Buildings
