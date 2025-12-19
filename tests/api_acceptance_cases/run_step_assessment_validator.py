@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -10,7 +9,6 @@ from tests.api_acceptance_cases.run_step_validator_protocol import (
     RunStepValidator,
     _get_database_reference_path,
 )
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
 import pytest
 from peewee import fn
@@ -53,24 +52,6 @@ class RunStepMeasuresValidator(RunStepValidator):
 
         if not _connected_db.is_closed():
             _connected_db.close()
-
-    @staticmethod
-    def reliability_dicts_are_equal(
-        left_dict: dict[Any, Any], right_dict: dict[Any, Any]
-    ) -> bool:
-        if left_dict.keys() != right_dict.keys():
-            return False
-        for _key, _left_value in left_dict.items():
-            _right_value = right_dict[_key]
-            if isinstance(_left_value, dict):
-                if not RunStepMeasuresValidator.reliability_dicts_are_equal(
-                    _left_value, _right_value
-                ):
-                    return False
-                continue
-            if _left_value != pytest.approx(_right_value):
-                return False
-        return True
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         """
