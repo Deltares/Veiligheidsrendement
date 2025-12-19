@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ci/407-update-pythonlibraries-to-recent-version
     
 jobs:
   install-package:
@@ -12,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [py312]
+        environment: [py312, py313, py314]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
