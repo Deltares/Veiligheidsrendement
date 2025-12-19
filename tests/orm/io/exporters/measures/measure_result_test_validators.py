@@ -221,7 +221,7 @@ def validate_measure_result_mechanisms_year(
 
         assert isinstance(_retrieved_result_section, MeasureResultMechanism)
         assert _retrieved_result_section.beta == pytest.approx(
-            input_data.section_reliability.mechanism_pf[_mechanism.name][year]
+            pf_to_beta(input_data.section_reliability.mechanism_pf[_mechanism][year])
         )
 
 
