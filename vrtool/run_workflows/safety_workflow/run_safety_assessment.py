@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -47,9 +46,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
             _section.section_reliability.calculate_section_reliability(
                 _section.get_cross_sectional_properties()
             )
-
-        # aggregate computed initial probabilities to DataFrame in selected_traject:
-        self.selected_traject.set_probabilities()
 
         _results = ResultsSafetyAssessment()
         _results.selected_traject = self.selected_traject

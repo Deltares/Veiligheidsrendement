@@ -1,5 +1,3 @@
-from random import shuffle
-
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
@@ -19,10 +17,6 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
@@ -237,7 +231,7 @@ class TestRevetmentMeasure:
             """
 
             def __init__(self):
-                self.SectionReliability = {0: {"REVETMENT": beta}}
+                self.mechanism_pf = {MechanismEnum.REVETMENT: {0: beta}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost

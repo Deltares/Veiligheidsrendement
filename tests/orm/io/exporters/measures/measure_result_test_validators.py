@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from tests.orm.conftest import (
     _get_basic_measure_per_section,
@@ -27,6 +28,7 @@ from vrtool.orm.models.measure_result.measure_result_section import MeasureResul
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class MeasureWithDictMocked(MeasureProtocol):
@@ -101,16 +103,16 @@ class MeasureResultTestInputData:
     @staticmethod
     def create_section_reliability(years: list[int]) -> SectionReliability:
         _section_reliability = SectionReliability()
-
-        _section_reliability.SectionReliability = pd.DataFrame.from_dict(
-            {
-                MechanismEnum.OVERFLOW.name: [year / 12.0 for year in years],
-                MechanismEnum.STABILITY_INNER.name: [year / 13.0 for year in years],
-                "Section": [year / 10.0 for year in years],
+        _section_reliability.section_pf = {
+            _year: beta_to_pf(_year / 10) for _year in years
+        }
+        _section_reliability.mechanism_pf = {
+            MechanismEnum.OVERFLOW: {_year: beta_to_pf(_year / 12) for _year in years},
+            MechanismEnum.STABILITY_INNER: {
+                _year: beta_to_pf(_year / 13) for _year in years
             },
-            orient="index",
-            columns=years,
-        )
+        }
+
         return _section_reliability
 
     @staticmethod
@@ -192,10 +194,10 @@ def validate_measure_result_section_year(
     )
 
     assert isinstance(_retrieved_result_section, MeasureResultSection)
-    assert (
-        _retrieved_result_section.beta
-        == input_data.section_reliability.SectionReliability.loc["Section"][year]
+    assert _retrieved_result_section.beta == pytest.approx(
+        pf_to_beta(input_data.section_reliability.section_pf[year])
     )
+
     assert _retrieved_result_section.cost == input_data.expected_cost
 
 
@@ -218,11 +220,8 @@ def validate_measure_result_mechanisms_year(
         )
 
         assert isinstance(_retrieved_result_section, MeasureResultMechanism)
-        assert (
-            _retrieved_result_section.beta
-            == input_data.section_reliability.SectionReliability.loc[_mechanism.name][
-                year
-            ]
+        assert _retrieved_result_section.beta == pytest.approx(
+            input_data.section_reliability.mechanism_pf[_mechanism.name][year]
         )
 
 

@@ -35,13 +35,12 @@ class TestCustomMeasureResult:
 
         # Define section reliability
         _section_reliability = SectionReliability()
-        _mechanisms = [_me.name for _me in MechanismEnum]
-        _columns = [0, 5, 42]
-        _data_values = [_idx for _idx in range(0, len(_columns))]
-        _data = {_mech_name: _data_values for _mech_name in _mechanisms}
-        _section_reliability.SectionReliability = DataFrame.from_dict(
-            _data, orient="index", columns=list(map(str, _columns))
-        )
+        _mechanisms = [_me for _me in MechanismEnum]
+        _years = [0, 5, 42]
+        _data_values = {_year: _pf for _pf, _year in enumerate(_years)}
+        _section_reliability.mechanism_pf = {
+            _mech: _data_values for _mech in _mechanisms
+        }
 
         _measure_result.section_reliability = _section_reliability
 
@@ -83,55 +82,3 @@ class TestCustomMeasureResult:
             -999,
             valid_custom_measure_result.cost,
         ]
-
-    def test_get_beta_values_for_mechanisms_given_unknown_name(
-        self, valid_custom_measure_result: CustomMeasureResult
-    ):
-        # 1. Define test data.
-        _unknown_mechanism = "UnknownMechanism"
-        _expected_length = len(
-            valid_custom_measure_result.section_reliability.SectionReliability.columns
-        )
-
-        # 2. Run test.
-        _values = valid_custom_measure_result._get_beta_values_for_mechanism(
-            _unknown_mechanism
-        )
-
-        # 3. Verify expectations.
-        assert len(_values) == _expected_length
-        assert _values == [10.0] * _expected_length
-
-    @pytest.mark.parametrize("split", [(True), (False)])
-    def test_get_measure_output_values_with_empty_beta_columns(
-        self, split: bool, valid_custom_measure_result: CustomMeasureResult
-    ):
-        # 1. Define test data.
-        _beta_values = []
-
-        # 2. Run test.
-        (
-            _input_measure,
-            _output_betas,
-        ) = valid_custom_measure_result.get_measure_output_values(split, _beta_values)
-
-        # 3. Verify expectations
-        assert any(_input_measure)
-        assert any(_output_betas) is False
-
-    def test_get_measure_output_values(
-        self, valid_custom_measure_result: CustomMeasureResult
-    ):
-        # 1. Define test data.
-        _beta_values = [MechanismEnum.OVERFLOW.name, MechanismEnum.PIPING.name]
-
-        # 2. Run test.
-        (
-            _input_values,
-            _output_betas,
-        ) = valid_custom_measure_result.get_measure_output_values(False, _beta_values)
-
-        # 3. Verify expectations.
-        assert any(_input_values)
-        assert any(_output_betas)
-        assert _output_betas == [0, 1, 2, 0, 1, 2]

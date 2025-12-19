@@ -71,3 +71,9 @@ class MechanismReliabilityCollection:
                 int(_year),
                 traject_info,
             )
+
+    def get_reliability_for_year(self, year: int) -> float | None:
+        _reliability = self.Reliability.get(year)
+        if not _reliability:
+            return None
+        return _reliability.Pf
