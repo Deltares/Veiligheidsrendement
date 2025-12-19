@@ -161,7 +161,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                 _mechanism_data.mechanism
                 in _section_reliability.get_reliabilities_for_mechanisms().keys()
             ):
-                for _year, _pf in _section_reliability.get_reliabilities_for_mechanisms(
+                for _year, _pf in _section_reliability.get_reliabilities_for_mechanism(
                     _mechanism_data.mechanism
                 ).items():
                     _mechanism_data.set_reliability_for_year(_year, _pf)
