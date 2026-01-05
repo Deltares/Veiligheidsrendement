@@ -249,7 +249,7 @@ class TestMechanismReliabilityCollectionImporter:
     def _assert_common_collection_properties(
         self, collection: MechanismReliabilityCollection, config=VrtoolConfig
     ) -> None:
-        assert collection.T == config.T
+        assert collection.computation_years == config.T
         assert collection.t_0 == config.t_0
         assert list(collection.reliability.keys()) == [year for year in config.T]
 
