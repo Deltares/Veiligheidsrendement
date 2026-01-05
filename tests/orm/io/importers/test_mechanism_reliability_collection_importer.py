@@ -170,7 +170,7 @@ class TestMechanismReliabilityCollectionImporter:
         self._assert_mechanism_properties(collection, _mechanism, _computation_type)
 
         mechanism_reliability_input = [
-            mechanism_input.Input for mechanism_input in collection.Reliability.values()
+            mechanism_input.input for mechanism_input in collection.reliability.values()
         ]
         assert all(
             [
@@ -251,7 +251,7 @@ class TestMechanismReliabilityCollectionImporter:
     ) -> None:
         assert collection.T == config.T
         assert collection.t_0 == config.t_0
-        assert list(collection.Reliability.keys()) == [year for year in config.T]
+        assert list(collection.reliability.keys()) == [year for year in config.T]
 
     def _assert_mechanism_properties(
         self,
@@ -259,7 +259,7 @@ class TestMechanismReliabilityCollectionImporter:
         mechanism: MechanismEnum,
         computation_type: ComputationTypeEnum,
     ) -> None:
-        mechanism_reliabilities = collection.Reliability.values()
+        mechanism_reliabilities = collection.reliability.values()
         assert all(
             [
                 mechanism_reliability.mechanism == mechanism

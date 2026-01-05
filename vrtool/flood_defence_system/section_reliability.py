@@ -13,8 +13,11 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 BETA_THRESHOLD: float = 8.0
 
 
-# Class describing safety assessments of a section:
 class SectionReliability:
+    """
+    Class describing safety assessments of a section.
+    """
+
     load: LoadInput
     failure_mechanisms: FailureMechanismCollection
     # Result stored during calculate_section_reliability

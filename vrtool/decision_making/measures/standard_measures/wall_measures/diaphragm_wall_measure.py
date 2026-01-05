@@ -68,19 +68,19 @@ class DiaphragmWallMeasure(MeasureProtocol):
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism, calc_type, self.config.T, self.config.t_0, 0
+            mechanism, calc_type, self.config.T, self.config.t_0
         )
 
         for (
             year_to_calculate,
             _mechanism_reliability,
-        ) in mechanism_reliability_collection.Reliability.items():
-            _mechanism_reliability.Input = copy.deepcopy(
+        ) in mechanism_reliability_collection.reliability.items():
+            _mechanism_reliability.input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[year_to_calculate]
-                .Input
+                .reliability[year_to_calculate]
+                .input
             )
 
             if float(year_to_calculate) >= self.parameters["year"]:
@@ -106,7 +106,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
     ) -> None:
         _probability_overflow = traject_info.Pmax * traject_info.omegaOverflow
 
-        mechanism_input = mechanism_reliability.Input.input_dict
+        mechanism_input = mechanism_reliability.input.input_dict
         if mechanism_reliability.mechanism_type == ComputationTypeEnum.SIMPLE:
             if hasattr(dike_section, "HBNRise_factor"):
                 hc = probabilistic_design(
@@ -147,7 +147,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
     def _configure_piping_or_stability_inner(
         self, mechanism_reliability: MechanismReliability
     ) -> None:
-        mechanism_reliability.Input.input_dict["elimination"] = "yes"
-        mechanism_reliability.Input.input_dict["piping_reduction_factor"] = (
+        mechanism_reliability.input.input_dict["elimination"] = "yes"
+        mechanism_reliability.input.input_dict["piping_reduction_factor"] = (
             self.parameters["piping_reduction_factor"]
         )

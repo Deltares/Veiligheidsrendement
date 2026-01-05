@@ -122,10 +122,9 @@ class TestSectionReliability:
                 computation_type=ComputationTypeEnum.SIMPLE,
                 computation_years=_years,
                 t_0=_years[0],
-                measure_year=5,
             )
             for _yt in _years:
-                _mrc.Reliability[_yt].Pf = 0.42 / (100 * max(1, _yt))
+                _mrc.reliability[_yt].pf = 0.42 / (100 * max(1, _yt))
             return _mrc
 
         def build_section_reliability_for_mechanism(

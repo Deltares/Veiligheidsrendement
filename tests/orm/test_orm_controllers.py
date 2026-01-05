@@ -364,9 +364,8 @@ class TestOrmControllers:
             ComputationTypeEnum.SIMPLE,
             database_vrtool_config.T,
             2023,
-            2025,
         )
-        _stability_inner_collection.Reliability[0].Input = _mechanism_input
+        _stability_inner_collection.reliability[0].input = _mechanism_input
         _dike_section.section_reliability.load = LoadInput()
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.STABILITY_INNER

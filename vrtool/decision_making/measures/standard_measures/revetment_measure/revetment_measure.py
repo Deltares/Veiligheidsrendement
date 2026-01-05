@@ -153,8 +153,8 @@ class RevetmentMeasure(MeasureProtocol):
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
             MechanismEnum.REVETMENT
         )
-        _first_year = list(_reliability_collection.Reliability.keys())[0]
-        return _reliability_collection.Reliability[_first_year].Input.input_dict[
+        _first_year = list(_reliability_collection.reliability.keys())[0]
+        return _reliability_collection.reliability[_first_year].input.input_dict[
             "revetment_input"
         ]
 
@@ -386,7 +386,7 @@ class RevetmentMeasure(MeasureProtocol):
                 mechanism
             )
         )
-        _assessment_revetment.Reliability = (
+        _assessment_revetment.reliability = (
             self._get_mechanism_reliabilty_for_beta_transition(
                 mechanism, calc_type, revetment_measure_results
             )
@@ -424,7 +424,7 @@ class RevetmentMeasure(MeasureProtocol):
             mechanism_reliability = RevetmentMeasureMechanismReliability(
                 mechanism, calc_type, self.config.t_0
             )
-            mechanism_reliability.Beta = result.beta_combined
-            mechanism_reliability.Pf = beta_to_pf(result.beta_combined)
+            mechanism_reliability.beta = result.beta_combined
+            mechanism_reliability.pf = beta_to_pf(result.beta_combined)
             _reliability_dict[result.year] = mechanism_reliability
         return _reliability_dict
