@@ -17,14 +17,14 @@ class MechanismReliabilityCollection:
 
     mechanism: MechanismEnum
     computation_type: ComputationTypeEnum
-    T: list[int] = field(default_factory=list)
+    computation_years: list[int] = field(default_factory=list)
     t_0: int = 0
     reliability: dict[int, MechanismReliability] = field(default_factory=dict)
 
     def __post_init__(self):
         # Initialize and make collection of MechanismReliability objects
         # mechanism, type, years are universal.
-        for _computation_year in self.T:
+        for _computation_year in self.computation_years:
             self.reliability[_computation_year] = MechanismReliability(
                 self.mechanism, computation_type, self.t_0
             )
