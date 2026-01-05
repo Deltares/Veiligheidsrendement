@@ -33,7 +33,7 @@ class FailureMechanismCollection:
 
         mechanism = list(self._failure_mechanisms)[0]
         return list(
-            self.get_mechanism_reliability_collection(mechanism).Reliability.keys()
+            self.get_mechanism_reliability_collection(mechanism).reliability.keys()
         )
 
     def add_failure_mechanism_reliability_collection(

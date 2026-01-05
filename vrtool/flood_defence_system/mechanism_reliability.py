@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -32,35 +33,21 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calcu
 )
 
 
+@dataclass
 class MechanismReliability:
-    Input: MechanismInput
-    Pf: float
-    Beta: float
+    """
+    This class contains evaluations of the reliability for a mechanism in a given year.
+    """
 
-    # This class contains evaluations of the reliability for a mechanism in a given year.
-    def __init__(
-        self,
-        mechanism: MechanismEnum,
-        mechanism_type: ComputationTypeEnum,
-        t_0: int,
-        copy_or_calculate="calculate",
-    ):
-        # Initialize: set mechanism and type. These are the most important basic parameters
-        self.mechanism = mechanism
-        self.mechanism_type = mechanism_type
-        self.t_0 = t_0
-        self.copy_or_calculate = copy_or_calculate
+    mechanism: MechanismEnum
+    mechanism_type: ComputationTypeEnum
+    t_0: int
+    input: MechanismInput = field(init=False)
+    pf: float = float("nan")
+    beta: float = float("nan")
 
-        self.Input = MechanismInput(self.mechanism)
-        self.Pf = float("nan")
-        self.Beta = float("nan")
-
-        if mechanism == MechanismEnum.PIPING:
-            self.gamma_schem_heave = 1  # 1.05
-            self.gamma_schem_upl = 1  # 1.05
-            self.gamma_schem_pip = 1  # 1.05
-        else:
-            pass
+    def __post_init__(self):
+        self.input = MechanismInput(self.mechanism)
 
     def __clearvalues__(self):
         # clear all values
@@ -81,7 +68,7 @@ class MechanismReliability:
         calculator = self._get_failure_mechanism_calculator(
             mechanism, traject_info, strength, load
         )
-        self.Beta, self.Pf = calculator.calculate(year)
+        self.beta, self.pf = calculator.calculate(year)
 
     def _get_failure_mechanism_calculator(
         self,
@@ -95,7 +82,7 @@ class MechanismReliability:
             return self._get_direct_input_calculator(strength)
 
         if self.mechanism_type == ComputationTypeEnum.HRING:
-            return self._get_hydra_ring_calculator(mechanism, self.Input)
+            return self._get_hydra_ring_calculator(mechanism, self.input)
 
         if self.mechanism_type == ComputationTypeEnum.SIMPLE:
             return self._get_simple_calculator(mechanism, strength)

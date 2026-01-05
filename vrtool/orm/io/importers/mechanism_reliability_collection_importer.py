@@ -54,15 +54,15 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
             computation_scenarios[0].computation_type.name
         )
         collection = MechanismReliabilityCollection(
-            mechanism, computation_type, self.computation_years, self.t_0, 0
+            mechanism, computation_type, self.computation_years, self.t_0
         )
 
         mechanism_input = self._get_mechanism_input(
             orm_model, mechanism, computation_type
         )
 
-        for year in collection.Reliability.keys():
-            collection.Reliability[year].Input = mechanism_input
+        for year in collection.reliability.keys():
+            collection.reliability[year].input = mechanism_input
 
         return collection
 
