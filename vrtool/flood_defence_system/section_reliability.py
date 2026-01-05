@@ -35,15 +35,15 @@ class SectionReliability:
         ) -> bool:
             if left_dict.keys() != right_dict.keys():
                 return False
-            for _key, _left_value in left_dict.items():
-                _right_value = right_dict[_key]
+
+            def equal_reliability(key) -> bool:
+                _left_value = left_dict[key]
+                _right_value = right_dict[key]
                 if isinstance(_left_value, dict):
-                    if not reliability_dicts_are_equal(_left_value, _right_value):
-                        return False
-                    continue
-                if abs(_left_value - _right_value) > 1e-6:
-                    return False
-            return True
+                    return reliability_dicts_are_equal(_left_value, _right_value)
+                return abs(_left_value - _right_value) < 1e-6
+
+            return all(list(map(equal_reliability, left_dict.keys())))
 
         return reliability_dicts_are_equal(
             self._section_pf, other._section_pf
