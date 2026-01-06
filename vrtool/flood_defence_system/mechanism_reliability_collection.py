@@ -5,7 +5,6 @@ from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-from vrtool.orm.models import computation_type
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
