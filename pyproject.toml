@@ -8,6 +8,7 @@ maintainers = [
   {name = "Ardt Klapwijk", email = "ardt.klapwijk@deltares.nl"},
   {name = "Stephan Rikkert", email = "stephan.rikkert@deltares.nl"},
 ]
+license-files = ["LICENSE"]
 readme = "README.md"
 keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
 classifiers = [
