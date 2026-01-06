@@ -75,4 +75,4 @@ class TableDist:
         return self.computeQuantile(0.5)
 
     def getRange(self) -> tuple[float, float]:
-        return float(self.x[0]), float(self.x[-1:])
+        return float(self.x[0]), float(self.x[-1])

@@ -1,6 +1,6 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/release/python-31212/)
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/downloads/release/python-31311/)
-[![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/downloads/release/python-3142/)
+<!-- [![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/downloads/release/python-3142/) -->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 [![ci-install-package](https://github.com/Deltares/Veiligheidsrendement/actions/workflows/ci_installation.yml/badge.svg)](https://github.com/Deltares/Veiligheidsrendement/actions/workflows/ci_installation.yml)
