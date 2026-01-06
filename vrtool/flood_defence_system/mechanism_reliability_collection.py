@@ -26,7 +26,7 @@ class MechanismReliabilityCollection:
         # mechanism, type, years are universal.
         for _computation_year in self.computation_years:
             self.reliability[_computation_year] = MechanismReliability(
-                self.mechanism, computation_type, self.t_0
+                self.mechanism, self.computation_type, self.t_0
             )
 
     def generate_LCR_profile(self, load: LoadInput, traject_info: DikeTrajectInfo):
