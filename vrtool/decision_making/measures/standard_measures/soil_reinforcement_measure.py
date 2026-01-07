@@ -243,21 +243,20 @@ class SoilReinforcementMeasure(MeasureProtocol):
             calc_type,
             self.config.T,
             self.config.t_0,
-            self.parameters["year"],
         )
         is_first_year_with_widening = True
         for (
             year_to_calculate,
             _,
-        ) in mechanism_reliability_collection.Reliability.items():
+        ) in mechanism_reliability_collection.reliability.items():
             # for all time steps considered.
             # first copy the data
             reliability_input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[year_to_calculate]
-                .Input
+                .reliability[year_to_calculate]
+                .input
             )
             # Adapt inputs for reliability calculation, but only after year of implementation.
             if float(year_to_calculate) >= self.parameters["year"]:
@@ -279,7 +278,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 )
                 is_first_year_with_widening = False
             # put them back in the object
-            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
+            mechanism_reliability_collection.reliability[year_to_calculate].input = (
                 reliability_input
             )
 

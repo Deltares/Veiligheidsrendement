@@ -106,13 +106,13 @@ class TestOverflowHydraRingImporter:
         assert _mechanism_input.input_dict["d_crest"] == 42
         assert isinstance(_mechanism_table_data, pd.DataFrame)
 
-        assert list(_mechanism_table_data.columns) == [str(year) for year in years]
+        assert list(_mechanism_table_data.columns) == [year for year in years]
         assert _mechanism_table_data.index.to_list() == values
 
-        assert list(_mechanism_table_data[str(year_one)]) == [
+        assert list(_mechanism_table_data[year_one]) == [
             entry["beta"] for entry in mechanism_table_year_one
         ]
-        assert list(_mechanism_table_data[str(year_two)]) == [
+        assert list(_mechanism_table_data[year_two]) == [
             entry["beta"] for entry in mechanism_table_year_two
         ]
 

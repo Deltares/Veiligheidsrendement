@@ -1,53 +1,32 @@
+from dataclasses import dataclass, field
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-# A collection of MechanismReliability objects in time
+@dataclass
 class MechanismReliabilityCollection:
-    """Represents a collection of MechanismReliability objects over time."""
+    """
+    Represents a collection of MechanismReliability objects over time.
+    """
 
-    Reliability: dict[str, MechanismReliability]
     mechanism: MechanismEnum
+    computation_type: ComputationTypeEnum
+    computation_years: list[int] = field(default_factory=list)
+    t_0: int = 0
+    reliability: dict[int, MechanismReliability] = field(default_factory=dict)
 
-    def __init__(
-        self,
-        mechanism: MechanismEnum,
-        computation_type: ComputationTypeEnum,
-        computation_years: list[int],
-        t_0: int,
-        measure_year: int,
-    ):
-        """Creates a new instance of the MechanismReliabilityCollection
-
-        Args:
-            mechanism (MechanismEnum): The mechanism.
-            computation_type (ComputionTypeEnum): The computation type.
-            computation_years (list[int]): The collection of years to compute the reliability for.
-            t_0 (float): The initial year.
-            measure_year (int): The year to compute the measure for
-        """
-
+    def __post_init__(self):
         # Initialize and make collection of MechanismReliability objects
         # mechanism, type, years are universal.
-        # Measure_year is to indicate whether the reliability has to be recalculated or can be copied
-        # (the latter is the case if a measure is taken later than the considered point in time)
-        self.T = computation_years
-        self.t_0 = t_0
-        self.mechanism = mechanism
-        self.Reliability = {}
-
-        for _computation_year in computation_years:
-            if measure_year > _computation_year:
-                self.Reliability[str(_computation_year)] = MechanismReliability(
-                    mechanism, computation_type, self.t_0, copy_or_calculate="copy"
-                )
-            else:
-                self.Reliability[str(_computation_year)] = MechanismReliability(
-                    mechanism, computation_type, self.t_0
-                )
+        for _computation_year in self.computation_years:
+            self.reliability[_computation_year] = MechanismReliability(
+                self.mechanism, self.computation_type, self.t_0
+            )
 
     def generate_LCR_profile(self, load: LoadInput, traject_info: DikeTrajectInfo):
         """Generates the LifeCycleReliability profile.
@@ -63,11 +42,23 @@ class MechanismReliabilityCollection:
         if not load:
             raise ValueError("A {} is required.".format(LoadInput.__name__))
 
-        for _year, _reliability in self.Reliability.items():
-            self.Reliability[_year].calculate_reliability(
-                _reliability.Input,
+        for _year, _reliability in self.reliability.items():
+            self.reliability[_year].calculate_reliability(
+                _reliability.input,
                 load,
                 self.mechanism,
                 int(_year),
                 traject_info,
             )
+
+    def get_reliability_for_year(self, year: int) -> float | None:
+        _reliability = self.reliability.get(year)
+        return _reliability.pf if _reliability else None
+
+    def set_reliability_for_year(self, year: int, pf: float) -> None:
+        if year not in self.reliability:
+            raise KeyError(
+                f"Year {year} is not available in the reliability collection."
+            )
+        self.reliability[year].pf = pf
+        self.reliability[year].beta = pf_to_beta(pf)

@@ -61,7 +61,7 @@ def calculate_overflow_hydra_ring_assessment(
         betas.append(
             interp1d(
                 hc_beta.index.values,
-                hc_beta[str(j)],
+                hc_beta[j],
                 fill_value="extrapolate",
             )(h_t)
         )

@@ -54,7 +54,7 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
                 }
             )
             beta_for_year.set_index(crest_height_row_name, inplace=True, drop=True)
-            beta_for_year.rename(columns={beta_column_name: str(year)}, inplace=True)
+            beta_for_year.rename(columns={beta_column_name: year}, inplace=True)
             crest_height_beta_data.append(beta_for_year)
 
         return pd.concat(crest_height_beta_data, axis=1)

@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
-import pandas as pd
 import pytest
 from peewee import fn
 
@@ -14,6 +13,7 @@ from tests.api_acceptance_cases.run_step_validator_protocol import (
 )
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.decision_making.measure_result_importer import (
     MeasureResultImporter,
 )
@@ -67,14 +67,15 @@ class RunStepMeasuresValidator(RunStepValidator):
         def load_measures_reliabilities(
             vrtool_db: Path,
         ) -> tuple[
-            dict[str, dict[tuple, pd.DataFrame]], dict[str, tuple[float, int, float]]
+            dict[tuple[str, str], dict[set[tuple[str, float]], SectionReliability]],
+            dict[tuple[str, str], list[tuple[float, int, float]]],
         ]:
             _connected_db = open_database(vrtool_db)
             _m_reliabilities = defaultdict(dict)
             _m_beta_time_cost = defaultdict(list)
             for _measure_result in orm.MeasureResult.select():
                 _measure_per_section = _measure_result.measure_per_section
-                _reliability_df = MeasureResultImporter.import_measure_reliability_df(
+                _section_reliability = MeasureResultImporter.import_measure_reliability(
                     _measure_result
                 )
                 _available_parameters = frozenset(
@@ -93,7 +94,9 @@ class RunStepMeasuresValidator(RunStepValidator):
                             _as_string
                         )
                     )
-                _m_reliabilities[_dict_key][_available_parameters] = _reliability_df
+                _m_reliabilities[_dict_key][
+                    _available_parameters
+                ] = _section_reliability
                 _m_beta_time_cost[_dict_key] = list(
                     sorted(
                         (
@@ -165,15 +168,15 @@ class RunStepMeasuresValidator(RunStepValidator):
                 continue
             for (
                 _ref_params,
-                _ref_measure_result_reliability,
+                _ref_section_reliability,
             ) in _ref_section_measure_dict.items():
                 # Iterate over each dictionary entry,
                 # which represents the measure reliability results (the values as `pd.DataFrame`)
                 # for a given set of parameters represented as `dict` (the keys)
-                _res_measure_result_reliability = _res_section_measure_dict.get(
-                    _ref_params, pd.DataFrame()
+                _res_section_reliability = _res_section_measure_dict.get(
+                    _ref_params, SectionReliability()
                 )
-                if _res_measure_result_reliability.empty:
+                if not _res_section_reliability.get_reliabilities():
                     _parameters = [f"{k}={v}" for k, v in _ref_params]
                     _parameters_as_str = ", ".join(_parameters)
                     _errors.append(
@@ -182,8 +185,16 @@ class RunStepMeasuresValidator(RunStepValidator):
                         )
                     )
                     continue
-                pd.testing.assert_frame_equal(
-                    _ref_measure_result_reliability, _res_measure_result_reliability
-                )
+                if _ref_section_reliability != _res_section_reliability:
+                    _errors.append(
+                        "Measure {} = Section {}, Parameters: {}, have different reliability results.".format(
+                            _ref_key[0],
+                            _ref_key[1],
+                            ", ".join(
+                                [f"{k}={v}" for k, v in _ref_params],
+                            ),
+                        )
+                    )
+
         if _errors:
             pytest.fail("\n".join(_errors))

@@ -27,13 +27,13 @@ class TestFailureMechanismCollection:
 
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_one, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_one, "", [], 0)
         )
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_two, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_two, "", [], 0)
         )
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_three, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_three, "", [], 0)
         )
 
         # When
@@ -49,7 +49,7 @@ class TestFailureMechanismCollection:
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [], 0)
         )
 
         # Call
@@ -66,13 +66,13 @@ class TestFailureMechanismCollection:
         # Setup
         mechanism_to_retrieve = MechanismEnum.OVERFLOW
         collection_to_retrieve = MechanismReliabilityCollection(
-            mechanism_to_retrieve, "", [], 0, 0
+            mechanism_to_retrieve, "", [], 0
         )
 
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(collection_to_retrieve)
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(MechanismEnum.STABILITY_INNER, "", [], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.STABILITY_INNER, "", [], 0)
         )
 
         # Call
@@ -100,10 +100,10 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         reliability_collection_one = MechanismReliabilityCollection(
-            MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0
+            MechanismEnum.OVERFLOW, "", [4, 5, 6], 0
         )
         reliability_collection_two = MechanismReliabilityCollection(
-            MechanismEnum.STABILITY_INNER, "", [4, 5, 6], 0, 0
+            MechanismEnum.STABILITY_INNER, "", [4, 5, 6], 0
         )
 
         collection = FailureMechanismCollection()
@@ -129,9 +129,7 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         mechanism_to_add = MechanismEnum.OVERFLOW
-        collection_to_add = MechanismReliabilityCollection(
-            mechanism_to_add, "", [], 0, 0
-        )
+        collection_to_add = MechanismReliabilityCollection(mechanism_to_add, "", [], 0)
         collection = FailureMechanismCollection()
 
         # Call
@@ -152,13 +150,13 @@ class TestFailureMechanismCollection:
         duplicate_mechanism = MechanismEnum.OVERFLOW
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
+            MechanismReliabilityCollection(duplicate_mechanism, "", [], 0)
         )
 
         # Call
         with pytest.raises(ValueError) as exception_error:
             collection.add_failure_mechanism_reliability_collection(
-                MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
+                MechanismReliabilityCollection(duplicate_mechanism, "", [], 0)
             )
 
         # Assert
@@ -183,11 +181,11 @@ class TestFailureMechanismCollection:
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [4, 5, 6], 0)
         )
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(
-                MechanismEnum.STABILITY_INNER, "", [1, 2, 3], 0, 0
+                MechanismEnum.STABILITY_INNER, "", [1, 2, 3], 0
             )
         )
 
@@ -195,4 +193,4 @@ class TestFailureMechanismCollection:
         years = collection.get_calculation_years()
 
         # Assert
-        assert years == ["4", "5", "6"]
+        assert years == [4, 5, 6]

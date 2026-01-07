@@ -84,7 +84,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
     def _copy_results(
         self, target: MechanismReliability, source_input: MechanismReliability
     ) -> None:
-        target.Input = copy.deepcopy(source_input.Input)
+        target.input = copy.deepcopy(source_input.input)
 
     def _get_configured_mechanism_reliability_collection(
         self,
@@ -92,24 +92,24 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         calc_type: ComputationTypeEnum,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism, calc_type, self.reliability_years, self.computation_year_start, 0
+            mechanism, calc_type, self.reliability_years, self.computation_year_start
         )
 
         for (
             _year_to_calculate,
             _mechanism_reliability,
-        ) in mechanism_reliability_collection.Reliability.items():
-            _mechanism_reliability.Input = copy.deepcopy(
+        ) in mechanism_reliability_collection.reliability.items():
+            _mechanism_reliability.input = copy.deepcopy(
                 self.dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[_year_to_calculate]
-                .Input
+                .reliability[_year_to_calculate]
+                .input
             )
 
             dike_section_mechanism_reliability = self.dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism
-            ).Reliability[
+            ).reliability[
                 _year_to_calculate
             ]
             if mechanism == MechanismEnum.PIPING:
@@ -139,7 +139,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         if int(year_to_calculate) < self.measure_year:
             self._copy_results(mechanism_reliability, dike_section_piping_reliability)
 
-        mechanism_reliability.Input.input_dict["elimination"] = "yes"
-        mechanism_reliability.Input.input_dict["piping_reduction_factor"] = (
+        mechanism_reliability.input.input_dict["elimination"] = "yes"
+        mechanism_reliability.input.input_dict["piping_reduction_factor"] = (
             self.piping_reduction_factor
         )

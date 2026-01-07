@@ -22,18 +22,18 @@ class FailureMechanismCollection:
         """
         return self._failure_mechanisms
 
-    def get_calculation_years(self) -> list[str]:
+    def get_calculation_years(self) -> list[int]:
         """Gets the collection of years that are calculated.
 
         Returns:
-            list[str]: A collection of the years that are calculated. Empty when the collection contains no failure mechanisms.
+            list[int]: A collection of the years that are calculated. Empty when the collection contains no failure mechanisms.
         """
         if not self._failure_mechanisms:
             return []
 
         mechanism = list(self._failure_mechanisms)[0]
         return list(
-            self.get_mechanism_reliability_collection(mechanism).Reliability.keys()
+            self.get_mechanism_reliability_collection(mechanism).reliability.keys()
         )
 
     def add_failure_mechanism_reliability_collection(
@@ -76,3 +76,11 @@ class FailureMechanismCollection:
             list[MechanismReliabilityCollection]: The collection of stored mechanism reliability collections
         """
         return list(self._failure_mechanisms.values())
+
+    def get_mechanism_year_reliability(
+        self, mechanism: MechanismEnum, year: int
+    ) -> float | None:
+        _mrc = self.get_mechanism_reliability_collection(mechanism)
+        if not _mrc:
+            return None
+        return _mrc.get_reliability_for_year(year)

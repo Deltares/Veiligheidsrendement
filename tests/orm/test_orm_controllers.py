@@ -88,6 +88,7 @@ from vrtool.orm.orm_controllers import (
 )
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.orm_version import OrmVersion
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -363,9 +364,8 @@ class TestOrmControllers:
             ComputationTypeEnum.SIMPLE,
             database_vrtool_config.T,
             2023,
-            2025,
         )
-        _stability_inner_collection.Reliability["0"].Input = _mechanism_input
+        _stability_inner_collection.reliability[0].input = _mechanism_input
         _dike_section.section_reliability.load = LoadInput()
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.STABILITY_INNER
@@ -417,17 +417,13 @@ class TestOrmControllers:
         _mech_name = MechanismEnum.get_enum(
             _test_mechanism_per_section.mechanism_name
         ).name
-        _reliability_df = pd.DataFrame(
-            [4.2, 2.4],
-            columns=["42"],
-            index=[_mech_name, "Section"],
-        )
+        _section_reliability = {0: 0.1, 10: 0.2}
         _dummy_section = DikeSection()
         _dummy_section.name = _test_section_data.section_name
         _dummy_section.TrajectInfo = DikeTrajectInfo(
             traject_name=_test_section_data.dike_traject.traject_name
         )
-        _dummy_section.section_reliability.SectionReliability = _reliability_df
+        _dummy_section.section_reliability.set_reliabilities(_section_reliability)
         _test_traject = DikeTraject()
         _test_traject.sections = [_dummy_section]
 
@@ -447,23 +443,19 @@ class TestOrmControllers:
         export_results_safety_assessment(_safety_assessment)
 
         # 3. Verify final expectations.
-        assert any(
-            orm.AssessmentSectionResult.select().where(
-                (orm.AssessmentSectionResult.section_data == _test_section_data)
-                & (orm.AssessmentSectionResult.beta == 2.4)
-                & (orm.AssessmentSectionResult.time == 42)
-            )
-        )
-        assert any(
-            orm.AssessmentMechanismResult.select().where(
-                (
-                    orm.AssessmentMechanismResult.mechanism_per_section
-                    == _test_mechanism_per_section
+        def verify_assessment_result(time: int, pf: float) -> None:
+            _result = (
+                orm.AssessmentSectionResult.select()
+                .where(
+                    (orm.AssessmentSectionResult.section_data == _test_section_data)
+                    & (orm.AssessmentSectionResult.time == time)
                 )
-                & (orm.AssessmentMechanismResult.beta == 4.2)
-                & (orm.AssessmentMechanismResult.time == 42)
+                .get()
             )
-        )
+            assert _result.beta == pytest.approx(pf_to_beta(pf))
+
+        for _time, _pf in _section_reliability.items():
+            verify_assessment_result(_time, _pf)
 
     @pytest.fixture(name="results_measures_with_mocked_data")
     def _get_results_measures_with_mocked_data_fixture(

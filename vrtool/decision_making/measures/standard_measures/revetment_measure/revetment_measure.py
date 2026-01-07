@@ -153,8 +153,8 @@ class RevetmentMeasure(MeasureProtocol):
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
             MechanismEnum.REVETMENT
         )
-        _first_year = list(_reliability_collection.Reliability.keys())[0]
-        return _reliability_collection.Reliability[_first_year].Input.input_dict[
+        _first_year = list(_reliability_collection.reliability.keys())[0]
+        return _reliability_collection.reliability[_first_year].input.input_dict[
             "revetment_input"
         ]
 
@@ -203,12 +203,16 @@ class RevetmentMeasure(MeasureProtocol):
                 for j, cmp in enumerate(self.measures.result_collection):
                     if i == j:
                         continue
-                    beta_msr = msr.section_reliability.SectionReliability["0"][
-                        MechanismEnum.REVETMENT.__str__()
-                    ]
-                    beta_cmp = cmp.section_reliability.SectionReliability["0"][
-                        MechanismEnum.REVETMENT.__str__()
-                    ]
+                    beta_msr = pf_to_beta(
+                        msr.section_reliability.get_reliability_for_mechanism_year(
+                            MechanismEnum.REVETMENT, 0
+                        )
+                    )
+                    beta_cmp = pf_to_beta(
+                        cmp.section_reliability.get_reliability_for_mechanism_year(
+                            MechanismEnum.REVETMENT, 0
+                        )
+                    )
                     cmp_betas = self._compare_betas(beta_msr, beta_cmp)
                     cmp_costs = self._compare_costs(msr.cost, cmp.cost)
                     if cmp_costs == 0 and cmp_betas == 0:
@@ -382,7 +386,7 @@ class RevetmentMeasure(MeasureProtocol):
                 mechanism
             )
         )
-        _assessment_revetment.Reliability = (
+        _assessment_revetment.reliability = (
             self._get_mechanism_reliabilty_for_beta_transition(
                 mechanism, calc_type, revetment_measure_results
             )
@@ -420,7 +424,7 @@ class RevetmentMeasure(MeasureProtocol):
             mechanism_reliability = RevetmentMeasureMechanismReliability(
                 mechanism, calc_type, self.config.t_0
             )
-            mechanism_reliability.Beta = result.beta_combined
-            mechanism_reliability.Pf = beta_to_pf(result.beta_combined)
-            _reliability_dict[str(result.year)] = mechanism_reliability
+            mechanism_reliability.beta = result.beta_combined
+            mechanism_reliability.pf = beta_to_pf(result.beta_combined)
+            _reliability_dict[result.year] = mechanism_reliability
         return _reliability_dict

@@ -9,6 +9,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 @pytest.fixture(name="create_required_mechanism_per_section")
@@ -45,6 +46,21 @@ def get_section_reliability_with_values() -> Iterator[SectionReliability]:
     assert _reliability_file.exists()
 
     _reliability_df = pd.read_csv(_reliability_file, index_col=0)
-    _section_reliability.SectionReliability = _reliability_df
+    _section_reliability.set_reliabilities(
+        {
+            int(_year): beta_to_pf(_beta)
+            for _year, _beta in _reliability_df.loc["Section"].items()
+        }
+    )
+    for _mech in _reliability_df.index:
+        if _mech == "Section":
+            continue
+        _section_reliability.set_reliabilities_for_mechanism(
+            MechanismEnum.get_enum(_mech),
+            {
+                int(_year): beta_to_pf(_beta)
+                for _year, _beta in _reliability_df.loc[_mech].items()
+            },
+        )
 
     yield _section_reliability

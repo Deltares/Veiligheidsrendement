@@ -112,29 +112,20 @@ class TestDikeSectionReliabilityExporter:
         )
         _test_dike_section.section_reliability = section_reliability_with_values
         _expected_mechanisms_reliability = (
-            section_reliability_with_values.SectionReliability.loc[
-                section_reliability_with_values.SectionReliability.index != "Section"
-            ]
+            _test_dike_section.section_reliability.get_reliabilities_for_mechanisms()
         )
-        _mechanisms = list(
-            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
-        )
+        _mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _mechanisms)
-
-        _time_entries = len(section_reliability_with_values.SectionReliability.columns)
 
         # 2. Run test.
         _exporter.export_dom(_test_dike_section)
 
         # 3. Verify final expectations.
-        _assessment_mechanisms = len(AssessmentMechanismResult.select())
         _assessment_section_data = len(AssessmentSectionResult.select())
-        assert (
-            _assessment_mechanisms + _assessment_section_data
-            == section_reliability_with_values.SectionReliability.size
-        )
-        assert (
-            _assessment_mechanisms
-            == len(_expected_mechanisms_reliability.index) * _time_entries
+        _assessment_mechanisms = len(AssessmentMechanismResult.select())
+
+        _time_entries = len(
+            section_reliability_with_values.get_reliabilities().values()
         )
         assert _assessment_section_data == _time_entries
+        assert _assessment_mechanisms == len(_mechanisms) * _time_entries

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from math import isclose
 from pathlib import Path
 
 import pandas as pd
@@ -27,6 +25,7 @@ from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class DikeSectionImporter(OrmImporterProtocol):
@@ -48,23 +47,26 @@ class DikeSectionImporter(OrmImporterProtocol):
         self._config = vrtool_config
 
     @staticmethod
-    def import_assessment_reliability_df(section_data: SectionData) -> pd.DataFrame:
+    def import_assessment_reliability(
+        section_data: SectionData,
+    ) -> SectionReliability:
         """
-        Imports the assessment reliability data related to a section as a `pd.DataFrame`.
+        Imports the assessment reliability data.
 
         Args:
             section_data (SectionData): Section Data with an already saved initial assessment.
 
-        Returns:
-            pd.DataFrame: Dataframe containing information of section and mechanisms assessments.
+        Returns: SectionReliability
         """
         _columns = []
-        _section_reliability_dict = defaultdict(list)
+        _section_reliability = SectionReliability()
         for _asr in section_data.assessment_section_results.order_by(
             AssessmentSectionResult.time.asc()
         ):
-            _columns.append(str(_asr.time))
-            _section_reliability_dict["Section"].append(_asr.beta)
+            _columns.append(_asr.time)
+            _section_reliability.set_reliability_for_year(
+                _asr.time, beta_to_pf(_asr.beta)
+            )
             for _amr in (
                 AssessmentMechanismResult.select()
                 .join(MechanismPerSection)
@@ -76,13 +78,13 @@ class DikeSectionImporter(OrmImporterProtocol):
                     ),
                 )
             ):
-                _mech_name = MechanismEnum.get_enum(
-                    _amr.mechanism_per_section.mechanism.name
-                ).name
-                _section_reliability_dict[_mech_name].append(_amr.beta)
-        return pd.DataFrame.from_dict(
-            _section_reliability_dict, columns=_columns, orient="index"
-        )
+                _section_reliability.set_reliability_for_mechanism_year(
+                    MechanismEnum.get_enum(_amr.mechanism_per_section.mechanism.name),
+                    _amr.time,
+                    beta_to_pf(_amr.beta),
+                )
+
+        return _section_reliability
 
     def _import_buildings_list(self, buildings_list: list[Buildings]) -> pd.DataFrame:
         _buildings_data = [
@@ -143,8 +145,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         self,
         section_data: SectionData,
     ) -> SectionReliability:
-        _section_reliability = SectionReliability()
-
+        _section_reliability = self.import_assessment_reliability(section_data)
         _section_reliability.load = WaterLevelImporter(gridpoints=1000).import_orm(
             section_data
         )
@@ -152,28 +153,18 @@ class DikeSectionImporter(OrmImporterProtocol):
         _mechanism_collection = self._get_mechanism_reliability_collection_list(
             section_data
         )
-
-        _imported_initial_assessment = self.import_assessment_reliability_df(
-            section_data
-        )
-
         for _mechanism_data in _mechanism_collection:
-            if _mechanism_data.mechanism.name in _imported_initial_assessment.index:
-                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism.name).name
-                for _reliability_t, _beta in _imported_initial_assessment.loc[
-                    _mech_name
-                ].items():
-                    _mechanism_data.Reliability[_reliability_t].Beta = _beta
+            if (
+                _mechanism_data.mechanism
+                in _section_reliability.get_reliabilities_for_mechanisms().keys()
+            ):
+                for _year, _pf in _section_reliability.get_reliabilities_for_mechanism(
+                    _mechanism_data.mechanism
+                ).items():
+                    _mechanism_data.set_reliability_for_year(_year, _pf)
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )
-
-        if _imported_initial_assessment.empty:
-            logging.debug(
-                "No initial section -  mechanism (reliability) assessment was found."
-            )
-        else:
-            _section_reliability.SectionReliability = _imported_initial_assessment
 
         return _section_reliability
 

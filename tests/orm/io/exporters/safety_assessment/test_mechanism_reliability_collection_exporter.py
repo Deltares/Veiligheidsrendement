@@ -13,6 +13,7 @@ from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismRes
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestMechanismReliabilityCollectionExporter:
@@ -37,15 +38,13 @@ class TestMechanismReliabilityCollectionExporter:
         _test_section_data = get_orm_basic_dike_section()
         assert not any(AssessmentMechanismResult.select())
 
+        _expected_time_entries = len(
+            section_reliability_with_values.get_reliabilities()
+        )
         _expected_mechanisms_reliability = (
-            section_reliability_with_values.SectionReliability.loc[
-                section_reliability_with_values.SectionReliability.index != "Section"
-            ]
+            section_reliability_with_values.get_reliabilities_for_mechanisms()
         )
-        _expected_time_entries = len(_expected_mechanisms_reliability.columns)
-        _expected_mechanisms = list(
-            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
-        )
+        _expected_mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         assert any(Mechanism.select())
         assert any(MechanismPerSection.select())
@@ -60,10 +59,8 @@ class TestMechanismReliabilityCollectionExporter:
             _expected_mechanisms
         )
 
-        for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
-            _mechanism = MechanismEnum.get_enum(row_idx)
-            for time_idx, beta_value in enumerate(mechanism_row):
-                time_value = int(mechanism_row.index[time_idx])
+        for _mechanism, _reliabilities in _expected_mechanisms_reliability.items():
+            for _year, _pf in _reliabilities.items():
                 _orm_assessment = (
                     AssessmentMechanismResult.select()
                     .join(MechanismPerSection)
@@ -71,14 +68,14 @@ class TestMechanismReliabilityCollectionExporter:
                     .where(
                         (Mechanism.name == _mechanism.name)
                         & (MechanismPerSection.section == _test_section_data)
-                        & (AssessmentMechanismResult.time == time_value)
+                        & (AssessmentMechanismResult.time == _year)
                     )
                     .get()
                 )
                 assert isinstance(
                     _orm_assessment, AssessmentMechanismResult
-                ), f"No assessment created for mechanism {_mechanism}, time {time_value}."
-                assert _orm_assessment.beta == beta_value
+                ), f"No assessment created for mechanism {_mechanism}, time {_year}."
+                assert _orm_assessment.beta == pytest.approx(pf_to_beta(_pf))
 
     @with_empty_db_context
     def test_export_dom_with_two_sections_exports_to_expected(
@@ -103,15 +100,13 @@ class TestMechanismReliabilityCollectionExporter:
         )
         assert not any(AssessmentMechanismResult.select())
 
+        _expected_time_entries = len(
+            section_reliability_with_values.get_reliabilities()
+        )
         _expected_mechanisms_reliability = (
-            section_reliability_with_values.SectionReliability.loc[
-                section_reliability_with_values.SectionReliability.index != "Section"
-            ]
+            section_reliability_with_values.get_reliabilities_for_mechanisms()
         )
-        _expected_time_entries = len(_expected_mechanisms_reliability.columns)
-        _expected_mechanisms = list(
-            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
-        )
+        _expected_mechanisms = list(_expected_mechanisms_reliability.keys())
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         create_required_mechanism_per_section(
             _additional_section_data, _expected_mechanisms
@@ -144,9 +139,10 @@ class TestMechanismReliabilityCollectionExporter:
         assert not any(AssessmentMechanismResult.select())
         assert not any(Mechanism.select())
 
-        _expected_mechanism_not_found = MechanismEnum.get_enum(
-            section_reliability_with_values.SectionReliability.index[0]
+        _mechanisms = list(
+            section_reliability_with_values.get_reliabilities_for_mechanisms().keys()
         )
+        _expected_mechanism_not_found = _mechanisms[0]
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:

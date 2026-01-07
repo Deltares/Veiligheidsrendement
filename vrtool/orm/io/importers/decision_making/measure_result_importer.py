@@ -1,7 +1,3 @@
-from collections import defaultdict
-
-import pandas as pd
-
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -11,54 +7,50 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 )
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class MeasureResultImporter(OrmImporterProtocol):
     @staticmethod
-    def import_measure_reliability_df(measure_result: MeasureResult) -> pd.DataFrame:
+    def import_measure_reliability(
+        measure_result: MeasureResult,
+    ) -> SectionReliability:
         """
         Imports all the reliability values of a given `MeasureResult` into a
-        `pd.DataFrame`. Said `pd.DataFrame` will have its columns representing
-        the available `time` of a `MeasureResult`, the rows as the different
-        `Mechanism`, as well as `SectionData` and the values being their resulting
-         `beta`.
+        SectionReliability object.
 
         Args:
             measure_result (MeasureResult): The measure result whose reliability
-            dataframe (`pd.DataFrame`) needs to be imported.
+            needs to be imported.
 
         Returns:
-            pd.DataFrame: Dataframe containing reliability relative to the
+            SectionReliability: Object containing reliability relative to the
             measure - section and measure - mechanisms.
         """
-        _columns = []
-        _section_reliability_dict = defaultdict(list)
+        _section_reliability = SectionReliability()
         for _smr in measure_result.measure_result_section.order_by(
             MeasureResultSection.time.asc()
         ):
-            _columns.append(str(_smr.time))
-            _section_reliability_dict["Section"].append(_smr.beta)
+            _section_reliability.set_reliability_for_year(
+                _smr.time, beta_to_pf(_smr.beta)
+            )
             for _mrm in measure_result.measure_result_mechanisms.where(
                 MeasureResultMechanism.time == _smr.time
             ):
-                _mech_name = MechanismEnum.get_enum(
-                    _mrm.mechanism_per_section.mechanism.name
-                ).name
-                _section_reliability_dict[_mech_name].append(_mrm.beta)
-
-        return pd.DataFrame.from_dict(
-            _section_reliability_dict, columns=_columns, orient="index"
-        )
+                _section_reliability.set_reliability_for_mechanism_year(
+                    MechanismEnum.get_enum(_mrm.mechanism_per_section.mechanism.name),
+                    _mrm.time,
+                    beta_to_pf(_mrm.beta),
+                )
+        return _section_reliability
 
     def import_orm(self, measure_result: OrmBaseModel) -> dict:
         _cost = float("nan")
         if any(measure_result.measure_result_section):
             # The measure cost has the same value regardless of the time.
             _cost = measure_result.measure_result_section[0].cost
-        _section_reliability = SectionReliability()
-        _section_reliability.SectionReliability = self.import_measure_reliability_df(
-            measure_result
-        )
+
+        _section_reliability = self.import_measure_reliability(measure_result)
 
         # Get measure parameters (dberm, dcrest, target_beta, transition_level, ...).
         _imported_parameters = dict(
